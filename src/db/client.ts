@@ -25,7 +25,8 @@ const db = drizzle({ client: escopo.lonaPool });
 export type Transacao = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export type Contexto = {
-	usuarioId: string;
+	/** Só a rotina de limpeza roda sem usuário. */
+	usuarioId?: string;
 	/** Sem empresa só dá pra chamar o que não precisa dela (achar as empresas do usuário, copiar a demonstração). */
 	empresaId?: string;
 };
@@ -41,7 +42,7 @@ export function comContexto<T>(
 ): Promise<T> {
 	return db.transaction(async (tx) => {
 		await tx.execute(
-			sql`SELECT set_config('app.usuario_id', ${contexto.usuarioId}, true), set_config('app.empresa_id', ${contexto.empresaId ?? ""}, true)`,
+			sql`SELECT set_config('app.usuario_id', ${contexto.usuarioId ?? ""}, true), set_config('app.empresa_id', ${contexto.empresaId ?? ""}, true)`,
 		);
 		return fn(tx);
 	});

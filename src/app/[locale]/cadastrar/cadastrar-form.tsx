@@ -13,6 +13,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
 type Copy = {
@@ -62,6 +63,8 @@ export function CadastrarForm({
 			setEnviando(false);
 			return;
 		}
+		// Quem se cadastra também recebe uma demonstração de 2 horas.
+		await api().demonstracao.iniciar.post();
 		router.push(painelHref);
 		router.refresh();
 	}

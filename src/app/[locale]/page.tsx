@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { localePath } from "@/i18n/path";
 import { getT } from "@/i18n/server";
+import { TestarDemonstracao } from "./testar-demonstracao";
 
 export default async function Home() {
 	const { t, locale } = await getT();
@@ -16,6 +17,10 @@ export default async function Home() {
 					{t.app.meta.description}
 				</p>
 			</div>
+			<TestarDemonstracao
+				copy={t.app.home}
+				painelHref={localePath(locale, "/painel")}
+			/>
 			<div className="flex flex-wrap gap-3">
 				<Button
 					nativeButton={false}

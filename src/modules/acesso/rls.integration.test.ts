@@ -171,6 +171,7 @@ describe.skipIf(!temBanco)("RLS do módulo acesso", () => {
 			FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
 			WHERE n.nspname = 'public' AND c.relkind = 'r'
 				AND NOT (c.relrowsecurity AND c.relforcerowsecurity)
+				AND c.relname <> 'lona_copiadores' -- infraestrutura da cópia: não tem empresa e o app nem a enxerga
 				AND c.relname NOT LIKE 'teste\\_%'`,
 		);
 		expect(rows).toEqual([]);

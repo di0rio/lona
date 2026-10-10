@@ -24,6 +24,8 @@ export type NovaEmpresa = {
 	config?: Partial<ConfigEmpresa>;
 	ehModelo?: boolean;
 	expiraEm?: Date | null;
+	/** A matriz nasce junto (ADR 0003); por padrão, "Matriz" / MTZ. */
+	matriz?: { nome: string; codigo: string };
 };
 
 /**
@@ -47,8 +49,8 @@ export async function criarEmpresa(tx: Escrita, dados: NovaEmpresa) {
 		.insert(filiais)
 		.values({
 			empresaId: empresa.id,
-			nome: "Matriz",
-			codigo: "MTZ",
+			nome: dados.matriz?.nome ?? "Matriz",
+			codigo: dados.matriz?.codigo ?? "MTZ",
 			cnpj: cnpjDaFilial(dados.raizCnpj, 1),
 			ehMatriz: true,
 		})
@@ -124,10 +126,13 @@ export async function criarVinculo(tx: Escrita, dados: NovoVinculo) {
 	await tx.insert(vinculos).values(dados);
 }
 
-/** A empresa ativa mais recente do usuário, ou null (nunca teve, ou a demonstração venceu). */
-export async function empresaAtivaDoUsuario(usuarioId: string) {
-	return comContexto({ usuarioId }, async (tx) => {
-		const { rows } = await tx.execute<{
+/**
+ * A empresa ativa mais recente do usuário, ou null (nunca teve, ou a demonstração venceu).
+ * Dentro de uma transação que já tem o contexto do usuário, passe `tx` para não abrir outra.
+ */
+export async function empresaAtivaDoUsuario(usuarioId: string, tx?: Transacao) {
+	const buscar = async (t: Transacao) => {
+		const { rows } = await t.execute<{
 			empresa_id: string;
 			nome: string;
 			expira_em: Date | null;
@@ -140,7 +145,8 @@ export async function empresaAtivaDoUsuario(usuarioId: string) {
 					expiraEm: empresa.expira_em,
 				}
 			: null;
-	});
+	};
+	return tx ? buscar(tx) : comContexto({ usuarioId }, buscar);
 }
 
 export type ResumoDoPainel = {

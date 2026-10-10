@@ -6,6 +6,7 @@ export { cnpjDaFilial } from "./cnpj";
 export { type Limite, limites, type Permissao, permissoes } from "./permissoes";
 export { acessoRoutes, sessao } from "./routes";
 export type { ConfigEmpresa, Cor, Nivel } from "./schema";
+export { semearModeloAcesso } from "./seed";
 export {
 	criarEmpresa,
 	criarFilial,
