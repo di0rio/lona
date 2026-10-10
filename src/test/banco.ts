@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { urlSegura } from "@/db/url";
 
@@ -38,4 +40,19 @@ export async function comoApp<T>(
 		await cliente.query("ROLLBACK");
 		cliente.release();
 	}
+}
+
+/** Drizzle em cima da conexão do dono, pra montar dados de teste com os mesmos services do app. */
+export function drizzleDoDono(pool: pg.Pool) {
+	return drizzle({ client: pool });
+}
+
+/** Cria um usuário só para o teste (a tabela de autenticação não tem RLS). */
+export async function criarUsuarioDeTeste(pool: pg.Pool, apelido: string) {
+	const sufixo = randomUUID().slice(0, 8);
+	const { rows } = await pool.query<{ id: string }>(
+		"INSERT INTO autenticacao.usuarios (nome, email) VALUES ($1, $2) RETURNING id",
+		[apelido, `${apelido}-${sufixo}@teste.lona.test`],
+	);
+	return rows[0].id;
 }

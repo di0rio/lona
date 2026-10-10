@@ -8,6 +8,20 @@
       "when": 1791657730257,
       "tag": "0000_base",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791657982967,
+      "tag": "0001_acesso",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791657989091,
+      "tag": "0002_acesso_rls",
+      "breakpoints": true
     }
   ]
 }

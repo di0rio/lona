@@ -1,0 +1,983 @@
+{
+  "id": "b6f52ae9-7182-43c0-8820-22e42eccbbd1",
+  "prevId": "af63f781-8f0e-423a-aa51-87bd38cdf029",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.cargo_limites": {
+      "name": "cargo_limites",
+      "schema": "",
+      "columns": {
+        "empresa_id": {
+          "name": "empresa_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cargo_id": {
+          "name": "cargo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "limite": {
+          "name": "limite",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor": {
+          "name": "valor",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cargo_limites_empresa_id_cargo_id_cargos_empresa_id_id_fk": {
+          "name": "cargo_limites_empresa_id_cargo_id_cargos_empresa_id_id_fk",
+          "tableFrom": "cargo_limites",
+          "columnsFrom": [
+            "empresa_id",
+            "cargo_id"
+          ],
+          "tableTo": "cargos",
+          "columnsTo": [
+            "empresa_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cargo_limites_empresa_id_cargo_id_limite_pk": {
+          "name": "cargo_limites_empresa_id_cargo_id_limite_pk",
+          "columns": [
+            "empresa_id",
+            "cargo_id",
+            "limite"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cargo_limites_valor_nao_negativo": {
+          "name": "cargo_limites_valor_nao_negativo",
+          "value": "\"cargo_limites\".\"valor\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cargo_permissoes": {
+      "name": "cargo_permissoes",
+      "schema": "",
+      "columns": {
+        "empresa_id": {
+          "name": "empresa_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cargo_id": {
+          "name": "cargo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permissao": {
+          "name": "permissao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cargo_permissoes_empresa_id_cargo_id_cargos_empresa_id_id_fk": {
+          "name": "cargo_permissoes_empresa_id_cargo_id_cargos_empresa_id_id_fk",
+          "tableFrom": "cargo_permissoes",
+          "columnsFrom": [
+            "empresa_id",
+            "cargo_id"
+          ],
+          "tableTo": "cargos",
+          "columnsTo": [
+            "empresa_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cargo_permissoes_empresa_id_cargo_id_permissao_pk": {
+          "name": "cargo_permissoes_empresa_id_cargo_id_permissao_pk",
+          "columns": [
+            "empresa_id",
+            "cargo_id",
+            "permissao"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cargos": {
+      "name": "cargos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "empresa_id": {
+          "name": "empresa_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "padrao": {
+          "name": "padrao",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cargos_empresa_id_empresas_id_fk": {
+          "name": "cargos_empresa_id_empresas_id_fk",
+          "tableFrom": "cargos",
+          "columnsFrom": [
+            "empresa_id"
+          ],
+          "tableTo": "empresas",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cargos_empresa_id_id_unq": {
+          "name": "cargos_empresa_id_id_unq",
+          "columns": [
+            "empresa_id",
+            "id"
+          ],
+          "nullsNotDistinct": false
+        },
+        "cargos_empresa_id_nome_unq": {
+          "name": "cargos_empresa_id_nome_unq",
+          "columns": [
+            "empresa_id",
+            "nome"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "autenticacao.contas": {
+      "name": "contas",
+      "schema": "autenticacao",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "conta_id": {
+          "name": "conta_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provedor_id": {
+          "name": "provedor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_acesso": {
+          "name": "token_acesso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_renovacao": {
+          "name": "token_renovacao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_id": {
+          "name": "token_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_acesso_expira_em": {
+          "name": "token_acesso_expira_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_renovacao_expira_em": {
+          "name": "token_renovacao_expira_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "escopo": {
+          "name": "escopo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "senha": {
+          "name": "senha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizada_em": {
+          "name": "atualizada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "contas_usuario_id_idx": {
+          "name": "contas_usuario_id_idx",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "contas_usuario_id_usuarios_id_fk": {
+          "name": "contas_usuario_id_usuarios_id_fk",
+          "tableFrom": "contas",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "tableTo": "usuarios",
+          "schemaTo": "autenticacao",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.empresas": {
+      "name": "empresas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raiz_cnpj": {
+          "name": "raiz_cnpj",
+          "type": "char(8)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eh_modelo": {
+          "name": "eh_modelo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "expira_em": {
+          "name": "expira_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cor": {
+          "name": "cor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'azul'"
+        },
+        "config": {
+          "name": "config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"usa_filiais\":false,\"fluxo_os\":\"simples\",\"venda_com_orcamento\":false,\"caixa_obrigatorio\":false}'::jsonb"
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "empresas_expira_em_idx": {
+          "name": "empresas_expira_em_idx",
+          "columns": [
+            {
+              "expression": "expira_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"empresas\".\"expira_em\" IS NOT NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "empresas_raiz_cnpj_formato": {
+          "name": "empresas_raiz_cnpj_formato",
+          "value": "\"empresas\".\"raiz_cnpj\" ~ '^[0-9]{8}$'"
+        },
+        "empresas_cor_valida": {
+          "name": "empresas_cor_valida",
+          "value": "\"empresas\".\"cor\" IN ('azul', 'verde', 'vermelho', 'laranja', 'amarelo', 'roxo', 'rosa', 'cinza')"
+        },
+        "empresas_modelo_nao_expira": {
+          "name": "empresas_modelo_nao_expira",
+          "value": "NOT \"empresas\".\"eh_modelo\" OR \"empresas\".\"expira_em\" IS NULL"
+        },
+        "empresas_config_valida": {
+          "name": "empresas_config_valida",
+          "value": "\"empresas\".\"config\"->>'fluxo_os' IN ('simples', 'completo')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.filiais": {
+      "name": "filiais",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "empresa_id": {
+          "name": "empresa_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cnpj": {
+          "name": "cnpj",
+          "type": "char(14)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eh_matriz": {
+          "name": "eh_matriz",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ativa": {
+          "name": "ativa",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "filiais_matriz_unq": {
+          "name": "filiais_matriz_unq",
+          "columns": [
+            {
+              "expression": "empresa_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"filiais\".\"eh_matriz\"",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "filiais_empresa_id_empresas_id_fk": {
+          "name": "filiais_empresa_id_empresas_id_fk",
+          "tableFrom": "filiais",
+          "columnsFrom": [
+            "empresa_id"
+          ],
+          "tableTo": "empresas",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "filiais_empresa_id_id_unq": {
+          "name": "filiais_empresa_id_id_unq",
+          "columns": [
+            "empresa_id",
+            "id"
+          ],
+          "nullsNotDistinct": false
+        },
+        "filiais_empresa_id_codigo_unq": {
+          "name": "filiais_empresa_id_codigo_unq",
+          "columns": [
+            "empresa_id",
+            "codigo"
+          ],
+          "nullsNotDistinct": false
+        },
+        "filiais_empresa_id_cnpj_unq": {
+          "name": "filiais_empresa_id_cnpj_unq",
+          "columns": [
+            "empresa_id",
+            "cnpj"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "filiais_cnpj_formato": {
+          "name": "filiais_cnpj_formato",
+          "value": "\"filiais\".\"cnpj\" ~ '^[0-9]{14}$'"
+        },
+        "filiais_matriz_ordem_0001": {
+          "name": "filiais_matriz_ordem_0001",
+          "value": "NOT \"filiais\".\"eh_matriz\" OR substr(\"filiais\".\"cnpj\", 9, 4) = '0001'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "autenticacao.sessoes": {
+      "name": "sessoes",
+      "schema": "autenticacao",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "expira_em": {
+          "name": "expira_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizada_em": {
+          "name": "atualizada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agente": {
+          "name": "agente",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "sessoes_usuario_id_idx": {
+          "name": "sessoes_usuario_id_idx",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "sessoes_usuario_id_usuarios_id_fk": {
+          "name": "sessoes_usuario_id_usuarios_id_fk",
+          "tableFrom": "sessoes",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "tableTo": "usuarios",
+          "schemaTo": "autenticacao",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sessoes_token_unique": {
+          "name": "sessoes_token_unique",
+          "columns": [
+            "token"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "autenticacao.usuarios": {
+      "name": "usuarios",
+      "schema": "autenticacao",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verificado": {
+          "name": "email_verificado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "imagem": {
+          "name": "imagem",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eh_anonimo": {
+          "name": "eh_anonimo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "usuarios_anonimos_idx": {
+          "name": "usuarios_anonimos_idx",
+          "columns": [
+            {
+              "expression": "criado_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"autenticacao\".\"usuarios\".\"eh_anonimo\"",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "usuarios_email_unique": {
+          "name": "usuarios_email_unique",
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "autenticacao.verificacoes": {
+      "name": "verificacoes",
+      "schema": "autenticacao",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "identificador": {
+          "name": "identificador",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor": {
+          "name": "valor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expira_em": {
+          "name": "expira_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizada_em": {
+          "name": "atualizada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "verificacoes_identificador_idx": {
+          "name": "verificacoes_identificador_idx",
+          "columns": [
+            {
+              "expression": "identificador",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.vinculos": {
+      "name": "vinculos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "empresa_id": {
+          "name": "empresa_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filial_id": {
+          "name": "filial_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cargo_id": {
+          "name": "cargo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nivel": {
+          "name": "nivel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "vinculos_usuario_id_idx": {
+          "name": "vinculos_usuario_id_idx",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "empresa_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "vinculos_empresa_id_empresas_id_fk": {
+          "name": "vinculos_empresa_id_empresas_id_fk",
+          "tableFrom": "vinculos",
+          "columnsFrom": [
+            "empresa_id"
+          ],
+          "tableTo": "empresas",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "vinculos_usuario_id_usuarios_id_fk": {
+          "name": "vinculos_usuario_id_usuarios_id_fk",
+          "tableFrom": "vinculos",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "tableTo": "usuarios",
+          "schemaTo": "autenticacao",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "vinculos_empresa_id_filial_id_filiais_empresa_id_id_fk": {
+          "name": "vinculos_empresa_id_filial_id_filiais_empresa_id_id_fk",
+          "tableFrom": "vinculos",
+          "columnsFrom": [
+            "empresa_id",
+            "filial_id"
+          ],
+          "tableTo": "filiais",
+          "columnsTo": [
+            "empresa_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "vinculos_empresa_id_cargo_id_cargos_empresa_id_id_fk": {
+          "name": "vinculos_empresa_id_cargo_id_cargos_empresa_id_id_fk",
+          "tableFrom": "vinculos",
+          "columnsFrom": [
+            "empresa_id",
+            "cargo_id"
+          ],
+          "tableTo": "cargos",
+          "columnsTo": [
+            "empresa_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "vinculos_empresa_usuario_filial_unq": {
+          "name": "vinculos_empresa_usuario_filial_unq",
+          "columns": [
+            "empresa_id",
+            "usuario_id",
+            "filial_id"
+          ],
+          "nullsNotDistinct": true
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "vinculos_nivel_valido": {
+          "name": "vinculos_nivel_valido",
+          "value": "\"vinculos\".\"nivel\" IN ('consultar', 'operar')"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "autenticacao": "autenticacao"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
