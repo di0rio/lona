@@ -15,6 +15,24 @@ const reescrita = (res: Response) => res.headers.get("x-middleware-rewrite");
 afterEach(() => vi.unstubAllEnvs());
 
 describe("proxy", () => {
+	test("o matcher pega as páginas e deixa de fora a API, os internos e os arquivos", async () => {
+		vi.resetModules();
+		const { config } = await import("./proxy");
+		const pega = (path: string) =>
+			new RegExp(`^${config.matcher[0]}$`).test(path);
+		for (const path of ["/", "/painel", "/entrar", "/en/painel"]) {
+			expect(pega(path), path).toBe(true);
+		}
+		for (const path of [
+			"/api/auth/ok",
+			"/api/acesso/painel",
+			"/_next/static/x.js",
+			"/favicon.ico",
+		]) {
+			expect(pega(path), path).toBe(false);
+		}
+	});
+
 	test("português na raiz é reescrito pra /pt sem mudar a URL", async () => {
 		const run = await carregar(false);
 		expect(reescrita(run("/"))).toBe("http://localhost:3000/pt");

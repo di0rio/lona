@@ -28,6 +28,12 @@ describe.skipIf(!temBanco)("papel lona_app", () => {
 		expect(rows[0].total).toBe(0);
 	});
 
+	test("não enxerga o registro de copiadores", async () => {
+		await expect(app.query("SELECT * FROM lona_copiadores")).rejects.toThrow(
+			/permission denied/,
+		);
+	});
+
 	test("não cria objetos nem lê o histórico de migrações", async () => {
 		await expect(app.query("CREATE TABLE intruso (id int)")).rejects.toThrow(
 			/permission denied/,

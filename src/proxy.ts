@@ -23,5 +23,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
 	// Fora: arquivos internos, a API (Elysia e Better Auth) e qualquer arquivo com extensão (ícones, robots, /public).
-	matcher: ["/((?!_next|api|.*..*).*)"],
+	matcher: ["/((?!_next|api|.*\\..*).*)"],
 };
