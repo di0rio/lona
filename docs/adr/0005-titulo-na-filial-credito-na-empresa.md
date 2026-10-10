@@ -1,0 +1,3 @@
+# Título pertence à filial, crédito do cliente pertence à empresa
+
+O título a receber ou a pagar pertence à filial que faturou ou comprou, porque boleto, duplicata e conta bancária saem do CNPJ dela; dono e financeiro veem tudo somado na empresa. Já o limite de crédito e o bloqueio por atraso são da empresa: um título vencido em qualquer filial bloqueia o faturado em todas, como o Protheus faz quando soma as lojas do cliente. Escolhemos isso em vez de títulos centralizados na matriz (que esconderia de qual CNPJ veio a cobrança) ou de crédito por filial (que deixaria o cliente inadimplente em Bauru comprar faturado em Jaú).

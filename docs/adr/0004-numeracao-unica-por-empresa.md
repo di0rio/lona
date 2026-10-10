@@ -1,0 +1,3 @@
+# Numeração única por empresa para OS e vendas
+
+OS, vendas de balcão e pedidos de compra usam uma sequência única por empresa e tipo de documento (OS 1002 em Jaú, OS 1003 em Bauru), e a filial aparece como um campo do documento, não no número. Escolhemos isso em vez de uma sequência por filial com prefixo (`JAU-OS-0042`) porque é o padrão do mercado, nunca gera número repetido em relatórios consolidados e não exige configurar contador a cada filial aberta; o acesso de cada usuário é filtrado pelo vínculo com a filial, não pelo número. Exceção prevista para a v2: a nota fiscal tem numeração própria por filial (por CNPJ e série), como a legislação exige.
