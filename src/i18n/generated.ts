@@ -7,9 +7,43 @@ import { createI18n } from "better-intl/runtime";
 export const translations = {
 	pt: {
 		app: {
+			cadastrar: {
+				title: "Cadastrar",
+				description: "Ao cadastrar, você recebe uma demonstração de 2 horas para testar o sistema.",
+				nome: "Nome",
+				email: "E-mail",
+				senha: "Senha",
+				senhaDica: "Mínimo de 8 caracteres.",
+				enviar: "Cadastrar",
+				enviando: "Cadastrando...",
+				erroExistente: "Já existe um cadastro com este e-mail.",
+				erro: "Não foi possível cadastrar agora. Tente de novo.",
+				jaTemCadastro: "Já tem cadastro?",
+				entrar: "Entrar",
+			},
+			entrar: {
+				title: "Entrar",
+				description: "Use o e-mail e a senha do seu cadastro.",
+				email: "E-mail",
+				senha: "Senha",
+				enviar: "Entrar",
+				enviando: "Entrando...",
+				erro: "E-mail ou senha incorretos.",
+				semCadastro: "Ainda não tem cadastro?",
+				cadastrar: "Cadastrar",
+			},
+			painel: {
+				title: "Painel",
+				ola: (v: { nome: string }) => `Olá, ${v.nome}.`,
+				sair: "Sair",
+			},
 			meta: {
 				title: "Lona",
 				description: "ERP para lojas de peças e oficinas de freio de caminhão.",
+			},
+			home: {
+				entrar: "Entrar",
+				cadastrar: "Cadastrar",
 			},
 			notFound: {
 				title: "Página não encontrada",
@@ -30,9 +64,43 @@ export const translations = {
 	},
 	en: {
 		app: {
+			cadastrar: {
+				title: "Register",
+				description: "When you register you get a 2-hour demonstration to try the system.",
+				nome: "Name",
+				email: "Email",
+				senha: "Password",
+				senhaDica: "At least 8 characters.",
+				enviar: "Register",
+				enviando: "Registering...",
+				erroExistente: "There is already a registration with this email.",
+				erro: "Could not register right now. Try again.",
+				jaTemCadastro: "Already registered?",
+				entrar: "Sign in",
+			},
+			entrar: {
+				title: "Sign in",
+				description: "Use the email and password you registered with.",
+				email: "Email",
+				senha: "Password",
+				enviar: "Sign in",
+				enviando: "Signing in...",
+				erro: "Wrong email or password.",
+				semCadastro: "No registration yet?",
+				cadastrar: "Register",
+			},
+			painel: {
+				title: "Dashboard",
+				ola: (v: { nome: string }) => `Hello, ${v.nome}.`,
+				sair: "Sign out",
+			},
 			meta: {
 				title: "Lona",
 				description: "ERP for truck brake parts stores and workshops.",
+			},
+			home: {
+				entrar: "Sign in",
+				cadastrar: "Register",
 			},
 			notFound: {
 				title: "Page not found",

@@ -28,4 +28,9 @@ jobs:
       - run: bun run test
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # O build só precisa que as variáveis existam; nenhuma conexão acontece nele.
       - run: bun run build
+        env:
+          DATABASE_URL_APP: postgres://build:build@localhost:5432/build
+          BETTER_AUTH_SECRET: segredo-so-para-o-build-do-ci-0000000000
+          BETTER_AUTH_URL: http://localhost:3000
