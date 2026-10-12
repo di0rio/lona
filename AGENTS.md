@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Lona
 
-- Leia `GLOSSARY.md` e `docs/adr/` antes de mudar qualquer coisa. Os nomes do glossário valem no código, na interface e nas tabelas e colunas (empresa, filial, cargo, vínculo, consultar, operar, demonstração...). Nada de "demo", "tenant" ou "role".
-- Cada módulo vive em `src/modules/<modulo>/` (`schema.ts`, `service.ts`, `routes.ts`, `index.ts`). Um módulo só usa outro pelo `index.ts` dele, nunca importando as tabelas de outro módulo.
-- Toda consulta de negócio passa pelo helper de transação com contexto (`src/db/`), que seta a empresa e o usuário para o RLS. Nunca rode consulta de negócio fora dele.
+- Leia `GLOSSARY.md` e `docs/adr/` antes de mudar qualquer coisa. Código, banco e API em inglês, com os termos do glossário (linha "No código" de cada termo). Interface, URLs das páginas, comentários e docs em português. Commits em inglês (Conventional Commits).
+- Cada módulo vive em `src/modules/<module>/` (`schema.ts`, `service.ts`, `routes.ts`, `index.ts`). Um módulo só usa outro pelo `index.ts` dele, nunca importando as tabelas de outro módulo.
+- Toda consulta de negócio passa pelo helper de transação com contexto (`src/db/`, `withContext`), que seta a empresa e o usuário para o RLS. Nunca rode consulta de negócio fora dele.
 - Confira a documentação da versão instalada de cada biblioteca antes de escrever código para ela.
