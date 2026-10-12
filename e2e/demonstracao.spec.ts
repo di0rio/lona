@@ -66,9 +66,13 @@ test("testar demonstração leva ao painel com o contador", async ({ page }) => 
 	await expect(page).toHaveURL(/\/painel$/);
 	await expect(page.getByText("Demonstração acaba em")).toBeVisible();
 	await expect(page.getByText(contador)).toBeVisible();
-	await expect(page.getByText("Freios Rodovia Ltda")).toBeVisible();
-	await expect(page.getByText("Matriz Jaú")).toBeVisible();
+	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
+	await expect(page.getByText("Matriz Jaú").first()).toBeVisible();
 	await expect(page.getByText("dono (opera)")).toBeVisible();
+	await expect(page.locator("[data-cor]").first()).toHaveAttribute(
+		"data-cor",
+		"laranja",
+	);
 	await usuarioDaSessao(page);
 });
 
@@ -109,7 +113,7 @@ test("cadastro com e-mail e senha também recebe uma demonstração", async ({
 
 	await expect(page).toHaveURL(/\/painel$/);
 	await expect(page.getByText(contador)).toBeVisible();
-	await expect(page.getByText("Freios Rodovia Ltda")).toBeVisible();
+	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 	await usuarioDaSessao(page);
 });
 
@@ -123,7 +127,9 @@ test("entrar com o e-mail e a senha do cadastro", async ({ page, context }) => {
 	await expect(page).toHaveURL(/\/painel$/);
 	await usuarioDaSessao(page);
 
-	await page.getByRole("button", { name: "Sair" }).click();
+	// "Sair" vive no menu do usuário, no rodapé da sidebar.
+	await page.getByRole("button", { name: /Pessoa de Teste/ }).click();
+	await page.getByRole("menuitem", { name: "Sair" }).click();
 	await expect(page).toHaveURL(/\/$/);
 	await context.clearCookies();
 
@@ -132,7 +138,7 @@ test("entrar com o e-mail e a senha do cadastro", async ({ page, context }) => {
 	await page.getByLabel("Senha").fill("senha-de-teste-123");
 	await page.getByRole("button", { name: "Entrar" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	await expect(page.getByText("Freios Rodovia Ltda")).toBeVisible();
+	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 });
 
 test("ao vencer, mostra que a demonstração acabou e deixa começar outra", async ({
@@ -184,4 +190,29 @@ test("o inglês fica escondido: /en dá 404 e não há seletor de idioma", async
 	expect(resposta?.status()).toBe(404);
 	await page.goto("/");
 	await expect(page.getByRole("navigation", { name: "Idioma" })).toHaveCount(0);
+});
+
+test("Ctrl+K abre a paleta e navega por Painel", async ({ page }) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await usuarioDaSessao(page);
+
+	await page.keyboard.press("Control+k");
+	const paleta = page.getByRole("dialog");
+	await expect(paleta).toBeVisible();
+	await paleta.getByText("Painel", { exact: true }).click();
+	await expect(paleta).toBeHidden();
+	await expect(page).toHaveURL(/\/painel$/);
+});
+
+test("alternar tema no menu do usuário muda para escuro", async ({ page }) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await usuarioDaSessao(page);
+
+	await page.getByRole("button", { name: /dono · Matriz Jaú/ }).click();
+	await page.getByRole("menuitemradio", { name: "Escuro" }).click();
+	await expect(page.locator("html")).toHaveClass(/dark/);
 });
