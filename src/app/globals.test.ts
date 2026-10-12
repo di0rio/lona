@@ -56,7 +56,7 @@ function oklchDaVariavel(
 
 /** Acha o conteúdo de um bloco `seletor { ... }`, sem casar seletores mais específicos (ex.: `:root` vs `:root[data-cor="x"]`). */
 function blocoCss(seletor: string) {
-	const escapado = seletor.replace(/[.[\]"=]/g, "\\$&");
+	const escapado = seletor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const match = css.match(new RegExp(`${escapado}\\s*\\{([^}]*)\\}`));
 	if (!match)
 		throw new Error(`bloco "${seletor}" não encontrado em globals.css`);
