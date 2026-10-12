@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import type { Locale } from "@/i18n/generated";
 import type { ResumoDoPainel } from "@/modules/acesso";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
@@ -44,6 +45,7 @@ export function AppShell({
 	resumo,
 	usuarioNome,
 	painelTitulo,
+	locale,
 	copy,
 	sairPara,
 	children,
@@ -51,6 +53,7 @@ export function AppShell({
 	resumo: ResumoDoPainel | null;
 	usuarioNome: string;
 	painelTitulo: string;
+	locale: Locale;
 	copy: Copy;
 	sairPara: string;
 	children: ReactNode;
@@ -92,7 +95,7 @@ export function AppShell({
 	const expiraEm = resumo.empresa.expiraEm
 		? new Date(resumo.empresa.expiraEm).getTime()
 		: null;
-	const itens = navItens({ painel: painelTitulo });
+	const itens = navItens({ painel: painelTitulo }, locale);
 
 	return (
 		<div data-cor={resumo.empresa.cor}>

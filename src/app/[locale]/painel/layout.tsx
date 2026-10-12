@@ -17,6 +17,7 @@ export default async function PainelLayout({
 	return (
 		<AppShell
 			copy={shell}
+			locale={locale}
 			painelTitulo={t.app.painel.title}
 			resumo={resumo}
 			sairPara={localePath(locale, "/")}
