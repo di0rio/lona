@@ -3,104 +3,102 @@ import { expect, type Page, test } from "@playwright/test";
 import pg from "pg";
 
 // Conexão do dono só para preparar o cenário (vencer a demonstração) e limpar o que o teste criou.
-const dono = new pg.Pool({
+const owner = new pg.Pool({
 	connectionString: (process.env.DATABASE_URL_UNPOOLED ?? "").replace(
 		"sslmode=require",
 		"sslmode=verify-full",
 	),
 	max: 2,
 });
-const usuarioIds = new Set<string>();
+const userIds = new Set<string>();
 
 // O rate limit do Better Auth em /sign-in e /sign-up é por IP (3 por 10s). Os testes rodam em série no
 // mesmo processo; sem um IP próprio por teste, todos cairiam no mesmo balde e um bloquearia o outro.
-function ipDoVisitante() {
+function visitorIp() {
 	return `10.${randomInt(1, 255)}.${randomInt(1, 255)}.${randomInt(1, 255)}`;
 }
 
 test.beforeEach(async ({ page }) => {
-	await page
-		.context()
-		.setExtraHTTPHeaders({ "x-forwarded-for": ipDoVisitante() });
+	await page.context().setExtraHTTPHeaders({ "x-forwarded-for": visitorIp() });
 });
 
-async function usuarioDaSessao(page: Page) {
-	const resposta = await page.request.get("/api/auth/get-session");
-	const sessao = (await resposta.json()) as { user: { id: string } } | null;
-	if (!sessao) throw new Error("sem sessão");
-	usuarioIds.add(sessao.user.id);
-	return sessao.user.id;
+async function sessionUser(page: Page) {
+	const response = await page.request.get("/api/auth/get-session");
+	const session = (await response.json()) as { user: { id: string } } | null;
+	if (!session) throw new Error("sem sessão");
+	userIds.add(session.user.id);
+	return session.user.id;
 }
 
-async function empresaDoPainel(page: Page) {
-	const resposta = await page.request.get("/api/acesso/painel");
-	expect(resposta.status()).toBe(200);
-	return ((await resposta.json()) as { empresa: { id: string } }).empresa.id;
+async function dashboardCompany(page: Page) {
+	const response = await page.request.get("/api/access/dashboard");
+	expect(response.status()).toBe(200);
+	return ((await response.json()) as { company: { id: string } }).company.id;
 }
 
-const contador = /\d:\d{2}:\d{2}/;
+const countdown = /\d:\d{2}:\d{2}/;
 
 // Mesmo quando o teste falha no meio, a sessão dele entra na lista de limpeza.
 test.afterEach(async ({ page }) => {
-	const resposta = await page.request.get("/api/auth/get-session");
-	const sessao = (await resposta.json()) as { user: { id: string } } | null;
-	if (sessao) usuarioIds.add(sessao.user.id);
+	const response = await page.request.get("/api/auth/get-session");
+	const session = (await response.json()) as { user: { id: string } } | null;
+	if (session) userIds.add(session.user.id);
 });
 
 test.afterAll(async () => {
-	const ids = [...usuarioIds];
-	await dono.query(
-		"DELETE FROM empresas WHERE NOT eh_modelo AND id IN (SELECT empresa_id FROM vinculos WHERE usuario_id = ANY($1))",
+	const ids = [...userIds];
+	await owner.query(
+		"DELETE FROM companies WHERE NOT is_template AND id IN (SELECT company_id FROM memberships WHERE user_id = ANY($1))",
 		[ids],
 	);
-	await dono.query("DELETE FROM autenticacao.usuarios WHERE id = ANY($1)", [
-		ids,
-	]);
-	await dono.end();
+	await owner.query("DELETE FROM auth.users WHERE id = ANY($1)", [ids]);
+	await owner.end();
 });
 
-test("testar demonstração leva ao painel com o contador", async ({ page }) => {
+test("trying the demonstration leads to the dashboard with the countdown", async ({
+	page,
+}) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 
 	await expect(page).toHaveURL(/\/painel$/);
 	await expect(page.getByText("Demonstração acaba em")).toBeVisible();
-	await expect(page.getByText(contador)).toBeVisible();
+	await expect(page.getByText(countdown)).toBeVisible();
 	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 	await expect(page.getByText("Matriz Jaú").first()).toBeVisible();
 	await expect(page.getByText("dono (opera)")).toBeVisible();
-	await expect(page.locator("[data-cor]").first()).toHaveAttribute(
-		"data-cor",
-		"laranja",
+	await expect(page.locator("[data-color]").first()).toHaveAttribute(
+		"data-color",
+		"orange",
 	);
-	await usuarioDaSessao(page);
+	await sessionUser(page);
 });
 
-test("resetar troca a demonstração por uma nova e mantém o usuário", async ({
+test("reset swaps the demonstration for a new one and keeps the user", async ({
 	page,
 }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	const usuario = await usuarioDaSessao(page);
-	const antes = await empresaDoPainel(page);
+	const user = await sessionUser(page);
+	const before = await dashboardCompany(page);
 
 	await page
 		.getByRole("button", { name: "Resetar para a demonstração original" })
 		.click();
-	await expect(page.getByText(contador)).toBeVisible();
+	await expect(page.getByText(countdown)).toBeVisible();
 	await expect
-		.poll(async () => empresaDoPainel(page), { timeout: 15_000 })
-		.not.toBe(antes);
+		.poll(async () => dashboardCompany(page), { timeout: 15_000 })
+		.not.toBe(before);
 
-	expect(await usuarioDaSessao(page)).toBe(usuario);
-	const { rows } = await dono.query("SELECT 1 FROM empresas WHERE id = $1", [
-		antes,
+	expect(await sessionUser(page)).toBe(user);
+	const { rows } = await owner.query("SELECT 1 FROM companies WHERE id = $1", [
+		before,
 	]);
 	expect(rows).toHaveLength(0);
 });
 
-test("cadastro com e-mail e senha também recebe uma demonstração", async ({
+test("signing up with email and password also gets a demonstration", async ({
 	page,
 }) => {
 	await page.goto("/cadastrar");
@@ -112,12 +110,15 @@ test("cadastro com e-mail e senha também recebe uma demonstração", async ({
 	await page.getByRole("button", { name: "Cadastrar" }).click();
 
 	await expect(page).toHaveURL(/\/painel$/);
-	await expect(page.getByText(contador)).toBeVisible();
+	await expect(page.getByText(countdown)).toBeVisible();
 	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
-	await usuarioDaSessao(page);
+	await sessionUser(page);
 });
 
-test("entrar com o e-mail e a senha do cadastro", async ({ page, context }) => {
+test("sign in with the email and password from the registration", async ({
+	page,
+	context,
+}) => {
 	const email = `e2e-${randomUUID().slice(0, 8)}@teste.lona.test`;
 	await page.goto("/cadastrar");
 	await page.getByLabel("Nome").fill("Pessoa de Teste");
@@ -125,7 +126,7 @@ test("entrar com o e-mail e a senha do cadastro", async ({ page, context }) => {
 	await page.getByLabel("Senha").fill("senha-de-teste-123");
 	await page.getByRole("button", { name: "Cadastrar" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	await usuarioDaSessao(page);
+	await sessionUser(page);
 
 	// "Sair" vive no menu do usuário, no rodapé da sidebar.
 	await page.getByRole("button", { name: /Pessoa de Teste/ }).click();
@@ -141,18 +142,18 @@ test("entrar com o e-mail e a senha do cadastro", async ({ page, context }) => {
 	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 });
 
-test("ao vencer, mostra que a demonstração acabou e deixa começar outra", async ({
+test("on expiry, shows that the demonstration is over and allows starting another", async ({
 	page,
 }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	const usuario = await usuarioDaSessao(page);
-	const vencida = await empresaDoPainel(page);
+	const user = await sessionUser(page);
+	const expired = await dashboardCompany(page);
 
-	await dono.query(
-		"UPDATE empresas SET expira_em = now() - interval '1 minute' WHERE id = $1",
-		[vencida],
+	await owner.query(
+		"UPDATE companies SET expires_at = now() - interval '1 minute' WHERE id = $1",
+		[expired],
 	);
 	await page.reload();
 	await expect(
@@ -162,55 +163,57 @@ test("ao vencer, mostra que a demonstração acabou e deixa começar outra", asy
 	await page
 		.getByRole("button", { name: "Começar outra demonstração" })
 		.click();
-	await expect(page.getByText(contador)).toBeVisible();
-	expect(await usuarioDaSessao(page)).toBe(usuario);
-	expect(await empresaDoPainel(page)).not.toBe(vencida);
+	await expect(page.getByText(countdown)).toBeVisible();
+	expect(await sessionUser(page)).toBe(user);
+	expect(await dashboardCompany(page)).not.toBe(expired);
 });
 
-test("o contador avisa quando faltam menos de 10 minutos", async ({ page }) => {
+test("the countdown warns when less than 10 minutes are left", async ({
+	page,
+}) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	await usuarioDaSessao(page);
-	const empresa = await empresaDoPainel(page);
+	await sessionUser(page);
+	const company = await dashboardCompany(page);
 	await expect(page.getByRole("status")).toHaveCount(0);
 
-	await dono.query(
-		"UPDATE empresas SET expira_em = now() + interval '9 minutes' WHERE id = $1",
-		[empresa],
+	await owner.query(
+		"UPDATE companies SET expires_at = now() + interval '9 minutes' WHERE id = $1",
+		[company],
 	);
 	await page.reload();
 	await expect(page.getByRole("status")).toContainText("menos de 10 minutos");
 });
 
-test("o inglês fica escondido: /en dá 404 e não há seletor de idioma", async ({
+test("english stays hidden: /en gives 404 and there is no language switch", async ({
 	page,
 }) => {
-	const resposta = await page.goto("/en");
-	expect(resposta?.status()).toBe(404);
+	const response = await page.goto("/en");
+	expect(response?.status()).toBe(404);
 	await page.goto("/");
 	await expect(page.getByRole("navigation", { name: "Idioma" })).toHaveCount(0);
 });
 
-test("Ctrl+K abre a paleta e navega por Painel", async ({ page }) => {
+test("Ctrl+K opens the palette and navigates via Painel", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	await usuarioDaSessao(page);
+	await sessionUser(page);
 
 	await page.keyboard.press("Control+k");
-	const paleta = page.getByRole("dialog");
-	await expect(paleta).toBeVisible();
-	await paleta.getByText("Painel", { exact: true }).click();
-	await expect(paleta).toBeHidden();
+	const palette = page.getByRole("dialog");
+	await expect(palette).toBeVisible();
+	await palette.getByText("Painel", { exact: true }).click();
+	await expect(palette).toBeHidden();
 	await expect(page).toHaveURL(/\/painel$/);
 });
 
-test("alternar tema no menu do usuário muda para escuro", async ({ page }) => {
+test("toggling theme in the user menu switches to dark", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
-	await usuarioDaSessao(page);
+	await sessionUser(page);
 
 	await page.getByRole("button", { name: /dono · Matriz Jaú/ }).click();
 	await page.getByRole("menuitemradio", { name: "Escuro" }).click();

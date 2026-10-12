@@ -1,10 +1,10 @@
 import { Elysia } from "elysia";
-import { acessoRoutes } from "@/modules/acesso";
-import { demonstracaoRoutes } from "@/modules/demonstracao";
+import { accessRoutes } from "@/modules/access";
+import { demoRoutes } from "@/modules/demo";
 
 // Cada módulo entra como plugin; os caminhos saem de /api/...
 export const app = new Elysia({ prefix: "/api" })
-	.use(acessoRoutes)
-	.use(demonstracaoRoutes);
+	.use(accessRoutes)
+	.use(demoRoutes);
 
 export type App = typeof app;
