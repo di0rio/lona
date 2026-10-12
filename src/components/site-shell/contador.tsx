@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 const AVISO_EM_MS = 10 * 60 * 1000;
 
@@ -17,9 +17,12 @@ function formatar(ms: number) {
 export function Contador({
 	expiraEm,
 	copy,
+	acao,
 }: {
 	expiraEm: number;
 	copy: { rotulo: string; aviso: string };
+	/** Ação da faixa da demonstração (hoje, o botão de resetar), ao lado do contador. */
+	acao?: ReactNode;
 }) {
 	const router = useRouter();
 	// Só depois de montar: o relógio do navegador não existe no HTML do servidor.
@@ -44,15 +47,21 @@ export function Contador({
 	const perto = restante !== null && restante <= AVISO_EM_MS;
 
 	return (
-		<div className="sticky top-0 z-10 -mx-4 flex flex-col gap-1 border-b bg-background/95 px-4 py-3 backdrop-blur">
-			<p className="flex items-baseline gap-2 text-sm">
-				<span className="text-muted-foreground">{copy.rotulo}</span>
-				<span className="font-mono font-semibold tabular-nums">
-					{restante === null ? "-:--:--" : formatar(restante)}
-				</span>
-			</p>
+		<div className="sticky top-0 z-10 flex flex-col gap-1 border-b bg-background/95 px-4 py-3 backdrop-blur">
+			<div className="flex items-center justify-between gap-3">
+				<p className="flex items-baseline gap-2 text-sm">
+					<span className="text-muted-foreground">{copy.rotulo}</span>
+					<span className="font-mono font-semibold tabular-nums">
+						{restante === null ? "-:--:--" : formatar(restante)}
+					</span>
+				</p>
+				{acao}
+			</div>
 			{perto && (
-				<p className="text-destructive text-sm" role="status">
+				<p
+					className="text-destructive text-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
+					role="status"
+				>
 					{copy.aviso}
 				</p>
 			)}

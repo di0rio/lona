@@ -41,23 +41,6 @@ export const translations = {
 					consultar: "só consulta",
 					operar: "opera",
 				},
-				sair: "Sair",
-				contador: {
-					rotulo: "Demonstração acaba em",
-					aviso: "Falta menos de 10 minutos. Depois disso, os dados desta demonstração são apagados.",
-				},
-				resetar: {
-					botao: "Resetar para a demonstração original",
-					resetando: "Resetando...",
-					erro: "Não foi possível resetar agora. Tente de novo.",
-				},
-				encerrada: {
-					title: "Sua demonstração acabou",
-					texto: "Os dados dela foram apagados. Comece outra para continuar testando.",
-					botao: "Começar outra demonstração",
-					iniciando: "Preparando...",
-					erro: "Não foi possível começar agora. Tente de novo.",
-				},
 			},
 			meta: {
 				title: "Lona",
@@ -83,6 +66,39 @@ export const translations = {
 				},
 				theme: {
 					toggle: "Alternar tema claro e escuro",
+				},
+				buscar: "Buscar",
+				sidebar: {
+					tema: {
+						label: "Tema",
+						claro: "Claro",
+						escuro: "Escuro",
+						sistema: "Sistema",
+					},
+					sair: "Sair",
+				},
+				commandMenu: {
+					irPara: "Ir para",
+					acoes: "Ações",
+					alternarTema: "Alternar tema",
+					resetar: "Resetar demonstração",
+					vazio: "Nada encontrado.",
+				},
+				contador: {
+					rotulo: "Demonstração acaba em",
+					aviso: "Falta menos de 10 minutos. Depois disso, os dados desta demonstração são apagados.",
+				},
+				resetar: {
+					botao: "Resetar para a demonstração original",
+					resetando: "Resetando...",
+					erro: "Não foi possível resetar agora. Tente de novo.",
+				},
+				encerrada: {
+					title: "Sua demonstração acabou",
+					texto: "Os dados dela foram apagados. Comece outra para continuar testando.",
+					botao: "Começar outra demonstração",
+					iniciando: "Preparando...",
+					erro: "Não foi possível começar agora. Tente de novo.",
 				},
 			},
 		},
@@ -123,23 +139,6 @@ export const translations = {
 					consultar: "view only",
 					operar: "operates",
 				},
-				sair: "Sign out",
-				contador: {
-					rotulo: "Demonstration ends in",
-					aviso: "Less than 10 minutes left. After that, this demonstration's data is deleted.",
-				},
-				resetar: {
-					botao: "Reset to the original demonstration",
-					resetando: "Resetting...",
-					erro: "Could not reset right now. Try again.",
-				},
-				encerrada: {
-					title: "Your demonstration is over",
-					texto: "Its data was deleted. Start another one to keep testing.",
-					botao: "Start another demonstration",
-					iniciando: "Preparing...",
-					erro: "Could not start right now. Try again.",
-				},
 			},
 			meta: {
 				title: "Lona",
@@ -165,6 +164,39 @@ export const translations = {
 				},
 				theme: {
 					toggle: "Toggle light and dark theme",
+				},
+				buscar: "Search",
+				sidebar: {
+					tema: {
+						label: "Theme",
+						claro: "Light",
+						escuro: "Dark",
+						sistema: "System",
+					},
+					sair: "Sign out",
+				},
+				commandMenu: {
+					irPara: "Go to",
+					acoes: "Actions",
+					alternarTema: "Toggle theme",
+					resetar: "Reset demonstration",
+					vazio: "Nothing found.",
+				},
+				contador: {
+					rotulo: "Demonstration ends in",
+					aviso: "Less than 10 minutes left. After that, this demonstration's data is deleted.",
+				},
+				resetar: {
+					botao: "Reset to the original demonstration",
+					resetando: "Resetting...",
+					erro: "Could not reset right now. Try again.",
+				},
+				encerrada: {
+					title: "Your demonstration is over",
+					texto: "Its data was deleted. Start another one to keep testing.",
+					botao: "Start another demonstration",
+					iniciando: "Preparing...",
+					erro: "Could not start right now. Try again.",
 				},
 			},
 		},
