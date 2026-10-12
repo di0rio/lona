@@ -15,6 +15,7 @@ export const permissoes = [
 	"os.lancar_mao_de_obra",
 	"os.finalizar",
 	"cliente.ver",
+	"cliente.criar",
 	"cliente.editar",
 	"cliente.alterar_limite_credito",
 	"caixa.operar",

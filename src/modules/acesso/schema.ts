@@ -61,7 +61,7 @@ export const empresas = pgTable(
 		ehModelo: boolean("eh_modelo").notNull().default(false),
 		// null para empresa real e para o modelo; a demonstração vence 2 horas depois de copiada.
 		expiraEm: timestamp("expira_em", { withTimezone: true }),
-		cor: text("cor").$type<Cor>().notNull().default("azul"),
+		cor: text("cor").$type<Cor>().notNull().default("cinza"),
 		config: jsonb("config")
 			.$type<ConfigEmpresa>()
 			.notNull()
