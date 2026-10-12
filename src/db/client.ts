@@ -39,8 +39,15 @@ export type Contexto = {
 export function comContexto<T>(
 	contexto: Contexto,
 	fn: (tx: Transacao) => Promise<T>,
+	// Pra quando a função achar a empresa ativa e só depois ler o que depende dela, tudo precisa vir do
+	// mesmo retrato: sem isso, READ COMMITTED tira um retrato novo a cada consulta e um commit concorrente
+	// (ex.: resetar a demonstração) pode apagar a empresa entre as duas leituras.
+	opcoes?: { leituraRepetivel?: boolean },
 ): Promise<T> {
 	return db.transaction(async (tx) => {
+		if (opcoes?.leituraRepetivel) {
+			await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`);
+		}
 		await tx.execute(
 			sql`SELECT set_config('app.usuario_id', ${contexto.usuarioId ?? ""}, true), set_config('app.empresa_id', ${contexto.empresaId ?? ""}, true)`,
 		);

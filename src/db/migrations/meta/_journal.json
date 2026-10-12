@@ -36,6 +36,13 @@
       "when": 1791658831023,
       "tag": "0004_limpeza_na_copia",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791766458974,
+      "tag": "0005_cor_padrao_cinza",
+      "breakpoints": true
     }
   ]
 }

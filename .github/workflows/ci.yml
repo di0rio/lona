@@ -17,20 +17,83 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run typecheck
-      # Os testes de integração só rodam se DATABASE_URL existir no ambiente; sem ela, pulam.
+
+  testes:
+    # PR de fork não recebe secrets, então não tem como criar o banco.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NEON: ci-${{ github.run_id }}-${{ github.run_attempt }}
+      # Valores fixos só de CI, não são credenciais reais.
+      BETTER_AUTH_SECRET: segredo-so-para-o-build-do-ci-0000000000
+      BETTER_AUTH_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+
+      - name: Prazo da branch do Neon (2h, caso a limpeza falhe)
+        id: prazo
+        run: echo "em=$(date -u --date '+2 hours' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
+      # Cada execução ganha uma cópia da branch dev, então CI e máquina local nunca mexem nos mesmos dados.
+      - name: Cria branch temporária no Neon
+        id: banco
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          parent_branch: dev
+          branch_name: ${{ env.BRANCH_NEON }}
+          expires_at: ${{ steps.prazo.outputs.em }}
+
+      - name: Guarda as URLs do banco sem mostrar no log
+        env:
+          URL_DIRETA: ${{ steps.banco.outputs.db_url }}
+          URL_POOLED: ${{ steps.banco.outputs.db_url_pooled }}
+        run: |
+          echo "::add-mask::$URL_DIRETA"
+          echo "::add-mask::$URL_POOLED"
+          echo "DATABASE_URL=$URL_POOLED" >> "$GITHUB_ENV"
+          echo "DATABASE_URL_UNPOOLED=$URL_DIRETA" >> "$GITHUB_ENV"
+
+      # db:papel dá uma senha aleatória ao lona_app e grava DATABASE_URL_APP no .env.local, que testes e app leem.
+      - name: Prepara o banco
+        run: |
+          bun run db:migrar
+          bun run db:papel
+          bun run db:seed
+
       - run: bun run test
+
+      - run: bunx playwright install --with-deps chromium
+      # O playwright.config.ts já builda e sobe o app.
+      - run: bun run test:e2e
+
+      - name: Apaga a branch temporária do Neon
+        if: always() && steps.banco.outcome == 'success'
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch: ${{ env.BRANCH_NEON }}
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      # O build só precisa que as variáveis existam; nenhuma conexão acontece nele.
-      - run: bun run build
-        env:
-          DATABASE_URL_APP: postgres://build:build@localhost:5432/build
-          BETTER_AUTH_SECRET: segredo-so-para-o-build-do-ci-0000000000
-          BETTER_AUTH_URL: http://localhost:3000
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
