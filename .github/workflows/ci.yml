@@ -70,8 +70,8 @@ jobs:
       - name: Prepara o banco
         run: |
           bun run db:migrar
-          bun run db:seed
           bun run db:papel
+          bun run db:seed
 
       - run: bun run test
 
