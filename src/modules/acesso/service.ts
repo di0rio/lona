@@ -160,47 +160,57 @@ export type ResumoDoPainel = {
 export async function resumoDoPainel(
 	usuarioId: string,
 ): Promise<ResumoDoPainel | null> {
-	const ativa = await empresaAtivaDoUsuario(usuarioId);
-	if (!ativa) return null;
+	// Acha a empresa ativa e lê filial/vínculo na mesma transação (REPEATABLE READ), senão um
+	// `resetarDemonstracao` concorrente pode trocar a empresa entre as duas leituras e devolver 404.
+	return comContexto(
+		{ usuarioId },
+		async (tx) => {
+			const ativa = await empresaAtivaDoUsuario(usuarioId, tx);
+			if (!ativa) return null;
 
-	return comContexto({ usuarioId, empresaId: ativa.empresaId }, async (tx) => {
-		const [filial] = await tx
-			.select({ id: filiais.id, nome: filiais.nome, codigo: filiais.codigo })
-			.from(filiais)
-			.orderBy(desc(filiais.ehMatriz), asc(filiais.nome))
-			.limit(1);
-		if (!filial) return null;
+			await tx.execute(
+				sql`SELECT set_config('app.empresa_id', ${ativa.empresaId}, true)`,
+			);
 
-		// Vínculo específico da filial primeiro; o de "todas" cobre quando não houver.
-		const [vinculo] = await tx
-			.select({ cargo: cargos.nome, nivel: vinculos.nivel })
-			.from(vinculos)
-			.innerJoin(
-				cargos,
-				and(
-					eq(cargos.empresaId, vinculos.empresaId),
-					eq(cargos.id, vinculos.cargoId),
-				),
-			)
-			.where(
-				and(
-					eq(vinculos.usuarioId, usuarioId),
-					or(isNull(vinculos.filialId), eq(vinculos.filialId, filial.id)),
-				),
-			)
-			.orderBy(sql`${vinculos.filialId} IS NULL`)
-			.limit(1);
-		if (!vinculo) return null;
+			const [filial] = await tx
+				.select({ id: filiais.id, nome: filiais.nome, codigo: filiais.codigo })
+				.from(filiais)
+				.orderBy(desc(filiais.ehMatriz), asc(filiais.nome))
+				.limit(1);
+			if (!filial) return null;
 
-		return {
-			empresa: {
-				id: ativa.empresaId,
-				nome: ativa.nome,
-				expiraEm: ativa.expiraEm,
-			},
-			filial: { nome: filial.nome, codigo: filial.codigo },
-			cargo: vinculo.cargo,
-			nivel: vinculo.nivel,
-		};
-	});
+			// Vínculo específico da filial primeiro; o de "todas" cobre quando não houver.
+			const [vinculo] = await tx
+				.select({ cargo: cargos.nome, nivel: vinculos.nivel })
+				.from(vinculos)
+				.innerJoin(
+					cargos,
+					and(
+						eq(cargos.empresaId, vinculos.empresaId),
+						eq(cargos.id, vinculos.cargoId),
+					),
+				)
+				.where(
+					and(
+						eq(vinculos.usuarioId, usuarioId),
+						or(isNull(vinculos.filialId), eq(vinculos.filialId, filial.id)),
+					),
+				)
+				.orderBy(sql`${vinculos.filialId} IS NULL`)
+				.limit(1);
+			if (!vinculo) return null;
+
+			return {
+				empresa: {
+					id: ativa.empresaId,
+					nome: ativa.nome,
+					expiraEm: ativa.expiraEm,
+				},
+				filial: { nome: filial.nome, codigo: filial.codigo },
+				cargo: vinculo.cargo,
+				nivel: vinculo.nivel,
+			};
+		},
+		{ leituraRepetivel: true },
+	);
 }

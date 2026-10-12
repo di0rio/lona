@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import pg from "pg";
 
@@ -11,6 +11,18 @@ const dono = new pg.Pool({
 	max: 2,
 });
 const usuarioIds = new Set<string>();
+
+// O rate limit do Better Auth em /sign-in e /sign-up é por IP (3 por 10s). Os testes rodam em série no
+// mesmo processo; sem um IP próprio por teste, todos cairiam no mesmo balde e um bloquearia o outro.
+function ipDoVisitante() {
+	return `10.${randomInt(1, 255)}.${randomInt(1, 255)}.${randomInt(1, 255)}`;
+}
+
+test.beforeEach(async ({ page }) => {
+	await page
+		.context()
+		.setExtraHTTPHeaders({ "x-forwarded-for": ipDoVisitante() });
+});
 
 async function usuarioDaSessao(page: Page) {
 	const resposta = await page.request.get("/api/auth/get-session");
