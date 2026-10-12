@@ -2,17 +2,17 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
-import { dbAutenticacao } from "@/db/client";
-import { contas, sessoes, usuarios, verificacoes } from "./schema";
+import { authDb } from "@/db/client";
+import { accounts, sessions, users, verifications } from "./schema";
 
 export const auth = betterAuth({
-	database: drizzleAdapter(dbAutenticacao, {
+	database: drizzleAdapter(authDb, {
 		provider: "pg",
 		schema: {
-			user: usuarios,
-			session: sessoes,
-			account: contas,
-			verification: verificacoes,
+			user: users,
+			session: sessions,
+			account: accounts,
+			verification: verifications,
 		},
 	}),
 	// Quem gera o id é o banco (uuidv7()), igual às demais tabelas.
