@@ -19,53 +19,53 @@ import { authClient } from "@/lib/auth-client";
 type Copy = {
 	title: string;
 	description: string;
-	nome: string;
+	name: string;
 	email: string;
-	senha: string;
-	senhaDica: string;
-	enviar: string;
-	enviando: string;
-	erroExistente: string;
-	erro: string;
-	jaTemCadastro: string;
-	entrar: string;
+	password: string;
+	passwordHint: string;
+	submit: string;
+	submitting: string;
+	alreadyExists: string;
+	error: string;
+	alreadyRegistered: string;
+	signIn: string;
 };
 
-export function CadastrarForm({
+export function RegisterForm({
 	copy,
-	painelHref,
-	entrarHref,
+	dashboardHref,
+	signInHref,
 }: {
 	copy: Copy;
-	painelHref: string;
-	entrarHref: string;
+	dashboardHref: string;
+	signInHref: string;
 }) {
 	const router = useRouter();
-	const [erro, setErro] = useState<string | null>(null);
-	const [enviando, setEnviando] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [submitting, setSubmitting] = useState(false);
 
-	async function enviar(evento: FormEvent<HTMLFormElement>) {
-		evento.preventDefault();
-		setErro(null);
-		setEnviando(true);
-		const dados = new FormData(evento.currentTarget);
-		const { error } = await authClient.signUp.email({
-			name: String(dados.get("nome")),
-			email: String(dados.get("email")),
-			password: String(dados.get("senha")),
+	async function submit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError(null);
+		setSubmitting(true);
+		const data = new FormData(event.currentTarget);
+		const { error: signUpError } = await authClient.signUp.email({
+			name: String(data.get("name")),
+			email: String(data.get("email")),
+			password: String(data.get("password")),
 		});
-		if (error) {
-			setErro(
-				error.code?.startsWith("USER_ALREADY_EXISTS")
-					? copy.erroExistente
-					: copy.erro,
+		if (signUpError) {
+			setError(
+				signUpError.code?.startsWith("USER_ALREADY_EXISTS")
+					? copy.alreadyExists
+					: copy.error,
 			);
-			setEnviando(false);
+			setSubmitting(false);
 			return;
 		}
 		// Quem se cadastra também recebe uma demonstração de 2 horas.
-		await api().demonstracao.iniciar.post();
-		router.push(painelHref);
+		await api().demo.start.post();
+		router.push(dashboardHref);
 		router.refresh();
 	}
 
@@ -75,16 +75,16 @@ export function CadastrarForm({
 				<CardTitle className="text-lg">{copy.title}</CardTitle>
 				<CardDescription>{copy.description}</CardDescription>
 			</CardHeader>
-			<form onSubmit={enviar}>
+			<form onSubmit={submit}>
 				<CardContent className="flex flex-col gap-4">
 					<div className="flex flex-col gap-1.5">
-						<label className="font-medium text-sm" htmlFor="nome">
-							{copy.nome}
+						<label className="font-medium text-sm" htmlFor="name">
+							{copy.name}
 						</label>
 						<Input
 							autoComplete="name"
-							id="nome"
-							name="nome"
+							id="name"
+							name="name"
 							required
 							type="text"
 						/>
@@ -102,36 +102,36 @@ export function CadastrarForm({
 						/>
 					</div>
 					<div className="flex flex-col gap-1.5">
-						<label className="font-medium text-sm" htmlFor="senha">
-							{copy.senha}
+						<label className="font-medium text-sm" htmlFor="password">
+							{copy.password}
 						</label>
 						<Input
-							aria-describedby="senha-dica"
+							aria-describedby="password-hint"
 							autoComplete="new-password"
-							id="senha"
+							id="password"
 							minLength={8}
-							name="senha"
+							name="password"
 							required
 							type="password"
 						/>
-						<p className="text-muted-foreground text-xs" id="senha-dica">
-							{copy.senhaDica}
+						<p className="text-muted-foreground text-xs" id="password-hint">
+							{copy.passwordHint}
 						</p>
 					</div>
-					{erro && (
+					{error && (
 						<p className="text-destructive text-sm" role="alert">
-							{erro}
+							{error}
 						</p>
 					)}
 				</CardContent>
 				<CardFooter className="mt-4 flex-col items-stretch gap-3 border-t">
-					<Button disabled={enviando} type="submit">
-						{enviando ? copy.enviando : copy.enviar}
+					<Button disabled={submitting} type="submit">
+						{submitting ? copy.submitting : copy.submit}
 					</Button>
 					<p className="text-center text-muted-foreground text-sm">
-						{copy.jaTemCadastro}{" "}
-						<Link className="underline" href={entrarHref}>
-							{copy.entrar}
+						{copy.alreadyRegistered}{" "}
+						<Link className="underline" href={signInHref}>
+							{copy.signIn}
 						</Link>
 					</p>
 				</CardFooter>

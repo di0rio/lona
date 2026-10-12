@@ -19,42 +19,42 @@ type Copy = {
 	title: string;
 	description: string;
 	email: string;
-	senha: string;
-	enviar: string;
-	enviando: string;
-	erro: string;
-	semCadastro: string;
-	cadastrar: string;
+	password: string;
+	submit: string;
+	submitting: string;
+	error: string;
+	noAccountYet: string;
+	register: string;
 };
 
-export function EntrarForm({
+export function SignInForm({
 	copy,
-	painelHref,
-	cadastrarHref,
+	dashboardHref,
+	registerHref,
 }: {
 	copy: Copy;
-	painelHref: string;
-	cadastrarHref: string;
+	dashboardHref: string;
+	registerHref: string;
 }) {
 	const router = useRouter();
-	const [erro, setErro] = useState(false);
-	const [enviando, setEnviando] = useState(false);
+	const [error, setError] = useState(false);
+	const [submitting, setSubmitting] = useState(false);
 
-	async function enviar(evento: FormEvent<HTMLFormElement>) {
-		evento.preventDefault();
-		setErro(false);
-		setEnviando(true);
-		const dados = new FormData(evento.currentTarget);
-		const { error } = await authClient.signIn.email({
-			email: String(dados.get("email")),
-			password: String(dados.get("senha")),
+	async function submit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError(false);
+		setSubmitting(true);
+		const data = new FormData(event.currentTarget);
+		const { error: signInError } = await authClient.signIn.email({
+			email: String(data.get("email")),
+			password: String(data.get("password")),
 		});
-		if (error) {
-			setErro(true);
-			setEnviando(false);
+		if (signInError) {
+			setError(true);
+			setSubmitting(false);
 			return;
 		}
-		router.push(painelHref);
+		router.push(dashboardHref);
 		router.refresh();
 	}
 
@@ -64,7 +64,7 @@ export function EntrarForm({
 				<CardTitle className="text-lg">{copy.title}</CardTitle>
 				<CardDescription>{copy.description}</CardDescription>
 			</CardHeader>
-			<form onSubmit={enviar}>
+			<form onSubmit={submit}>
 				<CardContent className="flex flex-col gap-4">
 					<div className="flex flex-col gap-1.5">
 						<label className="font-medium text-sm" htmlFor="email">
@@ -79,31 +79,31 @@ export function EntrarForm({
 						/>
 					</div>
 					<div className="flex flex-col gap-1.5">
-						<label className="font-medium text-sm" htmlFor="senha">
-							{copy.senha}
+						<label className="font-medium text-sm" htmlFor="password">
+							{copy.password}
 						</label>
 						<Input
 							autoComplete="current-password"
-							id="senha"
-							name="senha"
+							id="password"
+							name="password"
 							required
 							type="password"
 						/>
 					</div>
-					{erro && (
+					{error && (
 						<p className="text-destructive text-sm" role="alert">
-							{copy.erro}
+							{copy.error}
 						</p>
 					)}
 				</CardContent>
 				<CardFooter className="mt-4 flex-col items-stretch gap-3 border-t">
-					<Button disabled={enviando} type="submit">
-						{enviando ? copy.enviando : copy.enviar}
+					<Button disabled={submitting} type="submit">
+						{submitting ? copy.submitting : copy.submit}
 					</Button>
 					<p className="text-center text-muted-foreground text-sm">
-						{copy.semCadastro}{" "}
-						<Link className="underline" href={cadastrarHref}>
-							{copy.cadastrar}
+						{copy.noAccountYet}{" "}
+						<Link className="underline" href={registerHref}>
+							{copy.register}
 						</Link>
 					</p>
 				</CardFooter>

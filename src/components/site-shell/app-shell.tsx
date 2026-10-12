@@ -4,36 +4,36 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Locale } from "@/i18n/generated";
-import type { ResumoDoPainel } from "@/modules/acesso";
+import type { DashboardSummary } from "@/modules/access";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
-import { ComecarOutra } from "./comecar-outra";
 import { CommandMenu } from "./command-menu";
-import { Contador } from "./contador";
-import { navItens } from "./nav-itens";
-import { ResetarButton } from "./resetar-button";
+import { Countdown } from "./countdown";
+import { navItems } from "./nav-items";
+import { ResetButton } from "./reset-button";
+import { StartAnother } from "./start-another";
 
 type Copy = {
-	buscar: string;
+	search: string;
 	sidebar: {
-		tema: { label: string; claro: string; escuro: string; sistema: string };
-		sair: string;
+		theme: { label: string; light: string; dark: string; system: string };
+		signOut: string;
 	};
 	commandMenu: {
-		irPara: string;
-		acoes: string;
-		alternarTema: string;
-		resetar: string;
-		vazio: string;
+		goTo: string;
+		actions: string;
+		toggleTheme: string;
+		reset: string;
+		empty: string;
 	};
-	contador: { rotulo: string; aviso: string };
-	resetar: { botao: string; resetando: string; erro: string };
-	encerrada: {
+	countdown: { label: string; warning: string };
+	reset: { button: string; resetting: string; error: string };
+	expired: {
 		title: string;
-		texto: string;
-		botao: string;
-		iniciando: string;
-		erro: string;
+		text: string;
+		button: string;
+		starting: string;
+		error: string;
 	};
 };
 
@@ -42,96 +42,93 @@ type Copy = {
  * Sem empresa (demonstração vencida), substitui tudo pela tela de "começar outra".
  */
 export function AppShell({
-	resumo,
-	usuarioNome,
-	painelTitulo,
+	summary,
+	userName,
+	dashboardTitle,
 	locale,
 	copy,
-	sairPara,
+	signOutTo,
 	children,
 }: {
-	resumo: ResumoDoPainel | null;
-	usuarioNome: string;
-	painelTitulo: string;
+	summary: DashboardSummary | null;
+	userName: string;
+	dashboardTitle: string;
 	locale: Locale;
 	copy: Copy;
-	sairPara: string;
+	signOutTo: string;
 	children: ReactNode;
 }) {
-	const [buscaAberta, setBuscaAberta] = useState(false);
+	const [searchOpen, setSearchOpen] = useState(false);
 
 	useEffect(() => {
-		function onKeyDown(evento: KeyboardEvent) {
-			if (
-				evento.key.toLowerCase() === "k" &&
-				(evento.metaKey || evento.ctrlKey)
-			) {
-				evento.preventDefault();
-				setBuscaAberta((aberta) => !aberta);
+		function onKeyDown(event: KeyboardEvent) {
+			if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
+				event.preventDefault();
+				setSearchOpen((open) => !open);
 			}
 		}
 		document.addEventListener("keydown", onKeyDown);
 		return () => document.removeEventListener("keydown", onKeyDown);
 	}, []);
 
-	if (!resumo) {
+	if (!summary) {
 		return (
-			<div data-cor="cinza">
+			<div data-color="gray">
 				<section
 					className="mx-auto flex max-w-xl flex-col items-start gap-4 px-4 py-12 outline-none"
 					id="conteudo"
 					tabIndex={-1}
 				>
-					<h1 className="font-semibold text-2xl">{copy.encerrada.title}</h1>
+					<h1 className="font-semibold text-2xl">{copy.expired.title}</h1>
 					<p className="max-w-prose text-muted-foreground">
-						{copy.encerrada.texto}
+						{copy.expired.text}
 					</p>
-					<ComecarOutra copy={copy.encerrada} />
+					<StartAnother copy={copy.expired} />
 				</section>
 			</div>
 		);
 	}
 
-	const expiraEm = resumo.empresa.expiraEm
-		? new Date(resumo.empresa.expiraEm).getTime()
+	const expiresAt = summary.company.expiresAt
+		? new Date(summary.company.expiresAt).getTime()
 		: null;
-	const itens = navItens({ painel: painelTitulo }, locale);
+	const items = navItems({ dashboard: dashboardTitle }, locale);
 
 	return (
-		<div data-cor={resumo.empresa.cor}>
+		<div data-color={summary.company.color}>
 			<SidebarProvider>
 				<AppSidebar
+					companyName={summary.company.name}
 					copy={copy.sidebar}
-					empresaNome={resumo.empresa.nome}
-					itens={itens}
-					sairPara={sairPara}
-					usuario={{
-						nome: usuarioNome,
-						linha2: `${resumo.cargo} · ${resumo.filial.nome}`,
+					items={items}
+					signOutTo={signOutTo}
+					user={{
+						name: userName,
+						line2: `${summary.role} · ${summary.branch.name}`,
 					}}
 				/>
 				<SidebarInset>
 					<AppHeader
-						buscarLabel={copy.buscar}
-						onBuscarClick={() => setBuscaAberta(true)}
-						titulo={painelTitulo}
+						onSearchClick={() => setSearchOpen(true)}
+						searchLabel={copy.search}
+						title={dashboardTitle}
 					/>
-					{expiraEm && (
-						<Contador
-							acao={<ResetarButton copy={copy.resetar} />}
-							copy={copy.contador}
-							expiraEm={expiraEm}
+					{expiresAt && (
+						<Countdown
+							action={<ResetButton copy={copy.reset} />}
+							copy={copy.countdown}
+							expiresAt={expiresAt}
 						/>
 					)}
 					<div className="flex flex-1 flex-col gap-6 p-4">{children}</div>
 				</SidebarInset>
 			</SidebarProvider>
 			<CommandMenu
-				aberto={buscaAberta}
+				canReset={Boolean(expiresAt)}
 				copy={copy.commandMenu}
-				itens={itens}
-				onAbertoChange={setBuscaAberta}
-				podeResetar={Boolean(expiraEm)}
+				items={items}
+				onOpenChange={setSearchOpen}
+				open={searchOpen}
 			/>
 		</div>
 	);

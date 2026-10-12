@@ -7,53 +7,53 @@ export default {
 			en: "Toggle light and dark theme",
 		},
 	},
-	buscar: { pt: "Buscar", en: "Search" },
+	search: { pt: "Buscar", en: "Search" },
 	sidebar: {
-		tema: {
+		theme: {
 			label: { pt: "Tema", en: "Theme" },
-			claro: { pt: "Claro", en: "Light" },
-			escuro: { pt: "Escuro", en: "Dark" },
-			sistema: { pt: "Sistema", en: "System" },
+			light: { pt: "Claro", en: "Light" },
+			dark: { pt: "Escuro", en: "Dark" },
+			system: { pt: "Sistema", en: "System" },
 		},
-		sair: { pt: "Sair", en: "Sign out" },
+		signOut: { pt: "Sair", en: "Sign out" },
 	},
 	commandMenu: {
-		irPara: { pt: "Ir para", en: "Go to" },
-		acoes: { pt: "Ações", en: "Actions" },
-		alternarTema: { pt: "Alternar tema", en: "Toggle theme" },
-		resetar: { pt: "Resetar demonstração", en: "Reset demonstration" },
-		vazio: { pt: "Nada encontrado.", en: "Nothing found." },
+		goTo: { pt: "Ir para", en: "Go to" },
+		actions: { pt: "Ações", en: "Actions" },
+		toggleTheme: { pt: "Alternar tema", en: "Toggle theme" },
+		reset: { pt: "Resetar demonstração", en: "Reset demonstration" },
+		empty: { pt: "Nada encontrado.", en: "Nothing found." },
 	},
-	contador: {
-		rotulo: { pt: "Demonstração acaba em", en: "Demonstration ends in" },
-		aviso: {
+	countdown: {
+		label: { pt: "Demonstração acaba em", en: "Demonstration ends in" },
+		warning: {
 			pt: "Falta menos de 10 minutos. Depois disso, os dados desta demonstração são apagados.",
 			en: "Less than 10 minutes left. After that, this demonstration's data is deleted.",
 		},
 	},
-	resetar: {
-		botao: {
+	reset: {
+		button: {
 			pt: "Resetar para a demonstração original",
 			en: "Reset to the original demonstration",
 		},
-		resetando: { pt: "Resetando...", en: "Resetting..." },
-		erro: {
+		resetting: { pt: "Resetando...", en: "Resetting..." },
+		error: {
 			pt: "Não foi possível resetar agora. Tente de novo.",
 			en: "Could not reset right now. Try again.",
 		},
 	},
-	encerrada: {
+	expired: {
 		title: { pt: "Sua demonstração acabou", en: "Your demonstration is over" },
-		texto: {
+		text: {
 			pt: "Os dados dela foram apagados. Comece outra para continuar testando.",
 			en: "Its data was deleted. Start another one to keep testing.",
 		},
-		botao: {
+		button: {
 			pt: "Começar outra demonstração",
 			en: "Start another demonstration",
 		},
-		iniciando: { pt: "Preparando...", en: "Preparing..." },
-		erro: {
+		starting: { pt: "Preparando...", en: "Preparing..." },
+		error: {
 			pt: "Não foi possível começar agora. Tente de novo.",
 			en: "Could not start right now. Try again.",
 		},

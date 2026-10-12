@@ -12,68 +12,68 @@ import {
 	CommandList,
 } from "@/components/ui/command";
 import { api } from "@/lib/api";
-import type { NavItem } from "./nav-itens";
+import type { NavItem } from "./nav-items";
 
 /** A paleta em si: "Ir para" navega pelos itens da sidebar, "Ações" alterna tema e, com demonstração ativa, reseta. Quem abre e fecha é o AppShell (Ctrl+K e o botão "Buscar" do header controlam o mesmo estado). */
 export function CommandMenu({
-	aberto,
-	onAbertoChange,
-	itens,
-	podeResetar,
+	open,
+	onOpenChange,
+	items,
+	canReset,
 	copy,
 }: {
-	aberto: boolean;
-	onAbertoChange: (aberto: boolean) => void;
-	itens: NavItem[];
-	podeResetar: boolean;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	items: NavItem[];
+	canReset: boolean;
 	copy: {
-		irPara: string;
-		acoes: string;
-		alternarTema: string;
-		resetar: string;
-		vazio: string;
+		goTo: string;
+		actions: string;
+		toggleTheme: string;
+		reset: string;
+		empty: string;
 	};
 }) {
 	const router = useRouter();
 	const { resolvedTheme, setTheme } = useTheme();
 
-	function ir(href: string) {
-		onAbertoChange(false);
+	function go(href: string) {
+		onOpenChange(false);
 		router.push(href);
 	}
 
-	async function resetar() {
-		onAbertoChange(false);
-		const { error } = await api().demonstracao.resetar.post();
+	async function reset() {
+		onOpenChange(false);
+		const { error } = await api().demo.reset.post();
 		if (!error) router.refresh();
 	}
 
 	return (
-		<CommandDialog onOpenChange={onAbertoChange} open={aberto}>
+		<CommandDialog onOpenChange={onOpenChange} open={open}>
 			<Command>
 				<CommandList>
-					<CommandEmpty>{copy.vazio}</CommandEmpty>
-					<CommandGroup heading={copy.irPara}>
-						{itens.map((item) => (
-							<CommandItem key={item.href} onSelect={() => ir(item.href)}>
-								<item.icone />
-								{item.titulo}
+					<CommandEmpty>{copy.empty}</CommandEmpty>
+					<CommandGroup heading={copy.goTo}>
+						{items.map((item) => (
+							<CommandItem key={item.href} onSelect={() => go(item.href)}>
+								<item.icon />
+								{item.title}
 							</CommandItem>
 						))}
 					</CommandGroup>
-					<CommandGroup heading={copy.acoes}>
+					<CommandGroup heading={copy.actions}>
 						<CommandItem
 							onSelect={() =>
 								setTheme(resolvedTheme === "dark" ? "light" : "dark")
 							}
 						>
 							{resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
-							{copy.alternarTema}
+							{copy.toggleTheme}
 						</CommandItem>
-						{podeResetar && (
-							<CommandItem onSelect={resetar}>
+						{canReset && (
+							<CommandItem onSelect={reset}>
 								<RotateCcwIcon />
-								{copy.resetar}
+								{copy.reset}
 							</CommandItem>
 						)}
 					</CommandGroup>

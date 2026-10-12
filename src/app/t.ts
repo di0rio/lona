@@ -7,14 +7,14 @@ export default {
 		},
 	},
 	home: {
-		testar: { pt: "Testar demonstração", en: "Try the demonstration" },
-		testando: { pt: "Preparando...", en: "Preparing..." },
-		erro: {
+		try: { pt: "Testar demonstração", en: "Try the demonstration" },
+		preparing: { pt: "Preparando...", en: "Preparing..." },
+		error: {
 			pt: "Não foi possível começar agora. Tente de novo.",
 			en: "Could not start right now. Try again.",
 		},
-		entrar: { pt: "Entrar", en: "Sign in" },
-		cadastrar: { pt: "Cadastrar", en: "Register" },
+		signIn: { pt: "Entrar", en: "Sign in" },
+		register: { pt: "Cadastrar", en: "Register" },
 	},
 	notFound: {
 		title: { pt: "Página não encontrada", en: "Page not found" },

@@ -2,15 +2,18 @@ import { LayoutDashboardIcon, type LucideIcon } from "lucide-react";
 import type { Locale } from "@/i18n/generated";
 import { localePath } from "@/i18n/path";
 
-export type NavItem = { titulo: string; href: string; icone: LucideIcon };
+export type NavItem = { title: string; href: string; icon: LucideIcon };
 
 /** Itens de navegação do painel, em ordem. Hoje só "Painel"; cresce aqui conforme novas páginas nascerem. */
-export function navItens(copy: { painel: string }, locale: Locale): NavItem[] {
+export function navItems(
+	copy: { dashboard: string },
+	locale: Locale,
+): NavItem[] {
 	return [
 		{
-			titulo: copy.painel,
+			title: copy.dashboard,
 			href: localePath(locale, "/painel"),
-			icone: LayoutDashboardIcon,
+			icon: LayoutDashboardIcon,
 		},
 	];
 }

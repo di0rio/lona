@@ -63,30 +63,30 @@ function blocoCss(seletor: string) {
 	return match[1];
 }
 
-const cores = [
-	"cinza",
-	"azul",
-	"verde",
-	"vermelho",
-	"laranja",
-	"amarelo",
-	"roxo",
-	"rosa",
+const colors = [
+	"gray",
+	"blue",
+	"green",
+	"red",
+	"orange",
+	"yellow",
+	"purple",
+	"pink",
 ] as const;
 
-describe("contraste de --primary x --primary-foreground por cor da empresa", () => {
-	for (const cor of cores) {
+describe("contrast of --primary x --primary-foreground per company color", () => {
+	for (const cor of colors) {
 		for (const tema of ["claro", "escuro"] as const) {
-			it(`${cor} no tema ${tema} passa WCAG AA (4.5:1)`, () => {
-				// "cinza" é o neutro padrão: não tem bloco [data-cor], usa :root/.dark direto.
+			it(`${cor} in ${tema} theme passes WCAG AA (4.5:1)`, () => {
+				// "gray" é o neutro padrão: não tem bloco [data-color], usa :root/.dark direto.
 				const seletor =
-					cor === "cinza"
+					cor === "gray"
 						? tema === "claro"
 							? ":root"
 							: ".dark"
 						: tema === "claro"
-							? `:root[data-cor="${cor}"]`
-							: `.dark[data-cor="${cor}"]`;
+							? `:root[data-color="${cor}"]`
+							: `.dark[data-color="${cor}"]`;
 				const bloco = blocoCss(seletor);
 				const primary = oklchDaVariavel(bloco, "primary");
 				const primaryForeground = oklchDaVariavel(bloco, "primary-foreground");

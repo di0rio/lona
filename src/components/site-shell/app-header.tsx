@@ -14,13 +14,13 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 /** Breadcrumb simples (só o título da página de hoje) + gatilho da busca. Cresce para vários segmentos quando houver sub-rotas. */
 export function AppHeader({
-	titulo,
-	buscarLabel,
-	onBuscarClick,
+	title,
+	searchLabel,
+	onSearchClick,
 }: {
-	titulo: string;
-	buscarLabel: string;
-	onBuscarClick: () => void;
+	title: string;
+	searchLabel: string;
+	onSearchClick: () => void;
 }) {
 	// Só depois de montar: o server não sabe o sistema do visitante.
 	const [mac, setMac] = useState(false);
@@ -35,19 +35,19 @@ export function AppHeader({
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>
-							<BreadcrumbPage>{titulo}</BreadcrumbPage>
+							<BreadcrumbPage>{title}</BreadcrumbPage>
 						</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
 			</div>
 			<Button
-				aria-label={buscarLabel}
-				onClick={onBuscarClick}
+				aria-label={searchLabel}
+				onClick={onSearchClick}
 				size="sm"
 				variant="outline"
 			>
 				<SearchIcon />
-				<span className="hidden sm:inline">{buscarLabel}</span>
+				<span className="hidden sm:inline">{searchLabel}</span>
 				<KbdGroup>
 					<Kbd>{mac ? "⌘" : "Ctrl"}</Kbd>
 					<Kbd>K</Kbd>
