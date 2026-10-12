@@ -12,9 +12,9 @@
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",
 		"typecheck": "next typegen && tsc --noEmit",
-		"db:gerar": "drizzle-kit generate",
-		"db:migrar": "drizzle-kit migrate",
-		"db:papel": "bun scripts/papel-app.ts",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:app-role": "bun scripts/app-role.ts",
 		"db:seed": "bun src/db/seed/index.ts"
 	},
 	"packageManager": "bun@1.3.13",

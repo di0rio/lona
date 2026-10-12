@@ -1,1 +1,0 @@
-ALTER TABLE "empresas" ALTER COLUMN "cor" SET DEFAULT 'cinza';

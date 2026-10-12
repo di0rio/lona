@@ -1,40 +1,40 @@
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { conectarComoApp, temBanco } from "@/test/banco";
+import { connectAsApp, hasDatabase } from "@/test/database";
 
-describe.skipIf(!temBanco)("papel lona_app", () => {
+describe.skipIf(!hasDatabase)("lona_app role", () => {
 	let app: pg.Pool;
 
 	beforeAll(() => {
-		app = conectarComoApp();
+		app = connectAsApp();
 	});
 	afterAll(() => app.end());
 
-	test("não é superusuário nem ignora RLS", async () => {
+	test("is not a superuser nor bypasses RLS", async () => {
 		const { rows } = await app.query(
-			"SELECT current_user AS papel, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user",
+			"SELECT current_user AS role, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user",
 		);
 		expect(rows[0]).toEqual({
-			papel: "lona_app",
+			role: "lona_app",
 			rolsuper: false,
 			rolbypassrls: false,
 		});
 	});
 
-	test("não é dono de nenhuma tabela", async () => {
+	test("owns no table", async () => {
 		const { rows } = await app.query(
 			"SELECT count(*)::int AS total FROM pg_tables WHERE tableowner = 'lona_app'",
 		);
 		expect(rows[0].total).toBe(0);
 	});
 
-	test("não enxerga o registro de copiadores", async () => {
-		await expect(app.query("SELECT * FROM lona_copiadores")).rejects.toThrow(
+	test("cannot see the copiers registry", async () => {
+		await expect(app.query("SELECT * FROM lona_copiers")).rejects.toThrow(
 			/permission denied/,
 		);
 	});
 
-	test("não cria objetos nem lê o histórico de migrações", async () => {
+	test("cannot create objects nor read the migration history", async () => {
 		await expect(app.query("CREATE TABLE intruso (id int)")).rejects.toThrow(
 			/permission denied/,
 		);

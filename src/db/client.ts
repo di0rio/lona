@@ -2,33 +2,33 @@ import { attachDatabasePool } from "@vercel/functions";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { urlSegura } from "./url";
+import { safeUrl } from "./url";
 
 // O app conecta como lona_app (sem BYPASSRLS), pelo pooler do Neon. A URL do dono só serve a migração, ao seed e aos testes.
-function criarPool() {
+function createPool() {
 	const url = process.env.DATABASE_URL_APP;
 	if (!url)
-		throw new Error("DATABASE_URL_APP não definida (rode bun run db:papel)");
-	const pool = new Pool({ connectionString: urlSegura(url) });
+		throw new Error("DATABASE_URL_APP não definida (rode bun run db:app-role)");
+	const pool = new Pool({ connectionString: safeUrl(url) });
 	// Sem este ouvinte, o erro de uma conexão ociosa derrubada pelo Neon encerraria o processo.
-	pool.on("error", (erro) => console.error("pool do banco", erro.message));
+	pool.on("error", (error) => console.error("pool do banco", error.message));
 	attachDatabasePool(pool); // mantém a função viva até as conexões ociosas fecharem (Fluid compute)
 	return pool;
 }
 
 // No dev o Next recarrega os módulos; guardar o pool no globalThis evita abrir um novo a cada recarga.
-const escopo = globalThis as typeof globalThis & { lonaPool?: Pool };
-escopo.lonaPool ??= criarPool();
+const scope = globalThis as typeof globalThis & { lonaPool?: Pool };
+scope.lonaPool ??= createPool();
 
-const db = drizzle({ client: escopo.lonaPool });
+const db = drizzle({ client: scope.lonaPool });
 
-export type Transacao = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type Contexto = {
+export type Context = {
 	/** Só a rotina de limpeza roda sem usuário. */
-	usuarioId?: string;
+	userId?: string;
 	/** Sem empresa só dá pra chamar o que não precisa dela (achar as empresas do usuário, copiar a demonstração). */
-	empresaId?: string;
+	companyId?: string;
 };
 
 /**
@@ -36,24 +36,24 @@ export type Contexto = {
  * que vale só até o COMMIT. Isso funciona atrás do pooler (PgBouncer em modo transação), que mantém a mesma
  * conexão do BEGIN ao COMMIT.
  */
-export function comContexto<T>(
-	contexto: Contexto,
-	fn: (tx: Transacao) => Promise<T>,
+export function withContext<T>(
+	context: Context,
+	fn: (tx: Transaction) => Promise<T>,
 	// Pra quando a função achar a empresa ativa e só depois ler o que depende dela, tudo precisa vir do
 	// mesmo retrato: sem isso, READ COMMITTED tira um retrato novo a cada consulta e um commit concorrente
 	// (ex.: resetar a demonstração) pode apagar a empresa entre as duas leituras.
-	opcoes?: { leituraRepetivel?: boolean },
+	options?: { repeatableRead?: boolean },
 ): Promise<T> {
 	return db.transaction(async (tx) => {
-		if (opcoes?.leituraRepetivel) {
+		if (options?.repeatableRead) {
 			await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`);
 		}
 		await tx.execute(
-			sql`SELECT set_config('app.usuario_id', ${contexto.usuarioId ?? ""}, true), set_config('app.empresa_id', ${contexto.empresaId ?? ""}, true)`,
+			sql`SELECT set_config('app.user_id', ${context.userId ?? ""}, true), set_config('app.company_id', ${context.companyId ?? ""}, true)`,
 		);
 		return fn(tx);
 	});
 }
 
 /** Só pra Better Auth, que lê e grava as tabelas de autenticação (sem RLS de empresa). */
-export { db as dbAutenticacao };
+export { db as authDb };

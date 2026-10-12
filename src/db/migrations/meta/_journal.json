@@ -5,43 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1791657730257,
-      "tag": "0000_base",
+      "when": 1791774234795,
+      "tag": "0000_initial_schema",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1791657982967,
-      "tag": "0001_acesso",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1791657989091,
-      "tag": "0002_acesso_rls",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1791658582461,
-      "tag": "0003_demonstracao",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1791658831023,
-      "tag": "0004_limpeza_na_copia",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1791766458974,
-      "tag": "0005_cor_padrao_cinza",
+      "when": 1791774242967,
+      "tag": "0001_lona_infrastructure",
       "breakpoints": true
     }
   ]
