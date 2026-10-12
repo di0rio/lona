@@ -1,0 +1,10 @@
+title = "Lona"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Segredos fixos só de CI (não são credenciais reais)"
+regexes = [
+  '''segredo-so-para-o-build-do-ci-0000000000''',
+]
