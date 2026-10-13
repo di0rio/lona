@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import Link from "next/link";
 import "../globals.css";
-import { LocaleSwitch } from "@/components/site-shell/locale-switch";
 import { ThemeProvider } from "@/components/site-shell/theme-provider";
-import { ThemeSwitch } from "@/components/site-shell/theme-switch";
-import { getT, locales, mostrarEn } from "@/i18n/server";
+import { getT, locales } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
@@ -33,7 +30,7 @@ export default async function RootLayout({
 	return (
 		<html
 			className={cn("h-full antialiased", geist.variable)}
-			lang={locale}
+			lang={locale === "pt" ? "pt-BR" : locale}
 			suppressHydrationWarning
 		>
 			<body className="flex min-h-full flex-col">
@@ -44,24 +41,7 @@ export default async function RootLayout({
 					>
 						{shell.skip}
 					</a>
-					<header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-6">
-						<Link className="font-semibold text-lg" href="/">
-							{t.app.meta.title}
-						</Link>
-						<div className="flex items-center gap-2">
-							{mostrarEn && (
-								<LocaleSwitch label={shell.language.label} locale={locale} />
-							)}
-							<ThemeSwitch label={shell.theme.toggle} />
-						</div>
-					</header>
-					<main
-						className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-12 outline-none"
-						id="conteudo"
-						tabIndex={-1}
-					>
-						{children}
-					</main>
+					{children}
 				</ThemeProvider>
 			</body>
 		</html>

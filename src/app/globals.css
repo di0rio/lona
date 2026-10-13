@@ -116,6 +116,130 @@
 	--sidebar-ring: oklch(0.556 0 0);
 }
 
+/*
+ * Cor da empresa (data-cor no wrapper da casca). "cinza" é o neutro padrão acima, sem bloco próprio.
+ * Claro: --primary escuro e saturado com --primary-foreground quase branco. Escuro: --primary claro com
+ * --primary-foreground quase preto. As duas combinações passam WCAG AA (4.5:1); ver src/app/globals.test.ts.
+ */
+:root[data-cor="azul"] {
+	--primary: oklch(0.53 0.15 260);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.53 0.15 260);
+	--sidebar-primary: oklch(0.53 0.15 260);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.53 0.15 260);
+}
+.dark[data-cor="azul"] {
+	--primary: oklch(0.63 0.15 260);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 260);
+	--sidebar-primary: oklch(0.63 0.15 260);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 260);
+}
+
+:root[data-cor="verde"] {
+	--primary: oklch(0.51 0.15 145);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.51 0.15 145);
+	--sidebar-primary: oklch(0.51 0.15 145);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.51 0.15 145);
+}
+.dark[data-cor="verde"] {
+	--primary: oklch(0.63 0.15 145);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 145);
+	--sidebar-primary: oklch(0.63 0.15 145);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 145);
+}
+
+:root[data-cor="vermelho"] {
+	--primary: oklch(0.55 0.15 25);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.55 0.15 25);
+	--sidebar-primary: oklch(0.55 0.15 25);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.55 0.15 25);
+}
+.dark[data-cor="vermelho"] {
+	--primary: oklch(0.63 0.15 25);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 25);
+	--sidebar-primary: oklch(0.63 0.15 25);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 25);
+}
+
+:root[data-cor="laranja"] {
+	--primary: oklch(0.54 0.15 50);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.54 0.15 50);
+	--sidebar-primary: oklch(0.54 0.15 50);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.54 0.15 50);
+}
+.dark[data-cor="laranja"] {
+	--primary: oklch(0.63 0.15 50);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 50);
+	--sidebar-primary: oklch(0.63 0.15 50);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 50);
+}
+
+:root[data-cor="amarelo"] {
+	--primary: oklch(0.53 0.15 95);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.53 0.15 95);
+	--sidebar-primary: oklch(0.53 0.15 95);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.53 0.15 95);
+}
+.dark[data-cor="amarelo"] {
+	--primary: oklch(0.63 0.15 95);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 95);
+	--sidebar-primary: oklch(0.63 0.15 95);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 95);
+}
+
+:root[data-cor="roxo"] {
+	--primary: oklch(0.54 0.15 300);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.54 0.15 300);
+	--sidebar-primary: oklch(0.54 0.15 300);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.54 0.15 300);
+}
+.dark[data-cor="roxo"] {
+	--primary: oklch(0.63 0.15 300);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 300);
+	--sidebar-primary: oklch(0.63 0.15 300);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 300);
+}
+
+:root[data-cor="rosa"] {
+	--primary: oklch(0.55 0.15 350);
+	--primary-foreground: oklch(0.985 0 0);
+	--ring: oklch(0.55 0.15 350);
+	--sidebar-primary: oklch(0.55 0.15 350);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-ring: oklch(0.55 0.15 350);
+}
+.dark[data-cor="rosa"] {
+	--primary: oklch(0.63 0.15 350);
+	--primary-foreground: oklch(0.145 0 0);
+	--ring: oklch(0.63 0.15 350);
+	--sidebar-primary: oklch(0.63 0.15 350);
+	--sidebar-primary-foreground: oklch(0.145 0 0);
+	--sidebar-ring: oklch(0.63 0.15 350);
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;

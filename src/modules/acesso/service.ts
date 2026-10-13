@@ -150,7 +150,7 @@ export async function empresaAtivaDoUsuario(usuarioId: string, tx?: Transacao) {
 }
 
 export type ResumoDoPainel = {
-	empresa: { id: string; nome: string; expiraEm: Date | null };
+	empresa: { id: string; nome: string; expiraEm: Date | null; cor: Cor };
 	filial: { nome: string; codigo: string };
 	cargo: string;
 	nivel: Nivel;
@@ -171,6 +171,13 @@ export async function resumoDoPainel(
 			await tx.execute(
 				sql`SELECT set_config('app.empresa_id', ${ativa.empresaId}, true)`,
 			);
+
+			// lona_empresas_do_usuario() não devolve cor; um SELECT extra na mesma transação evita migration só pra isso.
+			const [dadosEmpresa] = await tx
+				.select({ cor: empresas.cor })
+				.from(empresas)
+				.where(eq(empresas.id, ativa.empresaId))
+				.limit(1);
 
 			const [filial] = await tx
 				.select({ id: filiais.id, nome: filiais.nome, codigo: filiais.codigo })
@@ -205,6 +212,7 @@ export async function resumoDoPainel(
 					id: ativa.empresaId,
 					nome: ativa.nome,
 					expiraEm: ativa.expiraEm,
+					cor: dadosEmpresa?.cor ?? "cinza",
 				},
 				filial: { nome: filial.nome, codigo: filial.codigo },
 				cargo: vinculo.cargo,
