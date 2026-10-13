@@ -56,7 +56,8 @@ function oklchFromVariable(
 
 /** Acha o conteúdo de um bloco `selector { ... }`, sem casar seletores mais específicos (ex.: `:root` vs `:root[data-color="x"]`). */
 function cssBlock(selector: string) {
-	const escaped = selector.replace(/[.[\]"=]/g, "\\$&");
+	// Escapa todo caractere especial de regex, inclusive a barra invertida.
+	const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const match = css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
 	if (!match)
 		throw new Error(`block "${selector}" não encontrado em globals.css`);
