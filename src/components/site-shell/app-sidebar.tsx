@@ -32,31 +32,31 @@ import {
 } from "@/components/ui/sidebar";
 import { stripLocale } from "@/i18n/path";
 import { authClient } from "@/lib/auth-client";
-import type { NavItem } from "./nav-itens";
+import type { NavItem } from "./nav-items";
 
 export function AppSidebar({
-	empresaNome,
-	itens,
-	usuario,
-	sairPara,
+	companyName,
+	items,
+	user,
+	signOutTo,
 	copy,
 }: {
-	empresaNome: string;
-	itens: NavItem[];
-	usuario: { nome: string; linha2: string };
-	sairPara: string;
+	companyName: string;
+	items: NavItem[];
+	user: { name: string; line2: string };
+	signOutTo: string;
 	copy: {
-		tema: { label: string; claro: string; escuro: string; sistema: string };
-		sair: string;
+		theme: { label: string; light: string; dark: string; system: string };
+		signOut: string;
 	};
 }) {
 	const pathname = stripLocale(usePathname());
 	const { theme, setTheme } = useTheme();
 	const router = useRouter();
 
-	async function sair() {
+	async function signOut() {
 		await authClient.signOut();
-		router.push(sairPara);
+		router.push(signOutTo);
 		router.refresh();
 	}
 
@@ -64,19 +64,19 @@ export function AppSidebar({
 		<Sidebar collapsible="icon">
 			<SidebarHeader>
 				<div className="flex items-center gap-2 px-2 py-1.5">
-					<span className="truncate font-semibold text-sm">{empresaNome}</span>
+					<span className="truncate font-semibold text-sm">{companyName}</span>
 				</div>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarMenu>
-					{itens.map((item) => (
+					{items.map((item) => (
 						<SidebarMenuItem key={item.href}>
 							<SidebarMenuButton
 								isActive={pathname === item.href}
 								render={<Link href={item.href} />}
 							>
-								<item.icone />
-								<span>{item.titulo}</span>
+								<item.icon />
+								<span>{item.title}</span>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					))}
@@ -90,9 +90,9 @@ export function AppSidebar({
 								render={
 									<SidebarMenuButton size="lg">
 										<div className="flex min-w-0 flex-col">
-											<span className="truncate text-sm">{usuario.nome}</span>
+											<span className="truncate text-sm">{user.name}</span>
 											<span className="truncate text-muted-foreground text-xs">
-												{usuario.linha2}
+												{user.line2}
 											</span>
 										</div>
 										<ChevronsUpDownIcon className="ml-auto" />
@@ -101,25 +101,25 @@ export function AppSidebar({
 							/>
 							<DropdownMenuContent align="start" side="top">
 								<DropdownMenuGroup>
-									<DropdownMenuLabel>{copy.tema.label}</DropdownMenuLabel>
+									<DropdownMenuLabel>{copy.theme.label}</DropdownMenuLabel>
 									<DropdownMenuRadioGroup
 										onValueChange={setTheme}
 										value={theme ?? "system"}
 									>
 										<DropdownMenuRadioItem value="light">
-											<SunIcon /> {copy.tema.claro}
+											<SunIcon /> {copy.theme.light}
 										</DropdownMenuRadioItem>
 										<DropdownMenuRadioItem value="dark">
-											<MoonIcon /> {copy.tema.escuro}
+											<MoonIcon /> {copy.theme.dark}
 										</DropdownMenuRadioItem>
 										<DropdownMenuRadioItem value="system">
-											<MonitorIcon /> {copy.tema.sistema}
+											<MonitorIcon /> {copy.theme.system}
 										</DropdownMenuRadioItem>
 									</DropdownMenuRadioGroup>
 								</DropdownMenuGroup>
 								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={sair} variant="destructive">
-									<LogOutIcon /> {copy.sair}
+								<DropdownMenuItem onClick={signOut} variant="destructive">
+									<LogOutIcon /> {copy.signOut}
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>

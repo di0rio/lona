@@ -7,57 +7,71 @@ ERP para lojas de peças e oficinas de freio de caminhão. Várias empresas usam
 **Empresa**:
 Um negócio que usa o Lona, com seus próprios dados, usuários e configurações. É a unidade de isolamento: nada de uma empresa aparece para outra.
 _Evitar_: tenant, conta, cliente (para o negócio que usa o sistema)
+No código: `company`
 
 **Filial**:
 Um ponto físico da empresa, com estoque e caixa próprios. Toda empresa tem pelo menos uma; a primeira é a **Matriz**.
 _Evitar_: loja, unidade, sede
+No código: `branch`
 
 **Matriz**:
 A primeira filial da empresa, de CNPJ terminado em `/0001`. Em quem não usa várias filiais, é a única e não aparece como escolha.
+No código: `isHeadquarters`
 
 **Raiz do CNPJ**:
 Os 8 primeiros dígitos do CNPJ, iguais na matriz e em todas as filiais; o número de ordem depois da barra muda em cada filial (`/0002`, `/0003`).
+No código: `cnpjRoot`
 
 **Usuário**:
 Uma pessoa que entra no sistema por uma empresa, com um cargo.
 _Evitar_: conta, membro
+No código: `user`
 
 **Cargo**:
 Um conjunto de permissões (dono, gerente, balconista, mecânico, financeiro), que decide o que o usuário vê e pode fazer. A empresa pode editar os cargos prontos e criar outros.
 _Evitar_: perfil, função, role
+No código: `role`. O nome de exibição (`roles.name`) é dado da empresa, em português, editável; não é um enum do sistema e por isso não passa por i18n.
 
 **Vínculo**:
 O acesso de um usuário a uma filial com um cargo ("balconista na matriz"). Um usuário pode ter vários, um cargo diferente em cada filial, ou um vínculo com todas as filiais. Sem vínculo, não vê nada.
 _Evitar_: acesso, abrangência, permissão (para o vínculo inteiro)
+No código: `membership`
 
 **Consultar**:
 Poder ver os dados de uma filial sem mexer neles.
 _Evitar_: visualizar, leitura
+No código: `view`
 
 **Operar**:
 Poder criar e alterar documentos numa filial. Quem opera também consulta.
 _Evitar_: editar, escrita
+No código: `operate`
 
 **Limite**:
 O máximo que um cargo pode fazer sem pedir liberação, como o desconto máximo ou o valor máximo de um pedido de compra.
 _Evitar_: alçada (na interface), teto
+No código: `role_limits` (tabela)
 
 **Liberação**:
 A autorização de alguém com limite maior para uma ação que passou do limite de quem a fez, dada na hora com PIN ou depois, a pedido. Fica registrada e não volta atrás.
 _Evitar_: aprovação (para venda e OS), autorização
+No código: `override`
 
 ## Demonstração
 
 **Modelo**:
 A empresa fictícia "Freios Rodovia Ltda", com 12 meses de dados, de onde toda demonstração é copiada. Ninguém usa o modelo diretamente.
 _Evitar_: template, seed
+No código: `isTemplate`/`is_template` (coluna); o módulo e as rotas usam `demo`, que é o termo em inglês para "demonstração" (ver abaixo)
 
 **Demonstração**:
 Uma empresa temporária copiada do modelo para um visitante, que dura 2 horas e depois é apagada.
-_Evitar_: sandbox, trial, demo (no código e na interface)
+_Evitar_: sandbox, trial, demo (na interface, em português)
+No código: `demo` (nome do módulo e das rotas; "demo" é o termo em inglês para "demonstração", só proibido na interface em português)
 
 **Visitante**:
 Quem abre uma demonstração, com ou sem cadastro.
+No código: `visitor`
 
 ## Clientes e veículos
 

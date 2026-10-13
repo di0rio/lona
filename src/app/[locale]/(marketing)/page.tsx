@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { localePath } from "@/i18n/path";
 import { getT } from "@/i18n/server";
-import { TestarDemonstracao } from "./testar-demonstracao";
+import { TryDemo } from "./try-demo";
 
 export default async function Home() {
 	const { t, locale } = await getT();
@@ -17,9 +17,9 @@ export default async function Home() {
 					{t.app.meta.description}
 				</p>
 			</div>
-			<TestarDemonstracao
+			<TryDemo
 				copy={t.app.home}
-				painelHref={localePath(locale, "/painel")}
+				dashboardHref={localePath(locale, "/painel")}
 			/>
 			<div className="flex flex-wrap gap-3">
 				<Button
@@ -27,14 +27,14 @@ export default async function Home() {
 					render={<Link href={localePath(locale, "/entrar")} />}
 					variant="outline"
 				>
-					{t.app.home.entrar}
+					{t.app.home.signIn}
 				</Button>
 				<Button
 					nativeButton={false}
 					render={<Link href={localePath(locale, "/cadastrar")} />}
 					variant="outline"
 				>
-					{t.app.home.cadastrar}
+					{t.app.home.register}
 				</Button>
 			</div>
 		</section>

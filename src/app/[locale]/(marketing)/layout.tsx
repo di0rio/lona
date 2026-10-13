@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LocaleSwitch } from "@/components/site-shell/locale-switch";
 import { ThemeSwitch } from "@/components/site-shell/theme-switch";
-import { getT, mostrarEn } from "@/i18n/server";
+import { getT, showEnglish } from "@/i18n/server";
 
 export default async function MarketingLayout({
 	children,
@@ -16,7 +16,7 @@ export default async function MarketingLayout({
 					{t.app.meta.title}
 				</Link>
 				<div className="flex items-center gap-2">
-					{mostrarEn && (
+					{showEnglish && (
 						<LocaleSwitch label={shell.language.label} locale={locale} />
 					)}
 					<ThemeSwitch label={shell.theme.toggle} />

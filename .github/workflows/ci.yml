@@ -66,11 +66,11 @@ jobs:
           echo "DATABASE_URL=$URL_POOLED" >> "$GITHUB_ENV"
           echo "DATABASE_URL_UNPOOLED=$URL_DIRETA" >> "$GITHUB_ENV"
 
-      # db:papel dá uma senha aleatória ao lona_app e grava DATABASE_URL_APP no .env.local, que testes e app leem.
+      # db:app-role dá uma senha aleatória ao lona_app e grava DATABASE_URL_APP no .env.local, que testes e app leem.
       - name: Prepara o banco
         run: |
-          bun run db:migrar
-          bun run db:papel
+          bun run db:migrate
+          bun run db:app-role
           bun run db:seed
 
       - run: bun run test

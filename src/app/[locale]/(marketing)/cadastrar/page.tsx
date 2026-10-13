@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { localePath } from "@/i18n/path";
 import { getT } from "@/i18n/server";
-import { CadastrarForm } from "./cadastrar-form";
+import { RegisterForm } from "./register-form";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const { t } = await getT();
@@ -12,10 +12,10 @@ export default async function Cadastrar() {
 	const { t, locale } = await getT();
 
 	return (
-		<CadastrarForm
+		<RegisterForm
 			copy={t.app.cadastrar}
-			entrarHref={localePath(locale, "/entrar")}
-			painelHref={localePath(locale, "/painel")}
+			dashboardHref={localePath(locale, "/painel")}
+			signInHref={localePath(locale, "/entrar")}
 		/>
 	);
 }

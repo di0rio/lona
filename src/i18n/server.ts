@@ -2,9 +2,9 @@ import { locale as localeParam } from "next/root-params";
 import { type Locale, translations } from "./generated";
 
 /** O inglês existe nas traduções, mas só vira rota com NEXT_PUBLIC_SHOW_EN ligada. */
-export const mostrarEn = process.env.NEXT_PUBLIC_SHOW_EN === "true";
+export const showEnglish = process.env.NEXT_PUBLIC_SHOW_EN === "true";
 
-export const locales: Locale[] = mostrarEn ? ["pt", "en"] : ["pt"];
+export const locales: Locale[] = showEnglish ? ["pt", "en"] : ["pt"];
 
 /**
  * Traduções do idioma da URL (`/` = pt, `/en` = en), pra usar em qualquer Server Component.

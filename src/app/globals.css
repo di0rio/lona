@@ -117,11 +117,11 @@
 }
 
 /*
- * Cor da empresa (data-cor no wrapper da casca). "cinza" é o neutro padrão acima, sem bloco próprio.
+ * Cor da empresa (data-color no wrapper da casca). "gray" é o neutro padrão acima, sem bloco próprio.
  * Claro: --primary escuro e saturado com --primary-foreground quase branco. Escuro: --primary claro com
  * --primary-foreground quase preto. As duas combinações passam WCAG AA (4.5:1); ver src/app/globals.test.ts.
  */
-:root[data-cor="azul"] {
+:root[data-color="blue"] {
 	--primary: oklch(0.53 0.15 260);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.53 0.15 260);
@@ -129,7 +129,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.53 0.15 260);
 }
-.dark[data-cor="azul"] {
+.dark[data-color="blue"] {
 	--primary: oklch(0.63 0.15 260);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 260);
@@ -138,7 +138,7 @@
 	--sidebar-ring: oklch(0.63 0.15 260);
 }
 
-:root[data-cor="verde"] {
+:root[data-color="green"] {
 	--primary: oklch(0.51 0.15 145);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.51 0.15 145);
@@ -146,7 +146,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.51 0.15 145);
 }
-.dark[data-cor="verde"] {
+.dark[data-color="green"] {
 	--primary: oklch(0.63 0.15 145);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 145);
@@ -155,7 +155,7 @@
 	--sidebar-ring: oklch(0.63 0.15 145);
 }
 
-:root[data-cor="vermelho"] {
+:root[data-color="red"] {
 	--primary: oklch(0.55 0.15 25);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.55 0.15 25);
@@ -163,7 +163,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.55 0.15 25);
 }
-.dark[data-cor="vermelho"] {
+.dark[data-color="red"] {
 	--primary: oklch(0.63 0.15 25);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 25);
@@ -172,7 +172,7 @@
 	--sidebar-ring: oklch(0.63 0.15 25);
 }
 
-:root[data-cor="laranja"] {
+:root[data-color="orange"] {
 	--primary: oklch(0.54 0.15 50);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.54 0.15 50);
@@ -180,7 +180,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.54 0.15 50);
 }
-.dark[data-cor="laranja"] {
+.dark[data-color="orange"] {
 	--primary: oklch(0.63 0.15 50);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 50);
@@ -189,7 +189,7 @@
 	--sidebar-ring: oklch(0.63 0.15 50);
 }
 
-:root[data-cor="amarelo"] {
+:root[data-color="yellow"] {
 	--primary: oklch(0.53 0.15 95);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.53 0.15 95);
@@ -197,7 +197,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.53 0.15 95);
 }
-.dark[data-cor="amarelo"] {
+.dark[data-color="yellow"] {
 	--primary: oklch(0.63 0.15 95);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 95);
@@ -206,7 +206,7 @@
 	--sidebar-ring: oklch(0.63 0.15 95);
 }
 
-:root[data-cor="roxo"] {
+:root[data-color="purple"] {
 	--primary: oklch(0.54 0.15 300);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.54 0.15 300);
@@ -214,7 +214,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.54 0.15 300);
 }
-.dark[data-cor="roxo"] {
+.dark[data-color="purple"] {
 	--primary: oklch(0.63 0.15 300);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 300);
@@ -223,7 +223,7 @@
 	--sidebar-ring: oklch(0.63 0.15 300);
 }
 
-:root[data-cor="rosa"] {
+:root[data-color="pink"] {
 	--primary: oklch(0.55 0.15 350);
 	--primary-foreground: oklch(0.985 0 0);
 	--ring: oklch(0.55 0.15 350);
@@ -231,7 +231,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.55 0.15 350);
 }
-.dark[data-cor="rosa"] {
+.dark[data-color="pink"] {
 	--primary: oklch(0.63 0.15 350);
 	--primary-foreground: oklch(0.145 0 0);
 	--ring: oklch(0.63 0.15 350);
