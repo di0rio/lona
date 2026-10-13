@@ -49,7 +49,7 @@ function oklchFromVariable(
 	name: string,
 ): [number, number, number] {
 	const match = cssBlock.match(new RegExp(`--${name}:\\s*oklch\\(([^)]*)\\)`));
-	if (!match) throw new Error(`--${name} não encontrado no block`);
+	if (!match) throw new Error(`--${name} não encontrado no bloco`);
 	const [l, c, h] = match[1].trim().split(/\s+/).map(Number);
 	return [l, c, h];
 }
@@ -60,7 +60,7 @@ function cssBlock(selector: string) {
 	const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const match = css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
 	if (!match)
-		throw new Error(`block "${selector}" não encontrado em globals.css`);
+		throw new Error(`bloco "${selector}" não encontrado em globals.css`);
 	return match[1];
 }
 
@@ -79,7 +79,7 @@ describe("contrast of --primary x --primary-foreground per company color", () =>
 	for (const color of colors) {
 		for (const theme of ["light", "dark"] as const) {
 			it(`${color} in ${theme} theme passes WCAG AA (4.5:1)`, () => {
-				// "gray" é o neutro padrão: não tem block [data-color], usa :root/.dark direto.
+				// "gray" é o neutro padrão: não tem bloco [data-color], usa :root/.dark direto.
 				const selector =
 					color === "gray"
 						? theme === "light"
