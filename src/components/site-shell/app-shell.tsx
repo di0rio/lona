@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import type { Locale } from "@/i18n/generated";
 import { stripLocale } from "@/i18n/path";
 import type { DashboardSummary } from "@/modules/access";
@@ -47,6 +48,7 @@ export function AppShell({
 	summary,
 	userName,
 	dashboardTitle,
+	branchesTitle,
 	settingsTitle,
 	locale,
 	copy,
@@ -56,6 +58,7 @@ export function AppShell({
 	summary: DashboardSummary | null;
 	userName: string;
 	dashboardTitle: string;
+	branchesTitle: string;
 	settingsTitle: string;
 	locale: Locale;
 	copy: Copy;
@@ -98,8 +101,13 @@ export function AppShell({
 		? new Date(summary.company.expiresAt).getTime()
 		: null;
 	const items = navItems(
-		{ dashboard: dashboardTitle, settings: settingsTitle },
+		{
+			dashboard: dashboardTitle,
+			branches: branchesTitle,
+			settings: settingsTitle,
+		},
 		locale,
+		summary.usesBranches,
 	);
 	const title =
 		items.find((item) => item.href === pathname)?.title ?? dashboardTitle;
@@ -140,6 +148,7 @@ export function AppShell({
 				onOpenChange={setSearchOpen}
 				open={searchOpen}
 			/>
+			<Toaster />
 		</div>
 	);
 }

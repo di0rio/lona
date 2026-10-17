@@ -281,3 +281,55 @@ test("settings: Desfazer brings the previous value back", async ({ page }) => {
 		page.getByRole("switch", { name: "Caixa obrigatório para vender" }),
 	).toBeChecked({ checked: was });
 });
+
+test("branches: turning them on shows the menu item, then create, deactivate and undo", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+	await page.goto("/painel/configuracoes");
+
+	// O modelo já usa filiais; desliga para ver o menu sumir e a página explicar.
+	const uses = page.getByRole("switch", { name: "Usa filiais" });
+	await expect(uses).toBeChecked();
+	await uses.click();
+	await expect(page.getByRole("link", { name: "Filiais" })).toHaveCount(0);
+	await page.goto("/painel/filiais");
+	await expect(
+		page.getByRole("heading", { name: "Sua empresa trabalha só com a matriz" }),
+	).toBeVisible();
+	await page.getByRole("link", { name: "Ir para Configurações" }).click();
+
+	await page.getByRole("switch", { name: "Usa filiais" }).click();
+	await page.getByRole("link", { name: "Filiais" }).click();
+	await expect(page).toHaveURL(/\/painel\/filiais$/);
+	await expect(page.getByRole("navigation", { name: "breadcrumb" })).toHaveText(
+		"Filiais",
+	);
+	await expect(page.getByRole("cell", { name: "Filial Bauru" })).toBeVisible();
+
+	await page.getByRole("button", { name: "Nova filial" }).click();
+	const dialog = page.getByRole("dialog");
+	await dialog.getByRole("button", { name: "Salvar" }).click();
+	await expect(dialog.getByText("Informe o nome da filial.")).toBeVisible();
+	await dialog.getByLabel("Nome").fill("Filial Marília");
+	await dialog.getByLabel("Código").fill("mar");
+	await dialog.getByLabel("Número de ordem").fill("2");
+	await dialog.getByRole("button", { name: "Salvar" }).click();
+	await expect(
+		dialog.getByText("Já existe filial com essa ordem."),
+	).toBeVisible();
+	await dialog.getByLabel("Número de ordem").fill("3");
+	await dialog.getByRole("button", { name: "Salvar" }).click();
+	await expect(dialog).toBeHidden();
+	const row = page.getByRole("row", { name: /Filial Marília/ });
+	await expect(row).toContainText(/\/0003-\d{2}/);
+	await expect(row).toContainText("Ativa");
+
+	await row.getByRole("button", { name: "Inativar" }).click();
+	await expect(row).toContainText("Inativa");
+	await page.getByRole("button", { name: "Desfazer" }).click();
+	await expect(row).toContainText("Ativa");
+});

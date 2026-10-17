@@ -16,3 +16,11 @@ export function branchCnpj(root: string, order: number) {
 	const d1 = checkDigit(base);
 	return `${base}${d1}${checkDigit(`${base}${d1}`)}`;
 }
+
+/** CNPJ de 14 dígitos no formato de exibição: 11.222.333/0001-81. */
+export function formatCnpj(cnpj: string) {
+	return cnpj.replace(
+		/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+		"$1.$2.$3/$4-$5",
+	);
+}
