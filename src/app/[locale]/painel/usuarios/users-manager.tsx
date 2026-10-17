@@ -1,10 +1,11 @@
 "use client";
 
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon, UserPlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
 	Sheet,
 	SheetContent,
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import type {
+	InviteRow,
 	Level,
 	MembershipInput,
 	MembershipRow,
@@ -43,6 +45,26 @@ type Copy = {
 		inactive: string;
 	};
 	level: Record<Level, string>;
+	invite: {
+		button: string;
+		title: string;
+		help: string;
+		create: string;
+		creating: string;
+		linkLabel: string;
+		copy: string;
+		copied: string;
+		error: string;
+		pending: {
+			title: string;
+			createdBy: string;
+			membership: string;
+			expires: string;
+			revoke: string;
+			revoked: string;
+			error: string;
+		};
+	};
 	form: {
 		title: string;
 		role: string;
@@ -65,9 +87,12 @@ const selectClass =
 export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 	const router = useRouter();
 	const [editing, setEditing] = useState<UserRow | undefined>();
+	const [inviting, setInviting] = useState(false);
 
 	// Sem filiais ligadas o vínculo é sempre "todas" e a filial nem aparece (ADR 0003).
-	const describe = (m: MembershipRow) => {
+	const describe = (
+		m: Pick<MembershipRow, "branchId" | "branchName" | "roleName" | "level">,
+	) => {
 		const where = !view.usesBranches
 			? ""
 			: ` ${copy.membership.in} ${
@@ -80,7 +105,14 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 
 	return (
 		<div className="flex flex-col gap-4">
-			{/* Aqui entra o botão de convidar usuário (próximo PR), ao lado do aviso de só leitura. */}
+			{view.canManage && (
+				<div>
+					<Button onClick={() => setInviting(true)}>
+						<UserPlusIcon />
+						{copy.invite.button}
+					</Button>
+				</div>
+			)}
 			{!view.canManage && (
 				<p className="rounded-lg border bg-muted p-3 text-sm">
 					{copy.readOnly}
@@ -128,6 +160,24 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 					<p className="text-muted-foreground text-sm">{copy.empty.text}</p>
 				</div>
 			)}
+			{view.invites.length > 0 && (
+				<PendingInvites
+					copy={copy}
+					describe={describe}
+					invites={view.invites}
+				/>
+			)}
+			<Sheet onOpenChange={setInviting} open={inviting}>
+				<SheetContent className="data-[side=right]:sm:max-w-lg">
+					{inviting && (
+						<InviteForm
+							copy={copy}
+							onCreated={() => router.refresh()}
+							view={view}
+						/>
+					)}
+				</SheetContent>
+			</Sheet>
 			<Sheet
 				onOpenChange={(open) => !open && setEditing(undefined)}
 				open={editing !== undefined}
@@ -344,6 +394,204 @@ function MembershipsForm({
 					</Button>
 				</SheetFooter>
 			)}
+		</form>
+	);
+}
+
+function PendingInvites({
+	invites,
+	copy,
+	describe,
+}: {
+	invites: InviteRow[];
+	copy: Copy;
+	describe: (m: InviteRow) => string;
+}) {
+	const router = useRouter();
+	const text = copy.invite.pending;
+
+	async function revoke(id: string) {
+		const { error } = await api().access.invites({ id }).delete();
+		if (error) return toast(text.error);
+		router.refresh();
+		toast(text.revoked);
+	}
+
+	return (
+		<div className="flex flex-col gap-2">
+			<h2 className="font-medium">{text.title}</h2>
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead>{text.createdBy}</TableHead>
+						<TableHead>{text.membership}</TableHead>
+						<TableHead>{text.expires}</TableHead>
+						<TableHead className="text-right">{copy.table.actions}</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{invites.map((invite) => (
+						<TableRow key={invite.id}>
+							<TableCell>{invite.createdByName}</TableCell>
+							<TableCell>{describe(invite)}</TableCell>
+							<TableCell>
+								{/* Fuso e idioma do navegador: o servidor pode renderizar diferente. */}
+								<time
+									dateTime={new Date(invite.expiresAt).toISOString()}
+									suppressHydrationWarning
+								>
+									{new Date(invite.expiresAt).toLocaleString(undefined, {
+										dateStyle: "short",
+										timeStyle: "short",
+									})}
+								</time>
+							</TableCell>
+							<TableCell className="text-right">
+								<Button
+									onClick={() => revoke(invite.id)}
+									size="sm"
+									variant="ghost"
+								>
+									{text.revoke}
+								</Button>
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</div>
+	);
+}
+
+function InviteForm({
+	view,
+	copy,
+	onCreated,
+}: {
+	view: UsersView;
+	copy: Copy;
+	onCreated: () => void;
+}) {
+	const invite = copy.invite;
+	const [roleId, setRoleId] = useState(view.roles[0]?.id ?? "");
+	const [branchId, setBranchId] = useState<string | null>(null);
+	const [level, setLevel] = useState<Level>("operate");
+	const [link, setLink] = useState("");
+	const [error, setError] = useState("");
+	const [saving, setSaving] = useState(false);
+
+	async function submit(event: FormEvent) {
+		event.preventDefault();
+		setSaving(true);
+		setError("");
+		const { data, error: failed } = await api().access.invites.post({
+			branchId: view.usesBranches ? branchId : null,
+			roleId,
+			level,
+		});
+		setSaving(false);
+		if (failed) {
+			return setError(
+				failed.status === 409 ? failed.value.message : invite.error,
+			);
+		}
+		setLink(`${window.location.origin}/convite/${data.token}`);
+		onCreated();
+	}
+
+	async function copyLink() {
+		await navigator.clipboard.writeText(link);
+		toast(invite.copied);
+	}
+
+	return (
+		<form className="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
+			<SheetHeader>
+				<SheetTitle>{invite.title}</SheetTitle>
+			</SheetHeader>
+			<fieldset
+				className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4"
+				disabled={link !== ""}
+			>
+				<p className="text-muted-foreground text-sm">{invite.help}</p>
+				<div className="flex flex-col gap-1.5">
+					<label className="text-sm" htmlFor="invite-role">
+						{copy.form.role}
+					</label>
+					<select
+						className={selectClass}
+						id="invite-role"
+						onChange={(event) => setRoleId(event.target.value)}
+						value={roleId}
+					>
+						{view.roles.map((role) => (
+							<option key={role.id} value={role.id}>
+								{role.name}
+							</option>
+						))}
+					</select>
+				</div>
+				{view.usesBranches && (
+					<div className="flex flex-col gap-1.5">
+						<label className="text-sm" htmlFor="invite-branch">
+							{copy.form.branch}
+						</label>
+						<select
+							className={selectClass}
+							id="invite-branch"
+							onChange={(event) => setBranchId(event.target.value || null)}
+							value={branchId ?? ""}
+						>
+							<option value="">{copy.membership.allBranches}</option>
+							{view.branches
+								.filter((branch) => branch.active)
+								.map((branch) => (
+									<option key={branch.id} value={branch.id}>
+										{branch.name}
+									</option>
+								))}
+						</select>
+					</div>
+				)}
+				<div className="flex flex-col gap-1.5">
+					<label className="text-sm" htmlFor="invite-level">
+						{copy.form.level}
+					</label>
+					<select
+						className={selectClass}
+						id="invite-level"
+						onChange={(event) => setLevel(event.target.value as Level)}
+						value={level}
+					>
+						<option value="view">{copy.level.view}</option>
+						<option value="operate">{copy.level.operate}</option>
+					</select>
+				</div>
+			</fieldset>
+			<SheetFooter>
+				{error && (
+					<p className="text-destructive text-sm" role="alert">
+						{error}
+					</p>
+				)}
+				{link ? (
+					<div className="flex gap-2">
+						<Input
+							aria-label={invite.linkLabel}
+							onFocus={(event) => event.currentTarget.select()}
+							readOnly
+							value={link}
+						/>
+						<Button onClick={copyLink} type="button">
+							{invite.copy}
+						</Button>
+					</div>
+				) : (
+					<Button disabled={saving || roleId === ""} type="submit">
+						{saving ? invite.creating : invite.create}
+					</Button>
+				)}
+			</SheetFooter>
 		</form>
 	);
 }

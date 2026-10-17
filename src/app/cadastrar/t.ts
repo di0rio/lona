@@ -4,6 +4,10 @@ export default {
 		pt: "Ao cadastrar, você recebe uma demonstração de 2 horas para testar o sistema.",
 		en: "When you register you get a 2-hour demonstration to try the system.",
 	},
+	inviteDescription: {
+		pt: "Crie sua conta para aceitar o convite.",
+		en: "Create your account to accept the invite.",
+	},
 	name: { pt: "Nome", en: "Name" },
 	email: { pt: "E-mail", en: "Email" },
 	password: { pt: "Senha", en: "Password" },

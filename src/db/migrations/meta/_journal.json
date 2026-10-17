@@ -15,6 +15,13 @@
       "when": 1791774242967,
       "tag": "0001_lona_infrastructure",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792207478886,
+      "tag": "0002_invites",
+      "breakpoints": true
     }
   ]
 }
