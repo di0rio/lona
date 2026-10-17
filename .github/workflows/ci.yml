@@ -87,6 +87,26 @@ jobs:
           api_key: ${{ secrets.NEON_API_KEY }}
           branch: ${{ env.BRANCH_NEON }}
 
+  # Todo bug corrigido vem com teste de regressão (AGENTS.md): PR com commit `fix:` precisa mexer em algum teste.
+  regressao:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Commit fix sem teste é barrado
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          fixes=$(git log --no-merges --format=%s "$BASE..$HEAD" | grep -E '^fix(\(.+\))?!?:' || true)
+          if [ -z "$fixes" ]; then exit 0; fi
+          if git diff --name-only "$BASE...$HEAD" | grep -qE '\.(test|spec)\.tsx?$'; then exit 0; fi
+          echo "::error::Este PR corrige bug mas não tem teste de regressão. Adicione um teste que falhava antes da correção."
+          echo "$fixes"
+          exit 1
+
   gitleaks:
     runs-on: ubuntu-latest
     steps:
