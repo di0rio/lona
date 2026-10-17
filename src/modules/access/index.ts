@@ -13,6 +13,8 @@ export { accessRoutes, session } from "./routes";
 export type { Color, CompanySettings, Level } from "./schema";
 export { seedAccessTemplate } from "./seed";
 export {
+	type CompanySettingsView,
+	companySettings,
 	createBranch,
 	createCompany,
 	createMembership,
@@ -21,6 +23,8 @@ export {
 	type NewBranch,
 	type NewCompany,
 	type NewMembership,
+	PermissionDeniedError,
+	updateCompanySettings,
 	userActiveCompany,
 } from "./service";
 export { sessionUser } from "./session";

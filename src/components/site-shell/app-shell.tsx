@@ -1,9 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Locale } from "@/i18n/generated";
+import { stripLocale } from "@/i18n/path";
 import type { DashboardSummary } from "@/modules/access";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
@@ -45,6 +47,7 @@ export function AppShell({
 	summary,
 	userName,
 	dashboardTitle,
+	settingsTitle,
 	locale,
 	copy,
 	signOutTo,
@@ -53,12 +56,14 @@ export function AppShell({
 	summary: DashboardSummary | null;
 	userName: string;
 	dashboardTitle: string;
+	settingsTitle: string;
 	locale: Locale;
 	copy: Copy;
 	signOutTo: string;
 	children: ReactNode;
 }) {
 	const [searchOpen, setSearchOpen] = useState(false);
+	const pathname = stripLocale(usePathname());
 
 	useEffect(() => {
 		function onKeyDown(event: KeyboardEvent) {
@@ -92,7 +97,12 @@ export function AppShell({
 	const expiresAt = summary.company.expiresAt
 		? new Date(summary.company.expiresAt).getTime()
 		: null;
-	const items = navItems({ dashboard: dashboardTitle }, locale);
+	const items = navItems(
+		{ dashboard: dashboardTitle, settings: settingsTitle },
+		locale,
+	);
+	const title =
+		items.find((item) => item.href === pathname)?.title ?? dashboardTitle;
 
 	return (
 		<div data-color={summary.company.color}>
@@ -111,7 +121,7 @@ export function AppShell({
 					<AppHeader
 						onSearchClick={() => setSearchOpen(true)}
 						searchLabel={copy.search}
-						title={dashboardTitle}
+						title={title}
 					/>
 					{expiresAt && (
 						<Countdown
