@@ -4,8 +4,23 @@ import { userActiveCompany } from "@/modules/access";
 
 export const DURATION_IN_HOURS = 2;
 
-// A função de cópia apaga antes as demonstrações vencidas (limpeza preguiçosa, ADR 0002).
-async function copyTemplate(tx: Transaction, userId: string) {
+// Teto de demonstrações vivas ao mesmo tempo. O plano grátis do Neon tem 0,5 GB e cada demonstração é uma cópia
+// dos dados do modelo (hoje uns poucos KB, mas a meta é ~12 meses de movimento, na casa de 10 MB). 30 x 10 MB
+// deixa folga no banco, e como cada uma dura 2 horas dá até 360 por dia. Rever quando o modelo crescer.
+export const MAX_ACTIVE_DEMOS = 30;
+
+export class DemoLimitReachedError extends Error {
+	constructor() {
+		super("Limite de demonstrações ativas atingido.");
+	}
+}
+
+// Confere o teto (e apaga as vencidas) antes de copiar. Se estourar, a transação inteira desfaz.
+async function copyTemplate(tx: Transaction, userId: string, max: number) {
+	const { rows: room } = await tx.execute<{ ok: boolean }>(
+		sql`SELECT lona_demo_has_room(${max}) AS ok`,
+	);
+	if (!room[0].ok) throw new DemoLimitReachedError();
 	const { rows } = await tx.execute<{ company_id: string }>(
 		sql`SELECT lona_clone_demo(lona_template_id(), ${userId}::uuid) AS company_id`,
 	);
@@ -16,10 +31,10 @@ async function copyTemplate(tx: Transaction, userId: string) {
  * Dá ao visitante uma demonstração de 2 horas. Se ele já tem uma ativa, devolve essa mesma: clique duplo ou aba
  * repetida não gasta outra cópia.
  */
-export async function startDemo(userId: string) {
+export async function startDemo(userId: string, max = MAX_ACTIVE_DEMOS) {
 	return withContext({ userId }, async (tx) => {
 		const active = await userActiveCompany(userId, tx);
-		return active ? active.companyId : copyTemplate(tx, userId);
+		return active ? active.companyId : copyTemplate(tx, userId, max);
 	});
 }
 
@@ -28,7 +43,7 @@ export async function startDemo(userId: string) {
  * Tudo na mesma transação, então ou o visitante troca de demonstração ou fica com a que tinha.
  * Devolve null se a empresa atual não for uma demonstração (empresa de verdade nunca é apagada por aqui).
  */
-export async function resetDemo(userId: string) {
+export async function resetDemo(userId: string, max = MAX_ACTIVE_DEMOS) {
 	const active = await userActiveCompany(userId);
 
 	return withContext({ userId, companyId: active?.companyId }, async (tx) => {
@@ -37,7 +52,7 @@ export async function resetDemo(userId: string) {
 			const deleted = await tx.execute(sql`DELETE FROM companies`);
 			if (deleted.rowCount === 0) return null;
 		}
-		return copyTemplate(tx, userId);
+		return copyTemplate(tx, userId, max);
 	});
 }
 

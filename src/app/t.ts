@@ -13,6 +13,14 @@ export default {
 			pt: "Não foi possível começar agora. Tente de novo.",
 			en: "Could not start right now. Try again.",
 		},
+		rateLimited: {
+			pt: "Muitas tentativas. Espere um pouco e tente de novo.",
+			en: "Too many attempts. Wait a moment and try again.",
+		},
+		full: {
+			pt: "Muita gente testando agora. Tente de novo em alguns minutos.",
+			en: "Lots of people are testing right now. Try again in a few minutes.",
+		},
 		signIn: { pt: "Entrar", en: "Sign in" },
 		register: { pt: "Cadastrar", en: "Register" },
 	},

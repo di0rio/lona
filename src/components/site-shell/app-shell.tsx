@@ -40,6 +40,8 @@ type Copy = {
 		button: string;
 		starting: string;
 		error: string;
+		rateLimited: string;
+		full: string;
 	};
 };
 
