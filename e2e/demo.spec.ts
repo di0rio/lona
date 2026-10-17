@@ -333,3 +333,49 @@ test("branches: turning them on shows the menu item, then create, deactivate and
 	await page.getByRole("button", { name: "Desfazer" }).click();
 	await expect(row).toContainText("Ativa");
 });
+
+test("roles: create one copying balconista, tick a permission, save and see it after reload", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.getByRole("link", { name: "Cargos" }).click();
+	await expect(page).toHaveURL(/\/painel\/cargos$/);
+	await expect(page.getByRole("cell", { name: /^balconista/ })).toBeVisible();
+
+	await page.getByRole("button", { name: "Novo cargo" }).click();
+	const sheet = page.getByRole("dialog");
+	await sheet.getByRole("button", { name: "Salvar" }).click();
+	await expect(sheet.getByText("Informe o nome do cargo.")).toBeVisible();
+	await sheet.getByLabel("Nome").fill("Balconista sênior");
+	await sheet
+		.getByLabel("Partir de uma cópia de")
+		.selectOption({ label: "balconista" });
+	await expect(sheet.getByLabel("Desconto máximo")).toHaveValue("5");
+	const cancel = sheet.getByLabel("Cancelar venda");
+	await expect(cancel).not.toBeChecked();
+	await cancel.check();
+	await sheet.getByRole("button", { name: "Salvar" }).click();
+	await expect(sheet).toBeHidden();
+
+	await page.reload();
+	const row = page.getByRole("row", { name: /Balconista sênior/ });
+	await expect(row).toBeVisible();
+	await row.getByRole("button", { name: "Editar" }).click();
+	await expect(page.getByLabel("Cancelar venda")).toBeChecked();
+	await expect(page.getByLabel("Desconto máximo")).toHaveValue("5");
+	await expect(page.getByLabel("Fazer venda de balcão")).toBeChecked();
+
+	// Permissão fora do catálogo é recusada pelo servidor.
+	const invalid = await page.request.post("/api/access/roles", {
+		data: {
+			name: "Fantasma",
+			permissions: ["nope.nothing"],
+			limits: { max_discount_pct: null, max_purchase_order: null },
+		},
+	});
+	expect(invalid.status()).toBe(422);
+});

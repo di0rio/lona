@@ -14,6 +14,7 @@ export type { Color, CompanySettings, Level } from "./schema";
 export { seedAccessTemplate } from "./seed";
 export {
 	addBranch,
+	addRole,
 	type BranchesView,
 	type BranchInput,
 	type BranchRow,
@@ -24,15 +25,25 @@ export {
 	createMembership,
 	type DashboardSummary,
 	DuplicateBranchError,
+	DuplicateRoleError,
 	dashboardSummary,
 	HeadquartersLockedError,
 	listBranches,
+	listRoles,
 	type NewBranch,
 	type NewCompany,
 	type NewMembership,
 	PermissionDeniedError,
+	PresetRoleError,
+	type RoleInput,
+	RoleInUseError,
+	type RoleRow,
+	type RolesView,
+	removeRole,
+	SelfLockoutError,
 	updateBranch,
 	updateCompanySettings,
+	updateRole,
 	userActiveCompany,
 } from "./service";
 export { sessionUser } from "./session";

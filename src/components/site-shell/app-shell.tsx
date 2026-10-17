@@ -49,6 +49,7 @@ export function AppShell({
 	userName,
 	dashboardTitle,
 	branchesTitle,
+	rolesTitle,
 	settingsTitle,
 	locale,
 	copy,
@@ -59,6 +60,7 @@ export function AppShell({
 	userName: string;
 	dashboardTitle: string;
 	branchesTitle: string;
+	rolesTitle: string;
 	settingsTitle: string;
 	locale: Locale;
 	copy: Copy;
@@ -104,6 +106,7 @@ export function AppShell({
 		{
 			dashboard: dashboardTitle,
 			branches: branchesTitle,
+			roles: rolesTitle,
 			settings: settingsTitle,
 		},
 		locale,
