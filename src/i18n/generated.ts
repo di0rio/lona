@@ -371,6 +371,12 @@ export const translations = {
 					resetting: "Resetando...",
 					error: "Não foi possível resetar agora. Tente de novo.",
 				},
+				viewAs: {
+					menu: "Ver como",
+					prefix: "Você está como",
+					back: "Voltar pro dono",
+					error: "Não foi possível agora. Tente de novo.",
+				},
 				expired: {
 					title: "Sua demonstração acabou",
 					text: "Os dados dela foram apagados. Comece outra para continuar testando.",
@@ -746,6 +752,12 @@ export const translations = {
 					button: "Reset to the original demonstration",
 					resetting: "Resetting...",
 					error: "Could not reset right now. Try again.",
+				},
+				viewAs: {
+					menu: "View as",
+					prefix: "You are viewing as",
+					back: "Back to the owner",
+					error: "Could not do that right now. Try again.",
 				},
 				expired: {
 					title: "Your demonstration is over",

@@ -42,6 +42,15 @@ export default {
 			en: "Could not reset right now. Try again.",
 		},
 	},
+	viewAs: {
+		menu: { pt: "Ver como", en: "View as" },
+		prefix: { pt: "Você está como", en: "You are viewing as" },
+		back: { pt: "Voltar pro dono", en: "Back to the owner" },
+		error: {
+			pt: "Não foi possível agora. Tente de novo.",
+			en: "Could not do that right now. Try again.",
+		},
+	},
 	expired: {
 		title: { pt: "Sua demonstração acabou", en: "Your demonstration is over" },
 		text: {

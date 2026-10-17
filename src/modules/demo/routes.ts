@@ -18,14 +18,17 @@ export const demoRoutes = new Elysia()
 	.use(session)
 	.post(
 		"/demo/start",
-		async ({ userId }) => ({
-			companyId: await startDemo(userId),
-		}),
+		async ({ userId, viewingAs, status }) => {
+			if (viewingAs) return status(403, "Volte pro dono antes.");
+			return { companyId: await startDemo(userId) };
+		},
 		{ session: true },
 	)
 	.post(
 		"/demo/reset",
-		async ({ userId, status }) => {
+		async ({ userId, viewingAs, status }) => {
+			// A pessoa fictícia não apaga a demonstração do dono nem ganha uma própria.
+			if (viewingAs) return status(403, "Volte pro dono antes.");
 			const companyId = await resetDemo(userId);
 			return companyId
 				? { companyId }

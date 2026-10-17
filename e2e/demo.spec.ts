@@ -522,3 +522,27 @@ test("invites: a revoked link no longer works", async ({ page, browser }) => {
 		await guestContext.close();
 	}
 });
+
+test("view as the counter clerk hides what only the owner sees, and going back brings it back", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.goto("/painel/cargos");
+	await expect(page.getByRole("button", { name: "Novo cargo" })).toBeVisible();
+
+	await page.getByRole("button", { name: /Visitante/ }).click();
+	await page.getByRole("menuitem", { name: /Paulo Mendes/ }).click();
+
+	const banner = page.getByRole("status").filter({ hasText: "Você está como" });
+	await expect(banner).toContainText("Paulo Mendes (balconista, Matriz Jaú)");
+	await expect(page.getByRole("button", { name: "Novo cargo" })).toHaveCount(0);
+	await expect(page.getByText(/Só quem gerencia cargos/)).toBeVisible();
+
+	await banner.getByRole("button", { name: "Voltar pro dono" }).click();
+	await expect(banner).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Novo cargo" })).toBeVisible();
+});

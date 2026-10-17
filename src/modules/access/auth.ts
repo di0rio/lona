@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
 import { authDb } from "@/db/client";
 import { accounts, sessions, users, verifications } from "./schema";
+import { viewAs } from "./view-as-plugin";
 
 export const auth = betterAuth({
 	database: drizzleAdapter(authDb, {
@@ -21,6 +22,7 @@ export const auth = betterAuth({
 	emailAndPassword: { enabled: true },
 	plugins: [
 		anonymous({ generateName: () => "Visitante" }),
+		viewAs(),
 		nextCookies(), // sempre o último: grava o cookie de sessão quando o login acontece num Server Action
 	],
 });

@@ -77,7 +77,10 @@ export const session = new Elysia({ name: "access.session" }).macro({
 		async resolve({ request, status }) {
 			const current = await auth.api.getSession({ headers: request.headers });
 			if (!current) return status(401, "Entre para continuar.");
-			return { userId: current.user.id };
+			return {
+				userId: current.user.id,
+				viewingAs: Boolean(current.session.impersonatedBy),
+			};
 		},
 	},
 });
