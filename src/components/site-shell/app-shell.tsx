@@ -7,7 +7,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import type { Locale } from "@/i18n/generated";
 import { stripLocale } from "@/i18n/path";
-import type { DashboardSummary } from "@/modules/access";
+import type { DashboardSummary, ViewAsTarget } from "@/modules/access";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
 import { CommandMenu } from "./command-menu";
@@ -15,6 +15,7 @@ import { Countdown } from "./countdown";
 import { navItems } from "./nav-items";
 import { ResetButton } from "./reset-button";
 import { StartAnother } from "./start-another";
+import { BackToOwner, ViewAsBanner, type ViewAsCopy } from "./view-as-banner";
 
 type Copy = {
 	search: string;
@@ -30,6 +31,7 @@ type Copy = {
 		empty: string;
 	};
 	countdown: { label: string; warning: string };
+	viewAs: ViewAsCopy & { menu: string };
 	reset: { button: string; resetting: string; error: string };
 	expired: {
 		title: string;
@@ -55,6 +57,8 @@ export function AppShell({
 	locale,
 	copy,
 	signOutTo,
+	viewAsTargets,
+	viewingAs,
 	children,
 }: {
 	summary: DashboardSummary | null;
@@ -67,6 +71,10 @@ export function AppShell({
 	locale: Locale;
 	copy: Copy;
 	signOutTo: string;
+	/** A quem o dono pode "ver como" (vazio para quem não é dono). */
+	viewAsTargets: ViewAsTarget[];
+	/** A sessão atual é de uma pessoa fictícia aberta pelo dono. */
+	viewingAs: boolean;
 	children: ReactNode;
 }) {
 	const [searchOpen, setSearchOpen] = useState(false);
@@ -95,7 +103,11 @@ export function AppShell({
 					<p className="max-w-prose text-muted-foreground">
 						{copy.expired.text}
 					</p>
-					<StartAnother copy={copy.expired} />
+					{viewingAs ? (
+						<BackToOwner copy={copy.viewAs} />
+					) : (
+						<StartAnother copy={copy.expired} />
+					)}
 				</section>
 			</div>
 		);
@@ -126,6 +138,8 @@ export function AppShell({
 					copy={copy.sidebar}
 					items={items}
 					signOutTo={signOutTo}
+					viewAs={{ copy: copy.viewAs, targets: viewAsTargets }}
+					viewingAs={viewingAs}
 					user={{
 						name: userName,
 						line2: `${summary.role} · ${summary.branch.name}`,
@@ -137,13 +151,22 @@ export function AppShell({
 						searchLabel={copy.search}
 						title={title}
 					/>
-					{expiresAt && (
-						<Countdown
-							action={<ResetButton copy={copy.reset} />}
-							copy={copy.countdown}
-							expiresAt={expiresAt}
-						/>
-					)}
+					<div className="sticky top-0 z-10">
+						{viewingAs && (
+							<ViewAsBanner
+								copy={copy.viewAs}
+								line={`${summary.role}, ${summary.branch.name}`}
+								name={userName}
+							/>
+						)}
+						{expiresAt && (
+							<Countdown
+								action={viewingAs ? null : <ResetButton copy={copy.reset} />}
+								copy={copy.countdown}
+								expiresAt={expiresAt}
+							/>
+						)}
+					</div>
 					<div className="flex flex-1 flex-col gap-6 p-4">{children}</div>
 				</SidebarInset>
 			</SidebarProvider>

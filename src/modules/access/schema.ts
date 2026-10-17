@@ -189,12 +189,20 @@ export const users = auth.table(
 		emailVerified: boolean("email_verified").notNull().default(false),
 		image: text("image"),
 		isAnonymous: boolean("is_anonymous").notNull().default(false),
+		// Preenchido só nas pessoas fictícias de uma demonstração (uma cópia por demonstração, para o "ver como").
+		// Apagar a demonstração apaga as pessoas dela.
+		demoCompanyId: uuid("demo_company_id").references(() => companies.id, {
+			onDelete: "cascade",
+		}),
 		createdAt: timestampColumn("created_at"),
 		updatedAt: timestampColumn("updated_at").$onUpdate(() => new Date()),
 	},
 	(t) => [
 		// Limpeza dos visitantes anônimos antigos.
 		index("users_anonymous_idx").on(t.createdAt).where(sql`${t.isAnonymous}`),
+		index("users_demo_company_id_idx")
+			.on(t.demoCompanyId)
+			.where(sql`${t.demoCompanyId} IS NOT NULL`),
 	],
 );
 
@@ -211,6 +219,10 @@ export const sessions = auth.table(
 		userId: uuid("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
+		// "Ver como": o dono da demonstração que abriu esta sessão. Só o servidor grava; é daqui que o "voltar" sai.
+		impersonatedBy: uuid("impersonated_by").references(() => users.id, {
+			onDelete: "cascade",
+		}),
 	},
 	(t) => [index("sessions_user_id_idx").on(t.userId)],
 );

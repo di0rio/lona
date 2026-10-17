@@ -9,5 +9,7 @@ export async function sessionUser() {
 		id: current.user.id,
 		name: current.user.name,
 		anonymous: current.user.isAnonymous === true,
+		/** Está "vendo como" uma pessoa fictícia (a sessão foi aberta pelo dono da demonstração). */
+		viewingAs: Boolean(current.session.impersonatedBy),
 	};
 }
