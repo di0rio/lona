@@ -2,6 +2,7 @@
 
 import {
 	ChevronsUpDownIcon,
+	LockKeyholeIcon,
 	LogOutIcon,
 	MonitorIcon,
 	MoonIcon,
@@ -38,6 +39,7 @@ import type { ViewAsTarget } from "@/modules/access";
 import type { NavItem } from "./nav-items";
 
 export function AppSidebar({
+	accountHref,
 	companyName,
 	items,
 	user,
@@ -46,6 +48,7 @@ export function AppSidebar({
 	viewingAs,
 	copy,
 }: {
+	accountHref: string;
 	companyName: string;
 	items: NavItem[];
 	user: { name: string; line2: string };
@@ -54,6 +57,7 @@ export function AppSidebar({
 	viewingAs: boolean;
 	copy: {
 		theme: { label: string; light: string; dark: string; system: string };
+		account: string;
 		signOut: string;
 	};
 }) {
@@ -146,6 +150,10 @@ export function AppSidebar({
 										</DropdownMenuGroup>
 									</>
 								)}
+								<DropdownMenuSeparator />
+								<DropdownMenuItem render={<Link href={accountHref} />}>
+									<LockKeyholeIcon /> {copy.account}
+								</DropdownMenuItem>
 								{!viewingAs && (
 									<>
 										<DropdownMenuSeparator />

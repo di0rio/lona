@@ -15,6 +15,7 @@ export default {
 			dark: { pt: "Escuro", en: "Dark" },
 			system: { pt: "Sistema", en: "System" },
 		},
+		account: { pt: "Segurança da conta", en: "Account security" },
 		signOut: { pt: "Sair", en: "Sign out" },
 	},
 	commandMenu: {
