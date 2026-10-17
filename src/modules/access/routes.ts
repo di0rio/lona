@@ -1,21 +1,52 @@
 import { Elysia, t } from "elysia";
 import { auth } from "./auth";
+import { permissions } from "./permissions";
 import {
 	addBranch,
+	addRole,
 	companySettings,
 	DuplicateBranchError,
+	DuplicateRoleError,
 	dashboardSummary,
 	HeadquartersLockedError,
 	listBranches,
+	listRoles,
 	PermissionDeniedError,
+	PresetRoleError,
+	RoleInUseError,
+	removeRole,
+	SelfLockoutError,
 	updateBranch,
 	updateCompanySettings,
+	updateRole,
 } from "./service";
 
 const branchName = t.String({ minLength: 1, maxLength: 80, pattern: "\\S" });
 const branchCode = t.String({ pattern: "^[A-Za-z0-9]{2,6}$" });
 // A ordem 1 é da matriz, que nasce com a empresa.
 const branchOrder = t.Integer({ minimum: 2, maximum: 9999 });
+
+const roleBody = t.Object(
+	{
+		name: t.String({ minLength: 1, maxLength: 80, pattern: "\\S" }),
+		permissions: t.Array(t.UnionEnum([...permissions]), { uniqueItems: true }),
+		// null = sem limite. Tetos: 100% no desconto e 12 dígitos no valor (cabe em numeric(14,2)).
+		limits: t.Object(
+			{
+				max_discount_pct: t.Union([
+					t.Number({ minimum: 0, maximum: 100 }),
+					t.Null(),
+				]),
+				max_purchase_order: t.Union([
+					t.Number({ minimum: 0, maximum: 999999999999 }),
+					t.Null(),
+				]),
+			},
+			{ additionalProperties: false },
+		),
+	},
+	{ additionalProperties: false },
+);
 
 const duplicateMessage = {
 	code: "Já existe filial com esse código.",
@@ -157,4 +188,81 @@ export const accessRoutes = new Elysia({ prefix: "/access" })
 				),
 			),
 		},
+	)
+	.get(
+		"/roles",
+		async ({ userId, status }) => {
+			const view = await listRoles(userId);
+			return view ?? status(404, "Nenhuma empresa ativa.");
+		},
+		{ session: true },
+	)
+	.post(
+		"/roles",
+		async ({ userId, body, status }) => {
+			try {
+				const id = await addRole(userId, body);
+				return id ? { id } : status(404, "Nenhuma empresa ativa.");
+			} catch (error) {
+				if (error instanceof PermissionDeniedError) {
+					return status(403, "Só quem gerencia cargos cria cargos.");
+				}
+				if (error instanceof DuplicateRoleError) {
+					return status(409, { field: "name", message: error.message });
+				}
+				throw error;
+			}
+		},
+		{ session: true, body: roleBody },
+	)
+	.put(
+		"/roles/:id",
+		async ({ userId, params, body, status }) => {
+			try {
+				const found = await updateRole(userId, params.id, body);
+				return found ? { id: params.id } : status(404, "Cargo não encontrado.");
+			} catch (error) {
+				if (error instanceof PermissionDeniedError) {
+					return status(403, "Só quem gerencia cargos altera cargos.");
+				}
+				if (error instanceof SelfLockoutError) {
+					return status(409, { field: "permissions", message: error.message });
+				}
+				if (error instanceof DuplicateRoleError) {
+					return status(409, { field: "name", message: error.message });
+				}
+				throw error;
+			}
+		},
+		{
+			session: true,
+			params: t.Object({ id: t.String({ format: "uuid" }) }),
+			body: roleBody,
+		},
+	)
+	.delete(
+		"/roles/:id",
+		async ({ userId, params, status }) => {
+			try {
+				const found = await removeRole(userId, params.id);
+				return found ? { id: params.id } : status(404, "Cargo não encontrado.");
+			} catch (error) {
+				if (error instanceof PermissionDeniedError) {
+					return status(403, "Só quem gerencia cargos apaga cargos.");
+				}
+				if (error instanceof RoleInUseError) {
+					return status(409, {
+						message:
+							"Há vínculos usando este cargo. Troque o cargo deles antes de apagar.",
+					});
+				}
+				if (error instanceof PresetRoleError) {
+					return status(409, {
+						message: "Cargo pronto não pode ser apagado, só editado.",
+					});
+				}
+				throw error;
+			}
+		},
+		{ session: true, params: t.Object({ id: t.String({ format: "uuid" }) }) },
 	);

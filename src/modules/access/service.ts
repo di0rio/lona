@@ -1,7 +1,7 @@
-import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { type Transaction, withContext } from "@/db/client";
 import { branchCnpj, formatCnpj } from "./cnpj";
-import type { Permission } from "./permissions";
+import { type Limit, limits, type Permission } from "./permissions";
 import { readyRoles } from "./ready-roles";
 import {
 	branches,
@@ -495,6 +495,203 @@ export async function updateBranch(
 			return updated.length > 0;
 		} catch (error) {
 			return translateDuplicate(error);
+		}
+	});
+}
+
+export type RoleInput = {
+	name: string;
+	permissions: Permission[];
+	/** null = sem limite. */
+	limits: Record<Limit, number | null>;
+};
+
+export type RoleRow = RoleInput & {
+	id: string;
+	isPreset: boolean;
+	/** Quantos vínculos usam o cargo. */
+	members: number;
+};
+
+export type RolesView = { roles: RoleRow[]; canManage: boolean };
+
+/** Cargos da empresa ativa (os prontos primeiro), com permissões, limites e quantos vínculos usam cada um. */
+export async function listRoles(userId: string): Promise<RolesView | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		const rows = await tx
+			.select()
+			.from(roles)
+			.orderBy(desc(roles.isPreset), asc(roles.name));
+		const granted = await tx.select().from(rolePermissions);
+		const limitRows = await tx.select().from(roleLimits);
+		const used = await tx
+			.select({ roleId: memberships.roleId, total: count() })
+			.from(memberships)
+			.groupBy(memberships.roleId);
+		return {
+			roles: rows.map((row) => ({
+				id: row.id,
+				name: row.name,
+				isPreset: row.isPreset,
+				members: used.find((u) => u.roleId === row.id)?.total ?? 0,
+				permissions: granted
+					.filter((g) => g.roleId === row.id)
+					.map((g) => g.permission as Permission),
+				// Sem linha o cargo não tem folga nenhuma (0); NULL é sem limite.
+				limits: Object.fromEntries(
+					limits.map((key) => {
+						const found = limitRows.find(
+							(l) => l.roleId === row.id && l.limitKey === key,
+						);
+						return [key, found ? found.value : 0];
+					}),
+				) as Record<Limit, number | null>,
+			})),
+			canManage: await hasPermission(tx, userId, companyId, "roles.manage"),
+		};
+	});
+}
+
+/** Já existe cargo com esse nome na empresa; o banco garante (unique), aqui só traduzimos. */
+export class DuplicateRoleError extends Error {
+	constructor() {
+		super("Já existe cargo com esse nome.");
+	}
+}
+
+/** O cargo é usado por algum vínculo (FK restrict de memberships). */
+export class RoleInUseError extends Error {
+	constructor() {
+		super("Há vínculos usando este cargo.");
+	}
+}
+
+/** Os cargos prontos podem ser editados, mas não apagados. */
+/** Quem edita não pode tirar `roles.manage` do próprio cargo: a empresa ficaria sem ninguém para desfazer. */
+export class SelfLockoutError extends Error {
+	constructor() {
+		super("Você não pode tirar de você mesmo a permissão de gerenciar cargos.");
+	}
+}
+
+export class PresetRoleError extends Error {
+	constructor() {
+		super("Cargo pronto não pode ser apagado.");
+	}
+}
+
+/** Traduz unicidade (23505) e cargo em uso (FK restrict) do Postgres; qualquer outro erro segue como está. */
+function translateRoleError(error: unknown): never {
+	const cause = (error as { cause?: unknown }).cause ?? error;
+	const { code } = cause as { code?: string };
+	if (code === "23505") throw new DuplicateRoleError();
+	// ON DELETE RESTRICT levanta 23001; NO ACTION levantaria 23503.
+	if (code === "23001" || code === "23503") throw new RoleInUseError();
+	throw error;
+}
+
+async function writeRoleGrants(
+	tx: Transaction,
+	companyId: string,
+	roleId: string,
+	data: RoleInput,
+) {
+	await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, roleId));
+	await tx.delete(roleLimits).where(eq(roleLimits.roleId, roleId));
+	if (data.permissions.length > 0) {
+		await tx.insert(rolePermissions).values(
+			data.permissions.map((permission) => ({
+				companyId,
+				roleId,
+				permission,
+			})),
+		);
+	}
+	await tx.insert(roleLimits).values(
+		limits.map((limitKey) => ({
+			companyId,
+			roleId,
+			limitKey,
+			value: data.limits[limitKey],
+		})),
+	);
+}
+
+/** Cria um cargo (não pronto) na empresa ativa. Exige `roles.manage`. */
+export async function addRole(userId: string, data: RoleInput) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "roles.manage"))) {
+			throw new PermissionDeniedError("roles.manage");
+		}
+		try {
+			const [role] = await tx
+				.insert(roles)
+				.values({ companyId, name: data.name.trim() })
+				.returning({ id: roles.id });
+			await writeRoleGrants(tx, companyId, role.id, data);
+			return role.id;
+		} catch (error) {
+			return translateRoleError(error);
+		}
+	});
+}
+
+/** Troca nome, permissões e limites de um cargo (pronto ou criado). Exige `roles.manage`. false se não existe. */
+export async function updateRole(
+	userId: string,
+	roleId: string,
+	data: RoleInput,
+) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "roles.manage"))) {
+			throw new PermissionDeniedError("roles.manage");
+		}
+		if (!data.permissions.includes("roles.manage")) {
+			const [own] = await tx
+				.select({ id: memberships.id })
+				.from(memberships)
+				.where(
+					and(
+						eq(memberships.companyId, companyId),
+						eq(memberships.userId, userId),
+						eq(memberships.roleId, roleId),
+					),
+				)
+				.limit(1);
+			if (own) throw new SelfLockoutError();
+		}
+		try {
+			const updated = await tx
+				.update(roles)
+				.set({ name: data.name.trim() })
+				.where(eq(roles.id, roleId))
+				.returning({ id: roles.id });
+			if (updated.length === 0) return false;
+			await writeRoleGrants(tx, companyId, roleId, data);
+			return true;
+		} catch (error) {
+			return translateRoleError(error);
+		}
+	});
+}
+
+/** Apaga um cargo criado que nenhum vínculo usa. Exige `roles.manage`. false se não existe. */
+export async function removeRole(userId: string, roleId: string) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "roles.manage"))) {
+			throw new PermissionDeniedError("roles.manage");
+		}
+		const [role] = await tx
+			.select({ isPreset: roles.isPreset })
+			.from(roles)
+			.where(eq(roles.id, roleId));
+		if (!role) return false;
+		if (role.isPreset) throw new PresetRoleError();
+		try {
+			await tx.delete(roles).where(eq(roles.id, roleId));
+			return true;
+		} catch (error) {
+			return translateRoleError(error);
 		}
 	});
 }
