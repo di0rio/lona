@@ -13,8 +13,8 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { startDemo as startDemoRequest } from "@/lib/demo-client";
 
 type Copy = {
 	title: string;
@@ -27,6 +27,8 @@ type Copy = {
 	submitting: string;
 	alreadyExists: string;
 	error: string;
+	rateLimited: string;
+	demoFull: string;
 	alreadyRegistered: string;
 	signIn: string;
 };
@@ -57,16 +59,23 @@ export function RegisterForm({
 			password: String(data.get("password")),
 		});
 		if (signUpError) {
-			setError(
-				signUpError.code?.startsWith("USER_ALREADY_EXISTS")
-					? copy.alreadyExists
-					: copy.error,
-			);
+			if (signUpError.status === 429) setError(copy.rateLimited);
+			else
+				setError(
+					signUpError.code?.startsWith("USER_ALREADY_EXISTS")
+						? copy.alreadyExists
+						: copy.error,
+				);
 			setSubmitting(false);
 			return;
 		}
 		// Quem se cadastra também recebe uma demonstração de 2 horas.
-		if (startDemo) await api().demo.start.post();
+		if (startDemo && (await startDemoRequest()) === "full") {
+			// A conta já existe; só a demonstração ficou para depois.
+			setError(copy.demoFull);
+			setSubmitting(false);
+			return;
+		}
 		router.push(dashboardHref);
 		router.refresh();
 	}

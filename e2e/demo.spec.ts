@@ -13,7 +13,7 @@ const owner = new pg.Pool({
 });
 const userIds = new Set<string>();
 
-// O rate limit do Better Auth em /sign-in e /sign-up é por IP (3 por 10s). Os testes rodam em série no
+// O rate limit do Better Auth (src/modules/access/auth.ts) é por IP e rota, e o contador fica no banco. Os testes rodam em série no
 // mesmo processo; sem um IP próprio por teste, todos cairiam no mesmo balde e um bloquearia o outro.
 function visitorIp() {
 	return `10.${randomInt(1, 255)}.${randomInt(1, 255)}.${randomInt(1, 255)}`;
@@ -114,6 +114,26 @@ test("signing up with email and password also gets a demonstration", async ({
 	await expect(page.getByText(countdown)).toBeVisible();
 	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 	await sessionUser(page);
+});
+
+test("signing up with the demonstration cap full explains it instead of showing an expired demo", async ({
+	page,
+}) => {
+	await page.route("**/api/demo/start", (route) =>
+		route.fulfill({ status: 503, body: "Muita gente testando agora." }),
+	);
+	await page.goto("/cadastrar");
+	await page.getByLabel("Nome").fill("Pessoa de Teste");
+	await page
+		.getByLabel("E-mail")
+		.fill(`e2e-${randomUUID().slice(0, 8)}@teste.lona.test`);
+	await page.getByLabel("Senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Cadastrar" }).click();
+
+	await expect(
+		page.getByText(/Conta criada, mas tem muita gente testando/),
+	).toBeVisible();
+	await expect(page).toHaveURL(/\/cadastrar$/);
 });
 
 test("sign in with the email and password from the registration", async ({
@@ -329,13 +349,17 @@ test("settings: Desfazer brings the previous value back", async ({ page }) => {
 	const was = await cash.isChecked();
 	await cash.click();
 	await expect(cash).toBeChecked({ checked: !was });
+	// O "Desfazer" só aparece depois que o primeiro PATCH respondeu; esperar por ele antes garante que o
+	// waitForResponse abaixo pega o PATCH do desfazer, não o primeiro (era isso que deixava o teste instável).
+	const undo = page.getByRole("button", { name: "Desfazer" });
+	await expect(undo).toBeVisible();
 	// Espera o PATCH do desfazer terminar: recarregar antes o cancela e o valor volta ao salvo.
 	const undone = page.waitForResponse(
 		(r) =>
 			r.url().endsWith("/api/access/settings") &&
 			r.request().method() === "PATCH",
 	);
-	await page.getByRole("button", { name: "Desfazer" }).click();
+	await undo.click();
 	await expect(cash).toBeChecked({ checked: was });
 	await undone;
 	await page.reload();

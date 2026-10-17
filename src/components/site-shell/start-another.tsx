@@ -3,28 +3,40 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { startDemo } from "@/lib/demo-client";
+import { type StartFailure, startDemo } from "@/lib/demo-client";
 
 export function StartAnother({
 	copy,
 }: {
-	copy: { button: string; starting: string; error: string };
+	copy: {
+		button: string;
+		starting: string;
+		error: string;
+		rateLimited: string;
+		full: string;
+	};
 }) {
 	const router = useRouter();
 	const [busy, setBusy] = useState(false);
-	const [error, setError] = useState(false);
+	const [error, setError] = useState<StartFailure | null>(null);
 
 	async function start() {
-		setError(false);
+		setError(null);
 		setBusy(true);
-		const ok = await startDemo();
+		const result = await startDemo();
 		setBusy(false);
-		if (!ok) {
-			setError(true);
+		if (result !== "ok") {
+			setError(result);
 			return;
 		}
 		router.refresh();
 	}
+
+	const errorText: Record<StartFailure, string> = {
+		"rate-limited": copy.rateLimited,
+		full: copy.full,
+		error: copy.error,
+	};
 
 	return (
 		<div className="flex flex-col items-start gap-2">
@@ -33,7 +45,7 @@ export function StartAnother({
 			</Button>
 			{error && (
 				<p className="text-destructive text-sm" role="alert">
-					{copy.error}
+					{errorText[error]}
 				</p>
 			)}
 		</div>
