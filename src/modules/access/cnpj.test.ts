@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { branchCnpj } from "./cnpj";
+import { branchCnpj, formatCnpj } from "./cnpj";
+
+describe("formatCnpj", () => {
+	test("puts the dots, slash and dash", () => {
+		expect(formatCnpj("11222333000181")).toBe("11.222.333/0001-81");
+	});
+});
 
 describe("branchCnpj", () => {
 	test("computes the check digits of a known CNPJ", () => {

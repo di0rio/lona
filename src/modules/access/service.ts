@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { type Transaction, withContext } from "@/db/client";
-import { branchCnpj } from "./cnpj";
+import { branchCnpj, formatCnpj } from "./cnpj";
 import type { Permission } from "./permissions";
 import { readyRoles } from "./ready-roles";
 import {
@@ -152,6 +152,8 @@ export async function userActiveCompany(userId: string, tx?: Transaction) {
 
 export type DashboardSummary = {
 	company: { id: string; name: string; expiresAt: Date | null; color: Color };
+	/** A casca só mostra o menu de Filiais quando a empresa usa filiais (ADR 0003). */
+	usesBranches: boolean;
 	branch: { name: string; code: string };
 	role: string;
 	level: Level;
@@ -173,9 +175,9 @@ export async function dashboardSummary(
 				sql`SELECT set_config('app.company_id', ${active.companyId}, true)`,
 			);
 
-			// lona_user_companies() não devolve cor; um SELECT extra na mesma transação evita migration só pra isso.
+			// lona_user_companies() não devolve cor nem configurações; um SELECT extra na mesma transação evita migration só pra isso.
 			const [companyRow] = await tx
-				.select({ color: companies.color })
+				.select({ color: companies.color, settings: companies.settings })
 				.from(companies)
 				.where(eq(companies.id, active.companyId))
 				.limit(1);
@@ -218,6 +220,7 @@ export async function dashboardSummary(
 					expiresAt: active.expiresAt,
 					color: companyRow?.color ?? "gray",
 				},
+				usesBranches: companyRow?.settings.uses_branches ?? false,
 				branch: { name: branch.name, code: branch.code },
 				role: membership.role,
 				level: membership.level,
@@ -328,5 +331,170 @@ export async function updateCompanySettings(
 			.where(eq(companies.id, companyId))
 			.returning({ settings: companies.settings });
 		return company.settings;
+	});
+}
+
+export type BranchRow = {
+	id: string;
+	name: string;
+	code: string;
+	/** Número de ordem do CNPJ: 1 é a matriz, 2 vira /0002. */
+	order: number;
+	/** CNPJ completo, formatado para exibição. */
+	cnpj: string;
+	isHeadquarters: boolean;
+	active: boolean;
+};
+
+export type BranchesView = {
+	branches: BranchRow[];
+	usesBranches: boolean;
+	/** Raiz do CNPJ já formatada (11.222.333), para a tela mostrar o que vem antes da ordem. */
+	cnpjRoot: string;
+	canConfigure: boolean;
+};
+
+/** Filiais que o usuário consulta na empresa ativa, a matriz primeiro. */
+export async function listBranches(
+	userId: string,
+): Promise<BranchesView | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		const [company] = await tx
+			.select({ cnpjRoot: companies.cnpjRoot, settings: companies.settings })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		const rows = await tx
+			.select()
+			.from(branches)
+			.orderBy(desc(branches.isHeadquarters), asc(branches.cnpj));
+		return {
+			branches: rows.map((row) => ({
+				id: row.id,
+				name: row.name,
+				code: row.code,
+				order: Number(row.cnpj.slice(8, 12)),
+				cnpj: formatCnpj(row.cnpj),
+				isHeadquarters: row.isHeadquarters,
+				active: row.active,
+			})),
+			usesBranches: company.settings.uses_branches,
+			cnpjRoot: company.cnpjRoot.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2.$3"),
+			canConfigure: await hasPermission(
+				tx,
+				userId,
+				companyId,
+				"company.configure",
+			),
+		};
+	});
+}
+
+/** Código ou ordem já usados por outra filial da empresa; o banco garante (unique), aqui só traduzimos. */
+export class DuplicateBranchError extends Error {
+	constructor(readonly field: "code" | "order") {
+		super(`Já existe filial com esse valor em ${field}.`);
+	}
+}
+
+/** A matriz não muda de ordem nem é inativada. */
+export class HeadquartersLockedError extends Error {
+	constructor() {
+		super("A matriz não pode mudar de ordem nem ser inativada.");
+	}
+}
+
+const duplicateField: Record<string, "code" | "order"> = {
+	branches_company_id_code_unq: "code",
+	branches_company_id_cnpj_unq: "order",
+};
+
+/** Traduz a violação de unicidade do Postgres (23505); qualquer outro erro segue como está. */
+function translateDuplicate(error: unknown): never {
+	const cause = (error as { cause?: unknown }).cause ?? error;
+	const { code, constraint } = cause as { code?: string; constraint?: string };
+	if (code === "23505" && constraint && constraint in duplicateField) {
+		throw new DuplicateBranchError(duplicateField[constraint]);
+	}
+	throw error;
+}
+
+export type BranchInput = { name: string; code: string; order: number };
+
+/** Cria uma filial na empresa ativa. Exige `company.configure`. O CNPJ vem da raiz da empresa e da ordem. */
+export async function addBranch(userId: string, data: BranchInput) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "company.configure"))) {
+			throw new PermissionDeniedError("company.configure");
+		}
+		const [company] = await tx
+			.select({ cnpjRoot: companies.cnpjRoot })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		try {
+			const code = data.code.trim().toUpperCase();
+			// Sem RETURNING: a política de consulta usa uma função STABLE, que não enxerga a linha criada no mesmo comando.
+			await tx.insert(branches).values({
+				companyId,
+				name: data.name.trim(),
+				code,
+				cnpj: branchCnpj(company.cnpjRoot, data.order),
+			});
+			const [branch] = await tx
+				.select({ id: branches.id })
+				.from(branches)
+				.where(eq(branches.code, code));
+			return branch.id;
+		} catch (error) {
+			return translateDuplicate(error);
+		}
+	});
+}
+
+/**
+ * Altera só o que foi enviado (nome, código, ordem, ativa). Exige `company.configure`. Devolve false se a filial
+ * não existe ou o usuário não a enxerga. Filial com histórico só se inativa, nunca se apaga.
+ */
+export async function updateBranch(
+	userId: string,
+	branchId: string,
+	patch: Partial<BranchInput & { active: boolean }>,
+) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "company.configure"))) {
+			throw new PermissionDeniedError("company.configure");
+		}
+		const [current] = await tx
+			.select({ isHeadquarters: branches.isHeadquarters })
+			.from(branches)
+			.where(eq(branches.id, branchId));
+		if (!current) return false;
+		if (
+			current.isHeadquarters &&
+			(patch.order !== undefined || patch.active === false)
+		) {
+			throw new HeadquartersLockedError();
+		}
+		const [company] = await tx
+			.select({ cnpjRoot: companies.cnpjRoot })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		try {
+			const updated = await tx
+				.update(branches)
+				.set({
+					name: patch.name?.trim(),
+					code: patch.code?.trim().toUpperCase(),
+					cnpj:
+						patch.order === undefined
+							? undefined
+							: branchCnpj(company.cnpjRoot, patch.order),
+					active: patch.active,
+				})
+				.where(eq(branches.id, branchId))
+				.returning({ id: branches.id });
+			return updated.length > 0;
+		} catch (error) {
+			return translateDuplicate(error);
+		}
 	});
 }

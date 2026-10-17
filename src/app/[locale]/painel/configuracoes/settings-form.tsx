@@ -1,9 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Toaster } from "@/components/ui/sonner";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import type { CompanySettings } from "@/modules/access";
@@ -40,6 +40,7 @@ export function SettingsForm({
 	canConfigure: boolean;
 	copy: Copy;
 }) {
+	const router = useRouter();
 	const [settings, setSettings] = useState(initial);
 	const [failed, setFailed] = useState(false);
 
@@ -53,6 +54,8 @@ export function SettingsForm({
 			setFailed(true);
 			return;
 		}
+		// O menu (Filiais) depende destas opções e vive no layout, que só recarrega com o refresh.
+		router.refresh();
 		if (isUndo) return;
 		const undoPatch = Object.fromEntries(
 			Object.keys(patch).map((key) => [
@@ -148,7 +151,6 @@ export function SettingsForm({
 					{copy.error}
 				</p>
 			)}
-			<Toaster />
 		</div>
 	);
 }
