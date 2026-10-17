@@ -50,6 +50,20 @@ export const translations = {
 				error: "E-mail ou senha incorretos.",
 				noAccountYet: "Ainda não tem cadastro?",
 				register: "Cadastrar",
+				totp: {
+					title: "Código do app autenticador",
+					description: "Abra o app autenticador e digite o código de 6 dígitos.",
+					label: "Código",
+					useBackup: "Usar código de recuperação",
+				},
+				backup: {
+					title: "Código de recuperação",
+					description: "Digite um dos códigos de recuperação que você guardou. Cada um vale uma vez só.",
+					label: "Código de recuperação",
+					useTotp: "Usar o app autenticador",
+				},
+				codeSubmit: "Verificar",
+				codeError: "Código incorreto ou vencido. Tente de novo.",
 			},
 			painel: {
 				cargos: {
@@ -198,6 +212,42 @@ export const translations = {
 					saved: "Salvo.",
 					undo: "Desfazer",
 					error: "Não foi possível salvar agora. A opção voltou ao que era.",
+				},
+				conta: {
+					title: "Segurança da conta",
+					description: "Proteja sua conta com um código do app autenticador, além da senha.",
+					anonymous: "A demonstração não tem senha, então não dá para ativar a verificação em duas etapas. Crie uma conta para proteger o seu acesso.",
+					createAccount: "Criar conta",
+					viewingAs: "Você está vendo como outra pessoa. A segurança da conta é de quem entra com a própria senha; volte para o dono para mexer na sua.",
+					status: {
+						on: "Verificação em duas etapas ligada.",
+						off: "Verificação em duas etapas desligada.",
+					},
+					password: "Sua senha",
+					passwordHelp: "Confirme sua senha para continuar.",
+					actions: {
+						enable: "Ativar",
+						disable: "Desativar",
+						regenerate: "Gerar novos códigos de recuperação",
+						confirm: "Confirmar",
+						cancel: "Cancelar",
+						working: "Aguarde...",
+					},
+					scan: {
+						title: "Leia o QR code no app autenticador",
+						qrLabel: "QR code para o app autenticador",
+						keyHelp: "Ou digite esta chave no app:",
+						code: "Código do app",
+						codeHelp: "Digite o código de 6 dígitos que o app mostra para confirmar.",
+					},
+					codes: {
+						title: "Guarde seus códigos de recuperação",
+						help: "Cada código vale uma vez e entra no lugar do app se você perder o celular. Eles aparecem só agora; guarde num lugar seguro.",
+						copy: "Copiar",
+						copied: "Copiados.",
+						done: "Guardei os códigos",
+					},
+					error: "Não deu certo. Confira a senha ou o código e tente de novo.",
 				},
 				filiais: {
 					title: "Filiais",
@@ -353,6 +403,7 @@ export const translations = {
 						dark: "Escuro",
 						system: "Sistema",
 					},
+					account: "Segurança da conta",
 					signOut: "Sair",
 				},
 				commandMenu: {
@@ -432,6 +483,20 @@ export const translations = {
 				error: "Wrong email or password.",
 				noAccountYet: "No registration yet?",
 				register: "Register",
+				totp: {
+					title: "Authenticator app code",
+					description: "Open your authenticator app and enter the 6-digit code.",
+					label: "Code",
+					useBackup: "Use a recovery code",
+				},
+				backup: {
+					title: "Recovery code",
+					description: "Enter one of the recovery codes you saved. Each one works only once.",
+					label: "Recovery code",
+					useTotp: "Use the authenticator app",
+				},
+				codeSubmit: "Verify",
+				codeError: "Wrong or expired code. Try again.",
 			},
 			painel: {
 				cargos: {
@@ -580,6 +645,42 @@ export const translations = {
 					saved: "Saved.",
 					undo: "Undo",
 					error: "Could not save right now. The option went back to what it was.",
+				},
+				conta: {
+					title: "Account security",
+					description: "Protect your account with an authenticator app code, on top of your password.",
+					anonymous: "The demonstration has no password, so two-step verification cannot be turned on. Create an account to protect your access.",
+					createAccount: "Create account",
+					viewingAs: "You are viewing as another person. Account security belongs to whoever signs in with their own password; go back to the owner to change yours.",
+					status: {
+						on: "Two-step verification is on.",
+						off: "Two-step verification is off.",
+					},
+					password: "Your password",
+					passwordHelp: "Confirm your password to continue.",
+					actions: {
+						enable: "Turn on",
+						disable: "Turn off",
+						regenerate: "Generate new recovery codes",
+						confirm: "Confirm",
+						cancel: "Cancel",
+						working: "Please wait...",
+					},
+					scan: {
+						title: "Scan the QR code in your authenticator app",
+						qrLabel: "QR code for the authenticator app",
+						keyHelp: "Or type this key into the app:",
+						code: "App code",
+						codeHelp: "Enter the 6-digit code the app shows to confirm.",
+					},
+					codes: {
+						title: "Save your recovery codes",
+						help: "Each code works once and replaces the app if you lose your phone. They are shown only now; keep them somewhere safe.",
+						copy: "Copy",
+						copied: "Copied.",
+						done: "I saved the codes",
+					},
+					error: "That did not work. Check the password or code and try again.",
 				},
 				filiais: {
 					title: "Branches",
@@ -735,6 +836,7 @@ export const translations = {
 						dark: "Dark",
 						system: "System",
 					},
+					account: "Account security",
 					signOut: "Sign out",
 				},
 				commandMenu: {

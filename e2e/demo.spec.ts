@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import pg from "pg";
+import { totpCode } from "../src/test/totp";
 
 // Conexão do dono só para preparar o cenário (vencer a demonstração) e limpar o que o teste criou.
 const owner = new pg.Pool({
@@ -138,6 +139,60 @@ test("sign in with the email and password from the registration", async ({
 	await page.getByLabel("E-mail").fill(email);
 	await page.getByLabel("Senha").fill("senha-de-teste-123");
 	await page.getByRole("button", { name: "Entrar" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
+});
+
+test("turning on two-factor makes the next sign-in ask for the authenticator code", async ({
+	page,
+	context,
+}) => {
+	const email = `e2e-${randomUUID().slice(0, 8)}@teste.lona.test`;
+	await page.goto("/cadastrar");
+	await page.getByLabel("Nome").fill("Pessoa de Teste");
+	await page.getByLabel("E-mail").fill(email);
+	await page.getByLabel("Senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Cadastrar" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.getByRole("button", { name: /Pessoa de Teste/ }).click();
+	await page.getByRole("menuitem", { name: "Segurança da conta" }).click();
+	await expect(page).toHaveURL(/\/painel\/conta$/);
+	await page.getByRole("button", { name: "Ativar" }).click();
+	await page.getByLabel("Sua senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Confirmar" }).click();
+
+	// A chave que o app autenticador receberia pelo QR code; o teste faz o papel do app.
+	const key = (await page.getByTestId("totp-key").textContent()) ?? "";
+	await expect(page.getByRole("img", { name: /QR code/ })).toBeVisible();
+	await expect(
+		page.getByText("Guarde seus códigos de recuperação"),
+	).toHaveCount(0);
+	await page.getByLabel("Código do app").fill(totpCode(key));
+	await page.getByRole("button", { name: "Confirmar" }).click();
+
+	await expect(
+		page.getByText("Guarde seus códigos de recuperação"),
+	).toBeVisible();
+	await page.getByRole("button", { name: "Guardei os códigos" }).click();
+	await expect(
+		page.getByText("Verificação em duas etapas ligada."),
+	).toBeVisible();
+
+	await page.getByRole("button", { name: /Pessoa de Teste/ }).click();
+	await page.getByRole("menuitem", { name: "Sair" }).click();
+	await expect(page).toHaveURL(/\/$/);
+	await context.clearCookies();
+
+	await page.goto("/entrar");
+	await page.getByLabel("E-mail").fill(email);
+	await page.getByLabel("Senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Entrar" }).click();
+	await expect(page.getByText("Código do app autenticador")).toBeVisible();
+	await expect(page).not.toHaveURL(/\/painel$/);
+	await page.getByLabel("Código", { exact: true }).fill(totpCode(key));
+	await page.getByRole("button", { name: "Verificar" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
 	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 });

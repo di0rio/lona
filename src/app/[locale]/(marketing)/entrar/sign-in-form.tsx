@@ -25,7 +25,24 @@ type Copy = {
 	error: string;
 	noAccountYet: string;
 	register: string;
+	totp: {
+		title: string;
+		description: string;
+		label: string;
+		useBackup: string;
+	};
+	backup: {
+		title: string;
+		description: string;
+		label: string;
+		useTotp: string;
+	};
+	codeSubmit: string;
+	codeError: string;
 };
+
+// Depois de e-mail e senha, quem tem 2FA passa por um segundo passo: código do app ou código de recuperação.
+type Step = "password" | "totp" | "backup";
 
 export function SignInForm({
 	copy,
@@ -37,6 +54,7 @@ export function SignInForm({
 	registerHref: string;
 }) {
 	const router = useRouter();
+	const [step, setStep] = useState<Step>("password");
 	const [error, setError] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -45,7 +63,7 @@ export function SignInForm({
 		setError(false);
 		setSubmitting(true);
 		const data = new FormData(event.currentTarget);
-		const { error: signInError } = await authClient.signIn.email({
+		const { data: result, error: signInError } = await authClient.signIn.email({
 			email: String(data.get("email")),
 			password: String(data.get("password")),
 		});
@@ -54,8 +72,80 @@ export function SignInForm({
 			setSubmitting(false);
 			return;
 		}
+		if (result && "twoFactorRedirect" in result) {
+			setStep("totp");
+			setSubmitting(false);
+			return;
+		}
 		router.push(dashboardHref);
 		router.refresh();
+	}
+
+	async function submitCode(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError(false);
+		setSubmitting(true);
+		const code = String(new FormData(event.currentTarget).get("code")).trim();
+		const { error: codeError } =
+			step === "backup"
+				? await authClient.twoFactor.verifyBackupCode({ code })
+				: await authClient.twoFactor.verifyTotp({ code });
+		if (codeError) {
+			setError(true);
+			setSubmitting(false);
+			return;
+		}
+		router.push(dashboardHref);
+		router.refresh();
+	}
+
+	if (step !== "password") {
+		const stepCopy = step === "totp" ? copy.totp : copy.backup;
+		return (
+			<Card className="w-full max-w-sm">
+				<CardHeader>
+					<CardTitle className="text-lg">{stepCopy.title}</CardTitle>
+					<CardDescription>{stepCopy.description}</CardDescription>
+				</CardHeader>
+				<form key={step} onSubmit={submitCode}>
+					<CardContent className="flex flex-col gap-4">
+						<div className="flex flex-col gap-1.5">
+							<label className="font-medium text-sm" htmlFor="code">
+								{stepCopy.label}
+							</label>
+							<Input
+								autoComplete="one-time-code"
+								autoFocus
+								id="code"
+								inputMode={step === "totp" ? "numeric" : "text"}
+								name="code"
+								required
+							/>
+						</div>
+						{error && (
+							<p className="text-destructive text-sm" role="alert">
+								{copy.codeError}
+							</p>
+						)}
+					</CardContent>
+					<CardFooter className="mt-4 flex-col items-stretch gap-3 border-t">
+						<Button disabled={submitting} type="submit">
+							{copy.codeSubmit}
+						</Button>
+						<Button
+							onClick={() => {
+								setError(false);
+								setStep(step === "totp" ? "backup" : "totp");
+							}}
+							type="button"
+							variant="link"
+						>
+							{step === "totp" ? copy.totp.useBackup : copy.backup.useTotp}
+						</Button>
+					</CardFooter>
+				</form>
+			</Card>
+		);
 	}
 
 	return (
