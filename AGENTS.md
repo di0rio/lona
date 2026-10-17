@@ -14,3 +14,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Cada módulo vive em `src/modules/<module>/` (`schema.ts`, `service.ts`, `routes.ts`, `index.ts`). Um módulo só usa outro pelo `index.ts` dele, nunca importando as tabelas de outro módulo.
 - Toda consulta de negócio passa pelo helper de transação com contexto (`src/db/`, `withContext`), que seta a empresa e o usuário para o RLS. Nunca rode consulta de negócio fora dele.
 - Confira a documentação da versão instalada de cada biblioteca antes de escrever código para ela.
+- Toda feature nova vem com teste (integração no Vitest para service e RLS, e2e no Playwright para o fluxo da tela).
+- Todo bug corrigido vem com um teste de regressão: primeiro um teste que falha reproduzindo o bug, depois a correção que faz ele passar. Commit `fix:` sem arquivo `*.test.ts` ou `*.spec.ts` alterado é barrado no CI.
+- Antes de abrir PR: `bun run lint`, `bun run typecheck`, `bun run test` e `bun run test:e2e` verdes. O CI roda os mesmos comandos e a `main` só aceita merge com ele verde.

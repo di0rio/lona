@@ -219,3 +219,65 @@ test("toggling theme in the user menu switches to dark", async ({ page }) => {
 	await page.getByRole("menuitemradio", { name: "Escuro" }).click();
 	await expect(page.locator("html")).toHaveClass(/dark/);
 });
+
+test("settings: opens from the menu, saves a toggle and keeps it after reloading", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.getByRole("link", { name: "Configurações" }).click();
+	await expect(page).toHaveURL(/\/painel\/configuracoes$/);
+	await expect(
+		page.getByRole("heading", { name: "Como sua empresa trabalha" }),
+	).toBeVisible();
+	// Regressão: o breadcrumb ficava "Painel" em qualquer página.
+	await expect(page.getByRole("navigation", { name: "breadcrumb" })).toHaveText(
+		"Configurações",
+	);
+
+	const quote = page.getByRole("switch", {
+		name: "Venda começa com orçamento",
+	});
+	// O modelo da demonstração já traz valores próprios; o teste inverte o que encontrar.
+	const was = await quote.isChecked();
+	await quote.click();
+	await expect(quote).toBeChecked({ checked: !was });
+	await expect(page.getByText("Salvo.")).toBeVisible();
+
+	await page.reload();
+	await expect(
+		page.getByRole("switch", { name: "Venda começa com orçamento" }),
+	).toBeChecked({ checked: !was });
+
+	// O servidor recusa valor inválido e corpo vazio.
+	const invalid = await page.request.patch("/api/access/settings", {
+		data: { work_order_flow: "banana" },
+	});
+	expect(invalid.status()).toBe(422);
+	const empty = await page.request.patch("/api/access/settings", { data: {} });
+	expect(empty.status()).toBe(422);
+});
+
+test("settings: Desfazer brings the previous value back", async ({ page }) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+	await page.goto("/painel/configuracoes");
+
+	const cash = page.getByRole("switch", {
+		name: "Caixa obrigatório para vender",
+	});
+	const was = await cash.isChecked();
+	await cash.click();
+	await expect(cash).toBeChecked({ checked: !was });
+	await page.getByRole("button", { name: "Desfazer" }).click();
+	await expect(cash).toBeChecked({ checked: was });
+	await page.reload();
+	await expect(
+		page.getByRole("switch", { name: "Caixa obrigatório para vender" }),
+	).toBeChecked({ checked: was });
+});

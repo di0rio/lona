@@ -33,6 +33,34 @@ export const translations = {
 				register: "Cadastrar",
 			},
 			painel: {
+				configuracoes: {
+					title: "Como sua empresa trabalha",
+					nav: "Configurações",
+					description: "Cada opção muda como o sistema se comporta para todos os usuários da empresa. Salva na hora; dá para desfazer.",
+					readOnly: "Só o dono muda estas opções. Você pode ver como estão, mas não alterar.",
+					usesBranches: {
+						label: "Usa filiais",
+						help: "Ligado: estoque e caixa são separados por filial e as telas pedem a filial. Desligado: a empresa trabalha só com a matriz.",
+					},
+					workOrderFlow: {
+						label: "Ordem de serviço: simples ou completa",
+						simple: "Simples",
+						simpleHelp: "Abre, executa e fecha. Sem etapas intermediárias.",
+						full: "Completa",
+						fullHelp: "Passa por orçamento, aprovação do cliente, execução e entrega.",
+					},
+					saleRequiresQuote: {
+						label: "Venda começa com orçamento",
+						help: "Ligado: toda venda nasce de um orçamento aprovado. Desligado: dá para vender direto no balcão.",
+					},
+					cashRegisterRequired: {
+						label: "Caixa obrigatório para vender",
+						help: "Ligado: só vende quem abriu o caixa. Desligado: dá para vender sem caixa aberto.",
+					},
+					saved: "Salvo.",
+					undo: "Desfazer",
+					error: "Não foi possível salvar agora. A opção voltou ao que era.",
+				},
 				title: "Painel",
 				company: "Empresa",
 				branch: "Filial atual",
@@ -131,6 +159,34 @@ export const translations = {
 				register: "Register",
 			},
 			painel: {
+				configuracoes: {
+					title: "How your company works",
+					nav: "Settings",
+					description: "Each option changes how the system behaves for everyone in the company. Saved instantly; you can undo.",
+					readOnly: "Only the owner changes these options. You can see them but not change them.",
+					usesBranches: {
+						label: "Uses branches",
+						help: "On: stock and cash register are kept per branch and screens ask for the branch. Off: the company works with the headquarters only.",
+					},
+					workOrderFlow: {
+						label: "Work order: simple or full",
+						simple: "Simple",
+						simpleHelp: "Open, do the work, close. No intermediate steps.",
+						full: "Full",
+						fullHelp: "Goes through quote, customer approval, execution and delivery.",
+					},
+					saleRequiresQuote: {
+						label: "Sale starts with a quote",
+						help: "On: every sale comes from an approved quote. Off: you can sell straight at the counter.",
+					},
+					cashRegisterRequired: {
+						label: "Cash register required to sell",
+						help: "On: only someone with an open cash register can sell. Off: selling works without one.",
+					},
+					saved: "Saved.",
+					undo: "Undo",
+					error: "Could not save right now. The option went back to what it was.",
+				},
 				title: "Dashboard",
 				company: "Company",
 				branch: "Current branch",

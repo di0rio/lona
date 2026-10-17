@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { type Transaction, withContext } from "@/db/client";
 import { branchCnpj } from "./cnpj";
+import type { Permission } from "./permissions";
 import { readyRoles } from "./ready-roles";
 import {
 	branches,
@@ -224,4 +225,108 @@ export async function dashboardSummary(
 		},
 		{ repeatableRead: true },
 	);
+}
+
+/** Lançado quando o usuário não tem a permissão que a ação pede; a rota converte em 403. */
+export class PermissionDeniedError extends Error {
+	constructor(permission: Permission) {
+		super(`Sem a permissão ${permission}.`);
+	}
+}
+
+/** Alguma das ligações do usuário na empresa ativa tem um cargo com a permissão? (Conferido dentro da transação.) */
+async function hasPermission(
+	tx: Transaction,
+	userId: string,
+	companyId: string,
+	permission: Permission,
+) {
+	const [row] = await tx
+		.select({ one: sql<number>`1` })
+		.from(memberships)
+		.innerJoin(
+			rolePermissions,
+			and(
+				eq(rolePermissions.companyId, memberships.companyId),
+				eq(rolePermissions.roleId, memberships.roleId),
+			),
+		)
+		.where(
+			and(
+				eq(memberships.companyId, companyId),
+				eq(memberships.userId, userId),
+				eq(rolePermissions.permission, permission),
+			),
+		)
+		.limit(1);
+	return Boolean(row);
+}
+
+export type CompanySettingsView = {
+	settings: CompanySettings;
+	/** Quem não tem `company.configure` só consulta. */
+	canConfigure: boolean;
+};
+
+/** Roda `fn` na empresa ativa do usuário, já com o contexto do RLS; null se ele não tem empresa ativa. */
+async function inActiveCompany<T>(
+	userId: string,
+	fn: (tx: Transaction, companyId: string) => Promise<T>,
+): Promise<T | null> {
+	return withContext(
+		{ userId },
+		async (tx) => {
+			const active = await userActiveCompany(userId, tx);
+			if (!active) return null;
+			await tx.execute(
+				sql`SELECT set_config('app.company_id', ${active.companyId}, true)`,
+			);
+			return fn(tx, active.companyId);
+		},
+		{ repeatableRead: true },
+	);
+}
+
+/** Configurações da empresa ativa do usuário e se ele pode mudá-las. */
+export async function companySettings(
+	userId: string,
+): Promise<CompanySettingsView | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		const [company] = await tx
+			.select({ settings: companies.settings })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		return {
+			settings: company.settings,
+			canConfigure: await hasPermission(
+				tx,
+				userId,
+				companyId,
+				"company.configure",
+			),
+		};
+	});
+}
+
+/**
+ * Altera só as opções enviadas (as outras ficam como estão). Exige `company.configure`.
+ * O merge é feito no banco, pra duas alterações ao mesmo tempo em opções diferentes não se sobrescreverem.
+ */
+export async function updateCompanySettings(
+	userId: string,
+	patch: Partial<CompanySettings>,
+): Promise<CompanySettings | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "company.configure"))) {
+			throw new PermissionDeniedError("company.configure");
+		}
+		const [company] = await tx
+			.update(companies)
+			.set({
+				settings: sql`${companies.settings} || ${JSON.stringify(patch)}::jsonb`,
+			})
+			.where(eq(companies.id, companyId))
+			.returning({ settings: companies.settings });
+		return company.settings;
+	});
 }
