@@ -1,4 +1,14 @@
-import { and, asc, count, desc, eq, isNull, or, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	inArray,
+	isNull,
+	or,
+	sql,
+} from "drizzle-orm";
 import { type Transaction, withContext } from "@/db/client";
 import { branchCnpj, formatCnpj } from "./cnpj";
 import { type Limit, limits, type Permission } from "./permissions";
@@ -14,6 +24,7 @@ import {
 	roleLimits,
 	rolePermissions,
 	roles,
+	users,
 } from "./schema";
 
 type Writable = Pick<Transaction, "insert">;
@@ -569,8 +580,10 @@ export class RoleInUseError extends Error {
 /** Os cargos prontos podem ser editados, mas não apagados. */
 /** Quem edita não pode tirar `roles.manage` do próprio cargo: a empresa ficaria sem ninguém para desfazer. */
 export class SelfLockoutError extends Error {
-	constructor() {
-		super("Você não pode tirar de você mesmo a permissão de gerenciar cargos.");
+	constructor(
+		message = "Você não pode tirar de você mesmo a permissão de gerenciar cargos.",
+	) {
+		super(message);
 	}
 }
 
@@ -693,5 +706,258 @@ export async function removeRole(userId: string, roleId: string) {
 		} catch (error) {
 			return translateRoleError(error);
 		}
+	});
+}
+
+export type MembershipInput = {
+	/** null = todas as filiais. */
+	branchId: string | null;
+	roleId: string;
+	level: Level;
+};
+
+export type MembershipRow = MembershipInput & {
+	/** null quando é "todas" ou quando o usuário não enxerga essa filial. */
+	branchName: string | null;
+	roleName: string;
+};
+
+export type UserRow = {
+	id: string;
+	name: string;
+	/** null para visitante anônimo (o e-mail dele é só um marcador interno). */
+	email: string | null;
+	memberships: MembershipRow[];
+};
+
+export type UsersView = {
+	users: UserRow[];
+	/** Filiais que o usuário enxerga, para escolher no vínculo. */
+	branches: { id: string; name: string; active: boolean }[];
+	roles: { id: string; name: string }[];
+	usesBranches: boolean;
+	canManage: boolean;
+};
+
+/**
+ * Usuários da empresa ativa (quem tem ao menos um vínculo nela) com seus vínculos. auth.users não tem RLS,
+ * então o recorte vem de partir dos vínculos, que têm.
+ */
+export async function listUsers(userId: string): Promise<UsersView | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		const [company] = await tx
+			.select({ settings: companies.settings })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		const rows = await tx
+			.select({
+				userId: users.id,
+				name: users.name,
+				email: users.email,
+				isAnonymous: users.isAnonymous,
+				branchId: memberships.branchId,
+				branchName: branches.name,
+				roleId: memberships.roleId,
+				roleName: roles.name,
+				level: memberships.level,
+			})
+			.from(memberships)
+			.innerJoin(users, eq(users.id, memberships.userId))
+			.innerJoin(
+				roles,
+				and(
+					eq(roles.companyId, memberships.companyId),
+					eq(roles.id, memberships.roleId),
+				),
+			)
+			.leftJoin(
+				branches,
+				and(
+					eq(branches.companyId, memberships.companyId),
+					eq(branches.id, memberships.branchId),
+				),
+			)
+			.where(eq(memberships.companyId, companyId))
+			.orderBy(
+				asc(users.name),
+				asc(users.id),
+				sql`${memberships.branchId} IS NOT NULL`,
+				asc(branches.name),
+			);
+
+		// E-mail é dado pessoal (LGPD): só quem gerencia usuários vê.
+		const canManage = await hasPermission(
+			tx,
+			userId,
+			companyId,
+			"users.manage",
+		);
+		const byUser = new Map<string, UserRow>();
+		for (const row of rows) {
+			const user = byUser.get(row.userId) ?? {
+				id: row.userId,
+				name: row.name,
+				email: canManage && !row.isAnonymous ? row.email : null,
+				memberships: [],
+			};
+			user.memberships.push({
+				branchId: row.branchId,
+				branchName: row.branchName,
+				roleId: row.roleId,
+				roleName: row.roleName,
+				level: row.level,
+			});
+			byUser.set(row.userId, user);
+		}
+
+		return {
+			users: [...byUser.values()],
+			branches: await tx
+				.select({
+					id: branches.id,
+					name: branches.name,
+					active: branches.active,
+				})
+				.from(branches)
+				.orderBy(desc(branches.isHeadquarters), asc(branches.name)),
+			roles: await tx
+				.select({ id: roles.id, name: roles.name })
+				.from(roles)
+				.orderBy(desc(roles.isPreset), asc(roles.name)),
+			usesBranches: company.settings.uses_branches,
+			canManage,
+		};
+	});
+}
+
+/** O mesmo usuário e filial já têm vínculo; o banco garante (unique), aqui só traduzimos. */
+export class DuplicateMembershipError extends Error {
+	constructor() {
+		super(
+			"Esta pessoa já tem vínculo nessa filial. Use um vínculo só por filial.",
+		);
+	}
+}
+
+/** Cargo ou filial inexistente, filial inativa recebendo vínculo novo, ou filial escolhida numa empresa sem filiais. */
+export class InvalidMembershipError extends Error {}
+
+/** Traduz unicidade (23505) e chave estrangeira (23503) de memberships; qualquer outro erro segue como está. */
+function translateMembershipError(error: unknown): never {
+	const cause = (error as { cause?: unknown }).cause ?? error;
+	const { code } = cause as { code?: string };
+	if (code === "23505") throw new DuplicateMembershipError();
+	if (code === "23503") {
+		throw new InvalidMembershipError("Cargo ou filial não encontrado.");
+	}
+	throw error;
+}
+
+/**
+ * Troca todos os vínculos de um usuário pela lista enviada (lista vazia tira o usuário da empresa). Exige
+ * `users.manage`. false se o usuário não tem vínculo na empresa. Ninguém fica sem `users.manage` por conta própria.
+ * Escreve só a diferença (insere, atualiza, depois apaga) para o próprio vínculo do usuário nunca sumir no meio:
+ * o RLS confere o vínculo a cada comando.
+ */
+export async function updateUserMemberships(
+	userId: string,
+	targetId: string,
+	items: MembershipInput[],
+) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "users.manage"))) {
+			throw new PermissionDeniedError("users.manage");
+		}
+		const current = await tx
+			.select({ id: memberships.id, branchId: memberships.branchId })
+			.from(memberships)
+			.where(
+				and(
+					eq(memberships.companyId, companyId),
+					eq(memberships.userId, targetId),
+				),
+			);
+		if (current.length === 0) return false;
+
+		if (targetId === userId) {
+			const [keeps] = await tx
+				.select({ one: sql<number>`1` })
+				.from(rolePermissions)
+				.where(
+					and(
+						inArray(
+							rolePermissions.roleId,
+							items.map((i) => i.roleId),
+						),
+						eq(rolePermissions.permission, "users.manage"),
+					),
+				)
+				.limit(1);
+			if (!keeps) {
+				throw new SelfLockoutError(
+					"Você não pode ficar sem a permissão de gerenciar usuários.",
+				);
+			}
+		}
+
+		const [company] = await tx
+			.select({ settings: companies.settings })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		const branchRows = await tx
+			.select({ id: branches.id, active: branches.active })
+			.from(branches);
+		const roleIds = new Set(
+			(await tx.select({ id: roles.id }).from(roles)).map((r) => r.id),
+		);
+		const linked = new Set(current.map((c) => c.branchId));
+		for (const item of items) {
+			if (!roleIds.has(item.roleId)) {
+				throw new InvalidMembershipError("Cargo não encontrado.");
+			}
+			if (item.branchId === null) continue;
+			const branch = branchRows.find((b) => b.id === item.branchId);
+			if (!branch) throw new InvalidMembershipError("Filial não encontrada.");
+			if (!company.settings.uses_branches) {
+				throw new InvalidMembershipError(
+					"A empresa não usa filiais: o vínculo vale para todas.",
+				);
+			}
+			// Vínculo que já existia numa filial depois inativada pode continuar (e trocar de cargo ou nível).
+			if (!branch.active && !linked.has(item.branchId)) {
+				throw new InvalidMembershipError(
+					"Filial inativa não recebe vínculo novo.",
+				);
+			}
+		}
+
+		const existing = new Map(current.map((c) => [c.branchId, c.id]));
+		const kept: string[] = [];
+		try {
+			for (const item of items) {
+				const id = existing.get(item.branchId);
+				// Repetida na lista: cai no insert e o unique do banco recusa.
+				if (id && !kept.includes(id)) {
+					kept.push(id);
+					await tx
+						.update(memberships)
+						.set({ roleId: item.roleId, level: item.level })
+						.where(eq(memberships.id, id));
+				} else {
+					await tx
+						.insert(memberships)
+						.values({ companyId, userId: targetId, ...item });
+				}
+			}
+			const removed = current
+				.map((c) => c.id)
+				.filter((id) => !kept.includes(id));
+			if (removed.length > 0) {
+				await tx.delete(memberships).where(inArray(memberships.id, removed));
+			}
+		} catch (error) {
+			return translateMembershipError(error);
+		}
+		return true;
 	});
 }

@@ -379,3 +379,38 @@ test("roles: create one copying balconista, tick a permission, save and see it a
 	});
 	expect(invalid.status()).toBe(422);
 });
+
+test("users: change a fictitious user's role, save and see it after reload", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.getByRole("link", { name: "Usuários" }).click();
+	await expect(page).toHaveURL(/\/painel\/usuarios$/);
+	const row = page.getByRole("row", { name: /Paulo Mendes/ });
+	await expect(row).toContainText("balconista em Matriz Jaú · opera");
+
+	await row.getByRole("button", { name: "Editar vínculos" }).click();
+	const sheet = page.getByRole("dialog");
+	await sheet.getByLabel("Cargo").selectOption({ label: "financeiro" });
+	await sheet.getByRole("button", { name: "Salvar" }).click();
+	await expect(sheet).toBeHidden();
+
+	await page.reload();
+	await expect(page.getByRole("row", { name: /Paulo Mendes/ })).toContainText(
+		"financeiro em Matriz Jaú · opera",
+	);
+
+	// Duas vezes a mesma filial: o banco recusa e a tela mostra o motivo.
+	await page
+		.getByRole("row", { name: /Paulo Mendes/ })
+		.getByRole("button", { name: "Editar vínculos" })
+		.click();
+	await sheet.getByRole("button", { name: "Adicionar vínculo" }).click();
+	await sheet.getByLabel("Filial").last().selectOption({ label: "Matriz Jaú" });
+	await sheet.getByRole("button", { name: "Salvar" }).click();
+	await expect(sheet.getByRole("alert")).toContainText("já tem vínculo");
+});
