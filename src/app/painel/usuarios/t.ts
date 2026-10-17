@@ -35,6 +35,35 @@ export default {
 		view: { pt: "consulta", en: "views" },
 		operate: { pt: "opera", en: "operates" },
 	},
+	invite: {
+		button: { pt: "Convidar", en: "Invite" },
+		title: { pt: "Convidar pessoa", en: "Invite a person" },
+		help: {
+			pt: "O Lona não envia e-mail. Gere o link, copie e mande pelo WhatsApp. Quem abrir cria a conta (ou entra) e já fica com o vínculo escolhido aqui. O link vale 48 horas e funciona uma vez só.",
+			en: "Lona does not send email. Generate the link, copy it and send it on WhatsApp. Whoever opens it creates an account (or signs in) and gets the membership chosen here. The link lasts 48 hours and works once.",
+		},
+		create: { pt: "Gerar link", en: "Generate link" },
+		creating: { pt: "Gerando...", en: "Generating..." },
+		linkLabel: { pt: "Link do convite", en: "Invite link" },
+		copy: { pt: "Copiar link", en: "Copy link" },
+		copied: { pt: "Link copiado.", en: "Link copied." },
+		error: {
+			pt: "Não foi possível gerar o convite agora. Tente de novo.",
+			en: "Could not create the invite right now. Try again.",
+		},
+		pending: {
+			title: { pt: "Convites pendentes", en: "Pending invites" },
+			createdBy: { pt: "Criado por", en: "Created by" },
+			membership: { pt: "Vínculo", en: "Membership" },
+			expires: { pt: "Vence em", en: "Expires" },
+			revoke: { pt: "Revogar", en: "Revoke" },
+			revoked: { pt: "Convite revogado.", en: "Invite revoked." },
+			error: {
+				pt: "Não foi possível revogar agora. Tente de novo.",
+				en: "Could not revoke right now. Try again.",
+			},
+		},
+	},
 	form: {
 		title: { pt: "Vínculos de", en: "Memberships of" },
 		role: { pt: "Cargo", en: "Role" },

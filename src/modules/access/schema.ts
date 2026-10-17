@@ -289,3 +289,45 @@ export const memberships = pgTable(
 		check("memberships_level_valid", sql`${t.level} IN ('view', 'operate')`),
 	],
 );
+
+// Convite de usuário por link único. No banco fica só o hash (sha256) do token; o token aparece uma vez, na criação.
+export const invites = pgTable(
+	"invites",
+	{
+		id: id(),
+		companyId: uuid("company_id")
+			.notNull()
+			.references(() => companies.id, { onDelete: "cascade" }),
+		tokenHash: text("token_hash").notNull(),
+		// O vínculo que o convite cria. null = todas as filiais (ADR 0006).
+		branchId: uuid("branch_id"),
+		roleId: uuid("role_id").notNull(),
+		level: text("level").$type<Level>().notNull(),
+		createdBy: uuid("created_by")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		// Marcados ao aceitar e ao revogar; convite pendente tem os dois nulos.
+		usedAt: timestamp("used_at", { withTimezone: true }),
+		usedBy: uuid("used_by").references(() => users.id, {
+			onDelete: "set null",
+		}),
+		revokedAt: timestamp("revoked_at", { withTimezone: true }),
+		createdAt: timestampColumn("created_at"),
+	},
+	(t) => [
+		// Apagar a filial ou o cargo leva os convites junto: o vínculo que eles criariam deixou de existir.
+		foreignKey({
+			columns: [t.companyId, t.branchId],
+			foreignColumns: [branches.companyId, branches.id],
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [t.companyId, t.roleId],
+			foreignColumns: [roles.companyId, roles.id],
+		}).onDelete("cascade"),
+		// Exceção à regra de partir da empresa: quem abre o link ainda não tem empresa, só o token.
+		unique("invites_token_hash_unq").on(t.tokenHash),
+		index("invites_company_id_idx").on(t.companyId, t.expiresAt),
+		check("invites_level_valid", sql`${t.level} IN ('view', 'operate')`),
+	],
+);
