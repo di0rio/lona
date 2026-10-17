@@ -4,6 +4,7 @@ import {
 	type LucideIcon,
 	SettingsIcon,
 	ShieldCheckIcon,
+	UsersIcon,
 } from "lucide-react";
 import type { Locale } from "@/i18n/generated";
 import { localePath } from "@/i18n/path";
@@ -16,6 +17,7 @@ export function navItems(
 		dashboard: string;
 		branches: string;
 		roles: string;
+		users: string;
 		settings: string;
 	},
 	locale: Locale,
@@ -40,6 +42,11 @@ export function navItems(
 			title: copy.roles,
 			href: localePath(locale, "/painel/cargos"),
 			icon: ShieldCheckIcon,
+		},
+		{
+			title: copy.users,
+			href: localePath(locale, "/painel/usuarios"),
+			icon: UsersIcon,
 		},
 		{
 			title: copy.settings,
