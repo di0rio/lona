@@ -1,9 +1,11 @@
+import { createHash, randomBytes } from "node:crypto";
 import {
 	and,
 	asc,
 	count,
 	desc,
 	eq,
+	gt,
 	inArray,
 	isNull,
 	or,
@@ -19,6 +21,7 @@ import {
 	type CompanySettings,
 	companies,
 	defaultSettings,
+	invites,
 	type Level,
 	memberships,
 	roleLimits,
@@ -730,8 +733,21 @@ export type UserRow = {
 	memberships: MembershipRow[];
 };
 
+export type InviteRow = {
+	id: string;
+	createdByName: string;
+	branchId: string | null;
+	/** null quando é "todas" ou quando o usuário não enxerga essa filial. */
+	branchName: string | null;
+	roleName: string;
+	level: Level;
+	expiresAt: Date;
+};
+
 export type UsersView = {
 	users: UserRow[];
+	/** Convites que ainda valem; só quem gerencia usuários os vê. */
+	invites: InviteRow[];
 	/** Filiais que o usuário enxerga, para escolher no vínculo. */
 	branches: { id: string; name: string; active: boolean }[];
 	roles: { id: string; name: string }[];
@@ -810,8 +826,47 @@ export async function listUsers(userId: string): Promise<UsersView | null> {
 			byUser.set(row.userId, user);
 		}
 
+		const pending = canManage
+			? await tx
+					.select({
+						id: invites.id,
+						createdByName: users.name,
+						branchId: invites.branchId,
+						branchName: branches.name,
+						roleName: roles.name,
+						level: invites.level,
+						expiresAt: invites.expiresAt,
+					})
+					.from(invites)
+					.innerJoin(users, eq(users.id, invites.createdBy))
+					.innerJoin(
+						roles,
+						and(
+							eq(roles.companyId, invites.companyId),
+							eq(roles.id, invites.roleId),
+						),
+					)
+					.leftJoin(
+						branches,
+						and(
+							eq(branches.companyId, invites.companyId),
+							eq(branches.id, invites.branchId),
+						),
+					)
+					.where(
+						and(
+							eq(invites.companyId, companyId),
+							isNull(invites.usedAt),
+							isNull(invites.revokedAt),
+							gt(invites.expiresAt, sql`now()`),
+						),
+					)
+					.orderBy(asc(invites.expiresAt), asc(invites.id))
+			: [];
+
 		return {
 			users: [...byUser.values()],
+			invites: pending,
 			branches: await tx
 				.select({
 					id: branches.id,
@@ -959,5 +1014,152 @@ export async function updateUserMemberships(
 			return translateMembershipError(error);
 		}
 		return true;
+	});
+}
+
+/** Hash sha256 do token: é o que o banco guarda e o que as funções lona_*_invite recebem. */
+const hashToken = (token: string) =>
+	createHash("sha256").update(token).digest("hex");
+
+/**
+ * Cria um convite com o vínculo já definido (mesmas regras de vínculo de `updateUserMemberships`). Vale 48 horas e
+ * uma vez só. O token volta aqui e em nenhum outro lugar: no banco fica só o hash. Exige `users.manage`.
+ */
+export async function createInvite(userId: string, input: MembershipInput) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "users.manage"))) {
+			throw new PermissionDeniedError("users.manage");
+		}
+		const [role] = await tx
+			.select({ id: roles.id })
+			.from(roles)
+			.where(eq(roles.id, input.roleId));
+		if (!role) throw new InvalidMembershipError("Cargo não encontrado.");
+		if (input.branchId !== null) {
+			const [branch] = await tx
+				.select({ active: branches.active })
+				.from(branches)
+				.where(eq(branches.id, input.branchId));
+			if (!branch) throw new InvalidMembershipError("Filial não encontrada.");
+			const [company] = await tx
+				.select({ settings: companies.settings })
+				.from(companies)
+				.where(eq(companies.id, companyId));
+			if (!company.settings.uses_branches) {
+				throw new InvalidMembershipError(
+					"A empresa não usa filiais: o vínculo vale para todas.",
+				);
+			}
+			if (!branch.active) {
+				throw new InvalidMembershipError(
+					"Filial inativa não recebe vínculo novo.",
+				);
+			}
+		}
+
+		const token = randomBytes(32).toString("base64url");
+		const [invite] = await tx
+			.insert(invites)
+			.values({
+				companyId,
+				tokenHash: hashToken(token),
+				branchId: input.branchId,
+				roleId: input.roleId,
+				level: input.level,
+				createdBy: userId,
+				expiresAt: sql`now() + interval '48 hours'`,
+			})
+			.returning({ id: invites.id, expiresAt: invites.expiresAt });
+		return { id: invite.id, token, expiresAt: invite.expiresAt };
+	});
+}
+
+/** Revoga um convite que ainda não foi usado. Exige `users.manage`. false se não existe, já foi usado ou revogado. */
+export async function revokeInvite(userId: string, inviteId: string) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "users.manage"))) {
+			throw new PermissionDeniedError("users.manage");
+		}
+		const revoked = await tx
+			.update(invites)
+			.set({ revokedAt: sql`now()` })
+			.where(
+				and(
+					eq(invites.id, inviteId),
+					isNull(invites.usedAt),
+					isNull(invites.revokedAt),
+				),
+			)
+			.returning({ id: invites.id });
+		return revoked.length > 0;
+	});
+}
+
+export type InviteInfo = {
+	companyName: string;
+	usesBranches: boolean;
+	inviterName: string;
+	roleName: string;
+	/** null = todas as filiais. */
+	branchName: string | null;
+	level: Level;
+};
+
+/**
+ * O que o convite oferece, para quem abriu o link (sem login e sem vínculo, então fora do RLS da empresa: vem da
+ * função lona_find_invite). null para token inexistente, vencido, usado ou revogado, sem dizer qual.
+ */
+export async function findInvite(token: string): Promise<InviteInfo | null> {
+	return withContext({}, async (tx) => {
+		const { rows } = await tx.execute<{
+			company_name: string;
+			uses_branches: boolean;
+			inviter_name: string;
+			role_name: string;
+			branch_name: string | null;
+			level: Level;
+		}>(sql`SELECT * FROM lona_find_invite(${hashToken(token)})`);
+		const row = rows[0];
+		return row
+			? {
+					companyName: row.company_name,
+					usesBranches: row.uses_branches,
+					inviterName: row.inviter_name,
+					roleName: row.role_name,
+					branchName: row.branch_name,
+					level: row.level,
+				}
+			: null;
+	});
+}
+
+/** Link vencido, usado, revogado ou inexistente: um erro só, para não vazar qual. */
+export class InvalidInviteError extends Error {}
+
+/** Visitante anônimo da demonstração não aceita convite; precisa criar uma conta. */
+export class AnonymousInviteError extends Error {}
+
+/**
+ * Aceita o convite: cria o vínculo e marca o convite como usado, de forma atômica (ver lona_accept_invite). Devolve a
+ * empresa do vínculo, que passa a ser a empresa ativa (userActiveCompany prefere empresa real a demonstração).
+ */
+export async function acceptInvite(userId: string, token: string) {
+	return withContext({ userId }, async (tx) => {
+		const [user] = await tx
+			.select({ isAnonymous: users.isAnonymous })
+			.from(users)
+			.where(eq(users.id, userId));
+		if (!user || user.isAnonymous) throw new AnonymousInviteError();
+		try {
+			const { rows } = await tx.execute<{ company_id: string | null }>(
+				sql`SELECT lona_accept_invite(${hashToken(token)}) AS company_id`,
+			);
+			const companyId = rows[0].company_id;
+			if (!companyId) throw new InvalidInviteError();
+			return companyId;
+		} catch (error) {
+			if (error instanceof InvalidInviteError) throw error;
+			return translateMembershipError(error);
+		}
 	});
 }

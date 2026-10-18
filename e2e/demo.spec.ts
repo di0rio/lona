@@ -274,8 +274,15 @@ test("settings: Desfazer brings the previous value back", async ({ page }) => {
 	const was = await cash.isChecked();
 	await cash.click();
 	await expect(cash).toBeChecked({ checked: !was });
+	// Espera o PATCH do desfazer terminar: recarregar antes o cancela e o valor volta ao salvo.
+	const undone = page.waitForResponse(
+		(r) =>
+			r.url().endsWith("/api/access/settings") &&
+			r.request().method() === "PATCH",
+	);
 	await page.getByRole("button", { name: "Desfazer" }).click();
 	await expect(cash).toBeChecked({ checked: was });
+	await undone;
 	await page.reload();
 	await expect(
 		page.getByRole("switch", { name: "Caixa obrigatório para vender" }),
@@ -413,4 +420,105 @@ test("users: change a fictitious user's role, save and see it after reload", asy
 	await sheet.getByLabel("Filial").last().selectOption({ label: "Matriz Jaú" });
 	await sheet.getByRole("button", { name: "Salvar" }).click();
 	await expect(sheet.getByRole("alert")).toContainText("já tem vínculo");
+});
+
+test("invites: the owner creates and copies the link, a new person signs up through it and shows up in the users list", async ({
+	page,
+	context,
+	browser,
+}) => {
+	await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+	const company = await dashboardCompany(page);
+
+	await page.getByRole("link", { name: "Usuários" }).click();
+	await page.getByRole("button", { name: "Convidar" }).click();
+	const sheet = page.getByRole("dialog");
+	await expect(sheet.getByText("O Lona não envia e-mail")).toBeVisible();
+	await sheet.getByLabel("Cargo").selectOption({ label: "balconista" });
+	await sheet.getByLabel("Filial").selectOption({ label: "Matriz Jaú" });
+	await sheet.getByRole("button", { name: "Gerar link" }).click();
+
+	const link = await sheet.getByLabel("Link do convite").inputValue();
+	expect(link).toMatch(/\/convite\/[\w-]{43}$/);
+	await sheet.getByRole("button", { name: "Copiar link" }).click();
+	expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(link);
+
+	// Outra pessoa, em outro navegador: abre o link, cria a conta e volta para o convite.
+	const guestContext = await browser.newContext({
+		locale: "pt-BR",
+		extraHTTPHeaders: { "x-forwarded-for": visitorIp() },
+	});
+	try {
+		const guest = await guestContext.newPage();
+		await guest.goto(link);
+		await expect(
+			guest.getByText(
+				/convidou você para Freios Rodovia Ltda como balconista em Matriz Jaú/,
+			),
+		).toBeVisible();
+		await guest.getByRole("button", { name: "Criar conta" }).click();
+		await expect(guest).toHaveURL(/\/cadastrar\?convite=/);
+		await guest.getByLabel("Nome").fill("Convidada de Teste");
+		await guest
+			.getByLabel("E-mail")
+			.fill(`e2e-${randomUUID().slice(0, 8)}@teste.lona.test`);
+		await guest.getByLabel("Senha").fill("senha-de-teste-123");
+		await guest.getByRole("button", { name: "Cadastrar" }).click();
+
+		await expect(guest).toHaveURL(/\/convite\/[\w-]+$/);
+		await sessionUser(guest);
+		await guest.getByRole("button", { name: "Aceitar convite" }).click();
+		await expect(guest).toHaveURL(/\/painel$/);
+		const dashboard = await guest.request.get("/api/access/dashboard");
+		expect(await dashboard.json()).toMatchObject({
+			company: { id: company },
+			role: "balconista",
+		});
+
+		// Link usado: mesma mensagem de qualquer link que não vale.
+		await guest.goto(link);
+		await expect(guest.getByText("Este link não vale mais")).toBeVisible();
+	} finally {
+		await guestContext.close();
+	}
+
+	await page.goto("/painel/usuarios");
+	await expect(
+		page.getByRole("row", { name: /Convidada de Teste/ }),
+	).toContainText("balconista em Matriz Jaú · opera");
+	await expect(page.getByText("Convites pendentes")).toHaveCount(0);
+});
+
+test("invites: a revoked link no longer works", async ({ page, browser }) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.goto("/painel/usuarios");
+	await page.getByRole("button", { name: "Convidar" }).click();
+	const sheet = page.getByRole("dialog");
+	await sheet.getByRole("button", { name: "Gerar link" }).click();
+	const link = await sheet.getByLabel("Link do convite").inputValue();
+	await page.keyboard.press("Escape");
+
+	const pending = page
+		.getByRole("row")
+		.filter({ has: page.getByRole("button", { name: "Revogar" }) });
+	await expect(page.getByText("Convites pendentes")).toBeVisible();
+	await pending.getByRole("button", { name: "Revogar" }).click();
+	await expect(page.getByText("Convites pendentes")).toHaveCount(0);
+
+	const guestContext = await browser.newContext({ locale: "pt-BR" });
+	try {
+		const guest = await guestContext.newPage();
+		await guest.goto(link);
+		await expect(guest.getByText("Este link não vale mais")).toBeVisible();
+	} finally {
+		await guestContext.close();
+	}
 });

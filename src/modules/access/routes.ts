@@ -2,14 +2,18 @@ import { Elysia, t } from "elysia";
 import { auth } from "./auth";
 import { permissions } from "./permissions";
 import {
+	AnonymousInviteError,
+	acceptInvite,
 	addBranch,
 	addRole,
 	companySettings,
+	createInvite,
 	DuplicateBranchError,
 	DuplicateMembershipError,
 	DuplicateRoleError,
 	dashboardSummary,
 	HeadquartersLockedError,
+	InvalidInviteError,
 	InvalidMembershipError,
 	listBranches,
 	listRoles,
@@ -18,6 +22,7 @@ import {
 	PresetRoleError,
 	RoleInUseError,
 	removeRole,
+	revokeInvite,
 	SelfLockoutError,
 	updateBranch,
 	updateCompanySettings,
@@ -48,6 +53,15 @@ const roleBody = t.Object(
 			},
 			{ additionalProperties: false },
 		),
+	},
+	{ additionalProperties: false },
+);
+
+const membershipBody = t.Object(
+	{
+		branchId: t.Union([t.String({ format: "uuid" }), t.Null()]),
+		roleId: t.String({ format: "uuid" }),
+		level: t.UnionEnum(["view", "operate"]),
 	},
 	{ additionalProperties: false },
 );
@@ -322,6 +336,73 @@ export const accessRoutes = new Elysia({ prefix: "/access" })
 						{ maxItems: 50 },
 					),
 				},
+				{ additionalProperties: false },
+			),
+		},
+	)
+	.post(
+		"/invites",
+		async ({ userId, body, status }) => {
+			try {
+				const invite = await createInvite(userId, body);
+				return invite ?? status(404, "Nenhuma empresa ativa.");
+			} catch (error) {
+				if (error instanceof PermissionDeniedError) {
+					return status(403, "Só quem gerencia usuários cria convites.");
+				}
+				if (error instanceof InvalidMembershipError) {
+					return status(409, { message: error.message });
+				}
+				throw error;
+			}
+		},
+		{ session: true, body: membershipBody },
+	)
+	.delete(
+		"/invites/:id",
+		async ({ userId, params, status }) => {
+			try {
+				const found = await revokeInvite(userId, params.id);
+				return found
+					? { id: params.id }
+					: status(404, "Convite não encontrado.");
+			} catch (error) {
+				if (error instanceof PermissionDeniedError) {
+					return status(403, "Só quem gerencia usuários revoga convites.");
+				}
+				throw error;
+			}
+		},
+		{ session: true, params: t.Object({ id: t.String({ format: "uuid" }) }) },
+	)
+	.post(
+		"/invites/accept",
+		async ({ userId, body, status }) => {
+			try {
+				return { companyId: await acceptInvite(userId, body.token) };
+			} catch (error) {
+				if (error instanceof AnonymousInviteError) {
+					return status(403, "Crie uma conta para aceitar o convite.");
+				}
+				// Vencido, usado, revogado e inexistente respondem igual: a resposta não vaza qual.
+				if (error instanceof InvalidInviteError) {
+					return status(404, "Convite não encontrado.");
+				}
+				if (error instanceof DuplicateMembershipError) {
+					return status(409, {
+						message: "Você já tem vínculo nessa filial.",
+					});
+				}
+				if (error instanceof InvalidMembershipError) {
+					return status(409, { message: error.message });
+				}
+				throw error;
+			}
+		},
+		{
+			session: true,
+			body: t.Object(
+				{ token: t.String({ minLength: 1, maxLength: 200 }) },
 				{ additionalProperties: false },
 			),
 		},

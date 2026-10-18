@@ -35,10 +35,12 @@ export function RegisterForm({
 	copy,
 	dashboardHref,
 	signInHref,
+	startDemo,
 }: {
 	copy: Copy;
 	dashboardHref: string;
 	signInHref: string;
+	startDemo: boolean;
 }) {
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function RegisterForm({
 			return;
 		}
 		// Quem se cadastra também recebe uma demonstração de 2 horas.
-		await api().demo.start.post();
+		if (startDemo) await api().demo.start.post();
 		router.push(dashboardHref);
 		router.refresh();
 	}
