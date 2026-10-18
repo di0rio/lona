@@ -6,11 +6,14 @@ import {
 	addRole,
 	companySettings,
 	DuplicateBranchError,
+	DuplicateMembershipError,
 	DuplicateRoleError,
 	dashboardSummary,
 	HeadquartersLockedError,
+	InvalidMembershipError,
 	listBranches,
 	listRoles,
+	listUsers,
 	PermissionDeniedError,
 	PresetRoleError,
 	RoleInUseError,
@@ -19,6 +22,7 @@ import {
 	updateBranch,
 	updateCompanySettings,
 	updateRole,
+	updateUserMemberships,
 } from "./service";
 
 const branchName = t.String({ minLength: 1, maxLength: 80, pattern: "\\S" });
@@ -265,4 +269,60 @@ export const accessRoutes = new Elysia({ prefix: "/access" })
 			}
 		},
 		{ session: true, params: t.Object({ id: t.String({ format: "uuid" }) }) },
+	)
+	.get(
+		"/users",
+		async ({ userId, status }) => {
+			const view = await listUsers(userId);
+			return view ?? status(404, "Nenhuma empresa ativa.");
+		},
+		{ session: true },
+	)
+	.put(
+		"/users/:id/memberships",
+		async ({ userId, params, body, status }) => {
+			try {
+				const found = await updateUserMemberships(
+					userId,
+					params.id,
+					body.memberships,
+				);
+				return found
+					? { id: params.id }
+					: status(404, "Usuário não encontrado.");
+			} catch (error) {
+				if (error instanceof PermissionDeniedError) {
+					return status(403, "Só quem gerencia usuários altera vínculos.");
+				}
+				if (
+					error instanceof SelfLockoutError ||
+					error instanceof DuplicateMembershipError ||
+					error instanceof InvalidMembershipError
+				) {
+					return status(409, { message: error.message });
+				}
+				throw error;
+			}
+		},
+		{
+			session: true,
+			params: t.Object({ id: t.String({ format: "uuid" }) }),
+			body: t.Object(
+				{
+					// Lista vazia tira o usuário da empresa.
+					memberships: t.Array(
+						t.Object(
+							{
+								branchId: t.Union([t.String({ format: "uuid" }), t.Null()]),
+								roleId: t.String({ format: "uuid" }),
+								level: t.UnionEnum(["view", "operate"]),
+							},
+							{ additionalProperties: false },
+						),
+						{ maxItems: 50 },
+					),
+				},
+				{ additionalProperties: false },
+			),
+		},
 	);
