@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import type { Locale } from "@/i18n/generated";
-import { stripLocale } from "@/i18n/path";
+import { localePath, stripLocale } from "@/i18n/path";
 import type { DashboardSummary, ViewAsTarget } from "@/modules/access";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
@@ -21,6 +21,7 @@ type Copy = {
 	search: string;
 	sidebar: {
 		theme: { label: string; light: string; dark: string; system: string };
+		account: string;
 		signOut: string;
 	};
 	commandMenu: {
@@ -127,14 +128,18 @@ export function AppShell({
 		locale,
 		summary.usesBranches,
 	);
+	const accountHref = localePath(locale, "/painel/conta");
 	const title =
-		items.find((item) => item.href === pathname)?.title ?? dashboardTitle;
+		pathname === accountHref
+			? copy.sidebar.account
+			: (items.find((item) => item.href === pathname)?.title ?? dashboardTitle);
 
 	return (
 		<div data-color={summary.company.color}>
 			<SidebarProvider>
 				<AppSidebar
 					companyName={summary.company.name}
+					accountHref={accountHref}
 					copy={copy.sidebar}
 					items={items}
 					signOutTo={signOutTo}

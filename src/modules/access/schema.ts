@@ -5,6 +5,7 @@ import {
 	check,
 	foreignKey,
 	index,
+	integer,
 	jsonb,
 	numeric,
 	pgSchema,
@@ -189,6 +190,7 @@ export const users = auth.table(
 		emailVerified: boolean("email_verified").notNull().default(false),
 		image: text("image"),
 		isAnonymous: boolean("is_anonymous").notNull().default(false),
+		twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
 		// Preenchido só nas pessoas fictícias de uma demonstração (uma cópia por demonstração, para o "ver como").
 		// Apagar a demonstração apaga as pessoas dela.
 		demoCompanyId: uuid("demo_company_id").references(() => companies.id, {
@@ -252,6 +254,23 @@ export const accounts = auth.table(
 	},
 	(t) => [index("accounts_user_id_idx").on(t.userId)],
 );
+
+// Segredo TOTP e códigos de recuperação do plugin twoFactor, ambos criptografados pelo Better Auth. Por usuário, sem company_id.
+export const twoFactor = auth.table("two_factors", {
+	id: id(),
+	secret: text("secret").notNull(),
+	backupCodes: text("backup_codes").notNull(),
+	userId: uuid("user_id")
+		.notNull()
+		.unique()
+		.references(() => users.id, { onDelete: "cascade" }),
+	// false até o usuário confirmar o primeiro código do app.
+	verified: boolean("verified").notNull().default(true),
+	failedVerificationCount: integer("failed_verification_count")
+		.notNull()
+		.default(0),
+	lockedUntil: timestamp("locked_until", { withTimezone: true }),
+});
 
 export const verifications = auth.table(
 	"verifications",
