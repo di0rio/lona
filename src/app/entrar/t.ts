@@ -9,6 +9,10 @@ export default {
 	submit: { pt: "Entrar", en: "Sign in" },
 	submitting: { pt: "Entrando...", en: "Signing in..." },
 	error: { pt: "E-mail ou senha incorretos.", en: "Wrong email or password." },
+	rateLimited: {
+		pt: "Muitas tentativas. Espere um pouco e tente de novo.",
+		en: "Too many attempts. Wait a moment and try again.",
+	},
 	noAccountYet: { pt: "Ainda não tem cadastro?", en: "No registration yet?" },
 	register: { pt: "Cadastrar", en: "Register" },
 	totp: {

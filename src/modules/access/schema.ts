@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+	bigint,
 	boolean,
 	char,
 	check,
@@ -270,6 +271,15 @@ export const twoFactor = auth.table("two_factors", {
 		.notNull()
 		.default(0),
 	lockedUntil: timestamp("locked_until", { withTimezone: true }),
+});
+
+// Contador do rate limit do Better Auth (storage "database"): um registro por IP e rota, compartilhado entre as instâncias.
+export const rateLimit = auth.table("rate_limits", {
+	id: id(),
+	key: text("key").notNull().unique(),
+	count: integer("count").notNull(),
+	// Milissegundos desde 1970 (Date.now()), como o Better Auth grava.
+	lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
 
 export const verifications = auth.table(

@@ -23,6 +23,7 @@ type Copy = {
 	submit: string;
 	submitting: string;
 	error: string;
+	rateLimited: string;
 	noAccountYet: string;
 	register: string;
 	totp: {
@@ -55,12 +56,12 @@ export function SignInForm({
 }) {
 	const router = useRouter();
 	const [step, setStep] = useState<Step>("password");
-	const [error, setError] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		setError(false);
+		setError(null);
 		setSubmitting(true);
 		const data = new FormData(event.currentTarget);
 		const { data: result, error: signInError } = await authClient.signIn.email({
@@ -68,7 +69,7 @@ export function SignInForm({
 			password: String(data.get("password")),
 		});
 		if (signInError) {
-			setError(true);
+			setError(signInError.status === 429 ? copy.rateLimited : copy.error);
 			setSubmitting(false);
 			return;
 		}
@@ -83,7 +84,7 @@ export function SignInForm({
 
 	async function submitCode(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		setError(false);
+		setError(null);
 		setSubmitting(true);
 		const code = String(new FormData(event.currentTarget).get("code")).trim();
 		const { error: codeError } =
@@ -91,7 +92,7 @@ export function SignInForm({
 				? await authClient.twoFactor.verifyBackupCode({ code })
 				: await authClient.twoFactor.verifyTotp({ code });
 		if (codeError) {
-			setError(true);
+			setError(codeError.status === 429 ? copy.rateLimited : copy.codeError);
 			setSubmitting(false);
 			return;
 		}
@@ -124,7 +125,7 @@ export function SignInForm({
 						</div>
 						{error && (
 							<p className="text-destructive text-sm" role="alert">
-								{copy.codeError}
+								{error}
 							</p>
 						)}
 					</CardContent>
@@ -134,7 +135,7 @@ export function SignInForm({
 						</Button>
 						<Button
 							onClick={() => {
-								setError(false);
+								setError(null);
 								setStep(step === "totp" ? "backup" : "totp");
 							}}
 							type="button"
@@ -182,7 +183,7 @@ export function SignInForm({
 					</div>
 					{error && (
 						<p className="text-destructive text-sm" role="alert">
-							{copy.error}
+							{error}
 						</p>
 					)}
 				</CardContent>
