@@ -22,6 +22,14 @@ export default {
 		pt: "Não foi possível cadastrar agora. Tente de novo.",
 		en: "Could not register right now. Try again.",
 	},
+	rateLimited: {
+		pt: "Muitas tentativas. Espere um pouco e tente de novo.",
+		en: "Too many attempts. Wait a moment and try again.",
+	},
+	demoFull: {
+		pt: "Conta criada, mas tem muita gente testando agora. Entre de novo em alguns minutos para começar sua demonstração.",
+		en: "Account created, but many people are trying it right now. Sign in again in a few minutes to start your demonstration.",
+	},
 	alreadyRegistered: { pt: "Já tem cadastro?", en: "Already registered?" },
 	signIn: { pt: "Entrar", en: "Sign in" },
 };

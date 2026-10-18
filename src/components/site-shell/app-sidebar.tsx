@@ -2,6 +2,7 @@
 
 import {
 	ChevronsUpDownIcon,
+	LockKeyholeIcon,
 	LogOutIcon,
 	MonitorIcon,
 	MoonIcon,
@@ -10,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -32,21 +34,30 @@ import {
 } from "@/components/ui/sidebar";
 import { stripLocale } from "@/i18n/path";
 import { authClient } from "@/lib/auth-client";
+import { viewAsStart } from "@/lib/view-as-client";
+import type { ViewAsTarget } from "@/modules/access";
 import type { NavItem } from "./nav-items";
 
 export function AppSidebar({
+	accountHref,
 	companyName,
 	items,
 	user,
 	signOutTo,
+	viewAs,
+	viewingAs,
 	copy,
 }: {
+	accountHref: string;
 	companyName: string;
 	items: NavItem[];
 	user: { name: string; line2: string };
 	signOutTo: string;
+	viewAs: { copy: { menu: string; error: string }; targets: ViewAsTarget[] };
+	viewingAs: boolean;
 	copy: {
 		theme: { label: string; light: string; dark: string; system: string };
+		account: string;
 		signOut: string;
 	};
 }) {
@@ -58,6 +69,11 @@ export function AppSidebar({
 		await authClient.signOut();
 		router.push(signOutTo);
 		router.refresh();
+	}
+
+	async function viewAsPerson(userId: string) {
+		if (await viewAsStart(userId)) router.refresh();
+		else toast(viewAs.copy.error);
 	}
 
 	return (
@@ -117,10 +133,35 @@ export function AppSidebar({
 										</DropdownMenuRadioItem>
 									</DropdownMenuRadioGroup>
 								</DropdownMenuGroup>
+								{viewAs.targets.length > 0 && (
+									<>
+										<DropdownMenuSeparator />
+										<DropdownMenuGroup>
+											<DropdownMenuLabel>{viewAs.copy.menu}</DropdownMenuLabel>
+											{viewAs.targets.map((target) => (
+												<DropdownMenuItem
+													key={target.id}
+													onClick={() => viewAsPerson(target.id)}
+												>
+													{target.name} ({target.role}
+													{target.branch ? `, ${target.branch}` : ""})
+												</DropdownMenuItem>
+											))}
+										</DropdownMenuGroup>
+									</>
+								)}
 								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={signOut} variant="destructive">
-									<LogOutIcon /> {copy.signOut}
+								<DropdownMenuItem render={<Link href={accountHref} />}>
+									<LockKeyholeIcon /> {copy.account}
 								</DropdownMenuItem>
+								{!viewingAs && (
+									<>
+										<DropdownMenuSeparator />
+										<DropdownMenuItem onClick={signOut} variant="destructive">
+											<LogOutIcon /> {copy.signOut}
+										</DropdownMenuItem>
+									</>
+								)}
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</SidebarMenuItem>

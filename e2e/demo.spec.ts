@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import pg from "pg";
+import { totpCode } from "../src/test/totp";
 
 // Conexão do dono só para preparar o cenário (vencer a demonstração) e limpar o que o teste criou.
 const owner = new pg.Pool({
@@ -12,7 +13,7 @@ const owner = new pg.Pool({
 });
 const userIds = new Set<string>();
 
-// O rate limit do Better Auth em /sign-in e /sign-up é por IP (3 por 10s). Os testes rodam em série no
+// O rate limit do Better Auth (src/modules/access/auth.ts) é por IP e rota, e o contador fica no banco. Os testes rodam em série no
 // mesmo processo; sem um IP próprio por teste, todos cairiam no mesmo balde e um bloquearia o outro.
 function visitorIp() {
 	return `10.${randomInt(1, 255)}.${randomInt(1, 255)}.${randomInt(1, 255)}`;
@@ -115,6 +116,26 @@ test("signing up with email and password also gets a demonstration", async ({
 	await sessionUser(page);
 });
 
+test("signing up with the demonstration cap full explains it instead of showing an expired demo", async ({
+	page,
+}) => {
+	await page.route("**/api/demo/start", (route) =>
+		route.fulfill({ status: 503, body: "Muita gente testando agora." }),
+	);
+	await page.goto("/cadastrar");
+	await page.getByLabel("Nome").fill("Pessoa de Teste");
+	await page
+		.getByLabel("E-mail")
+		.fill(`e2e-${randomUUID().slice(0, 8)}@teste.lona.test`);
+	await page.getByLabel("Senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Cadastrar" }).click();
+
+	await expect(
+		page.getByText(/Conta criada, mas tem muita gente testando/),
+	).toBeVisible();
+	await expect(page).toHaveURL(/\/cadastrar$/);
+});
+
 test("sign in with the email and password from the registration", async ({
 	page,
 	context,
@@ -138,6 +159,60 @@ test("sign in with the email and password from the registration", async ({
 	await page.getByLabel("E-mail").fill(email);
 	await page.getByLabel("Senha").fill("senha-de-teste-123");
 	await page.getByRole("button", { name: "Entrar" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
+});
+
+test("turning on two-factor makes the next sign-in ask for the authenticator code", async ({
+	page,
+	context,
+}) => {
+	const email = `e2e-${randomUUID().slice(0, 8)}@teste.lona.test`;
+	await page.goto("/cadastrar");
+	await page.getByLabel("Nome").fill("Pessoa de Teste");
+	await page.getByLabel("E-mail").fill(email);
+	await page.getByLabel("Senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Cadastrar" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.getByRole("button", { name: /Pessoa de Teste/ }).click();
+	await page.getByRole("menuitem", { name: "Segurança da conta" }).click();
+	await expect(page).toHaveURL(/\/painel\/conta$/);
+	await page.getByRole("button", { name: "Ativar" }).click();
+	await page.getByLabel("Sua senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Confirmar" }).click();
+
+	// A chave que o app autenticador receberia pelo QR code; o teste faz o papel do app.
+	const key = (await page.getByTestId("totp-key").textContent()) ?? "";
+	await expect(page.getByRole("img", { name: /QR code/ })).toBeVisible();
+	await expect(
+		page.getByText("Guarde seus códigos de recuperação"),
+	).toHaveCount(0);
+	await page.getByLabel("Código do app").fill(totpCode(key));
+	await page.getByRole("button", { name: "Confirmar" }).click();
+
+	await expect(
+		page.getByText("Guarde seus códigos de recuperação"),
+	).toBeVisible();
+	await page.getByRole("button", { name: "Guardei os códigos" }).click();
+	await expect(
+		page.getByText("Verificação em duas etapas ligada."),
+	).toBeVisible();
+
+	await page.getByRole("button", { name: /Pessoa de Teste/ }).click();
+	await page.getByRole("menuitem", { name: "Sair" }).click();
+	await expect(page).toHaveURL(/\/$/);
+	await context.clearCookies();
+
+	await page.goto("/entrar");
+	await page.getByLabel("E-mail").fill(email);
+	await page.getByLabel("Senha").fill("senha-de-teste-123");
+	await page.getByRole("button", { name: "Entrar" }).click();
+	await expect(page.getByText("Código do app autenticador")).toBeVisible();
+	await expect(page).not.toHaveURL(/\/painel$/);
+	await page.getByLabel("Código", { exact: true }).fill(totpCode(key));
+	await page.getByRole("button", { name: "Verificar" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
 	await expect(page.getByText("Freios Rodovia Ltda").first()).toBeVisible();
 });
@@ -274,13 +349,17 @@ test("settings: Desfazer brings the previous value back", async ({ page }) => {
 	const was = await cash.isChecked();
 	await cash.click();
 	await expect(cash).toBeChecked({ checked: !was });
+	// O "Desfazer" só aparece depois que o primeiro PATCH respondeu; esperar por ele antes garante que o
+	// waitForResponse abaixo pega o PATCH do desfazer, não o primeiro (era isso que deixava o teste instável).
+	const undo = page.getByRole("button", { name: "Desfazer" });
+	await expect(undo).toBeVisible();
 	// Espera o PATCH do desfazer terminar: recarregar antes o cancela e o valor volta ao salvo.
 	const undone = page.waitForResponse(
 		(r) =>
 			r.url().endsWith("/api/access/settings") &&
 			r.request().method() === "PATCH",
 	);
-	await page.getByRole("button", { name: "Desfazer" }).click();
+	await undo.click();
 	await expect(cash).toBeChecked({ checked: was });
 	await undone;
 	await page.reload();
@@ -521,4 +600,28 @@ test("invites: a revoked link no longer works", async ({ page, browser }) => {
 	} finally {
 		await guestContext.close();
 	}
+});
+
+test("view as the counter clerk hides what only the owner sees, and going back brings it back", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await expect(page).toHaveURL(/\/painel$/);
+	await sessionUser(page);
+
+	await page.goto("/painel/cargos");
+	await expect(page.getByRole("button", { name: "Novo cargo" })).toBeVisible();
+
+	await page.getByRole("button", { name: /Visitante/ }).click();
+	await page.getByRole("menuitem", { name: /Paulo Mendes/ }).click();
+
+	const banner = page.getByRole("status").filter({ hasText: "Você está como" });
+	await expect(banner).toContainText("Paulo Mendes (balconista, Matriz Jaú)");
+	await expect(page.getByRole("button", { name: "Novo cargo" })).toHaveCount(0);
+	await expect(page.getByText(/Só quem gerencia cargos/)).toBeVisible();
+
+	await banner.getByRole("button", { name: "Voltar pro dono" }).click();
+	await expect(banner).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Novo cargo" })).toBeVisible();
 });

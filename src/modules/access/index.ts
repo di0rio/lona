@@ -63,3 +63,4 @@ export {
 	userActiveCompany,
 } from "./service";
 export { sessionUser } from "./session";
+export { type ViewAsTarget, viewAsTargets } from "./view-as";

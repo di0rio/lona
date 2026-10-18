@@ -22,6 +22,27 @@
       "when": 1792207478886,
       "tag": "0002_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792209050031,
+      "tag": "0003_view_as",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792210236743,
+      "tag": "0004_two_factor",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792211413834,
+      "tag": "0005_anti_abuse",
+      "breakpoints": true
     }
   ]
 }

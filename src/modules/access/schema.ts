@@ -1,10 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
+	bigint,
 	boolean,
 	char,
 	check,
 	foreignKey,
 	index,
+	integer,
 	jsonb,
 	numeric,
 	pgSchema,
@@ -189,12 +191,21 @@ export const users = auth.table(
 		emailVerified: boolean("email_verified").notNull().default(false),
 		image: text("image"),
 		isAnonymous: boolean("is_anonymous").notNull().default(false),
+		twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+		// Preenchido só nas pessoas fictícias de uma demonstração (uma cópia por demonstração, para o "ver como").
+		// Apagar a demonstração apaga as pessoas dela.
+		demoCompanyId: uuid("demo_company_id").references(() => companies.id, {
+			onDelete: "cascade",
+		}),
 		createdAt: timestampColumn("created_at"),
 		updatedAt: timestampColumn("updated_at").$onUpdate(() => new Date()),
 	},
 	(t) => [
 		// Limpeza dos visitantes anônimos antigos.
 		index("users_anonymous_idx").on(t.createdAt).where(sql`${t.isAnonymous}`),
+		index("users_demo_company_id_idx")
+			.on(t.demoCompanyId)
+			.where(sql`${t.demoCompanyId} IS NOT NULL`),
 	],
 );
 
@@ -211,6 +222,10 @@ export const sessions = auth.table(
 		userId: uuid("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
+		// "Ver como": o dono da demonstração que abriu esta sessão. Só o servidor grava; é daqui que o "voltar" sai.
+		impersonatedBy: uuid("impersonated_by").references(() => users.id, {
+			onDelete: "cascade",
+		}),
 	},
 	(t) => [index("sessions_user_id_idx").on(t.userId)],
 );
@@ -240,6 +255,32 @@ export const accounts = auth.table(
 	},
 	(t) => [index("accounts_user_id_idx").on(t.userId)],
 );
+
+// Segredo TOTP e códigos de recuperação do plugin twoFactor, ambos criptografados pelo Better Auth. Por usuário, sem company_id.
+export const twoFactor = auth.table("two_factors", {
+	id: id(),
+	secret: text("secret").notNull(),
+	backupCodes: text("backup_codes").notNull(),
+	userId: uuid("user_id")
+		.notNull()
+		.unique()
+		.references(() => users.id, { onDelete: "cascade" }),
+	// false até o usuário confirmar o primeiro código do app.
+	verified: boolean("verified").notNull().default(true),
+	failedVerificationCount: integer("failed_verification_count")
+		.notNull()
+		.default(0),
+	lockedUntil: timestamp("locked_until", { withTimezone: true }),
+});
+
+// Contador do rate limit do Better Auth (storage "database"): um registro por IP e rota, compartilhado entre as instâncias.
+export const rateLimit = auth.table("rate_limits", {
+	id: id(),
+	key: text("key").notNull().unique(),
+	count: integer("count").notNull(),
+	// Milissegundos desde 1970 (Date.now()), como o Better Auth grava.
+	lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
 
 export const verifications = auth.table(
 	"verifications",

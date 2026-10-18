@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { app } from "@/api";
-import { createCompany, createMembership } from "@/modules/access";
+import { auth, createCompany, createMembership } from "@/modules/access";
 import {
 	asApp,
 	connectAsApp,
@@ -10,8 +11,25 @@ import {
 	drizzleAsOwner,
 	hasDatabase,
 } from "@/test/database";
-import { deleteExpiredDemos, resetDemo, startDemo } from "./service";
+import {
+	DemoLimitReachedError,
+	deleteExpiredDemos,
+	resetDemo,
+	startDemo,
+} from "./service";
 import { seedTemplate } from "./template";
+
+// BotID só existe na Vercel; aqui cada teste decide se o visitante é robô.
+const { isBotMock } = vi.hoisted(() => ({
+	isBotMock: vi.fn(async () => false),
+}));
+vi.mock("@/lib/bot", () => ({ isBot: isBotMock }));
+
+// Deixa o teste forçar o teto estourado na rota; fora isso é o startDemo de verdade.
+vi.mock("./service", async (importOriginal) => {
+	const original = await importOriginal<typeof import("./service")>();
+	return { ...original, startDemo: vi.fn(original.startDemo) };
+});
 
 // Tabelas que a cópia reproduz, na ordem das chaves estrangeiras, com a coluna que as liga à empresa.
 const idsOf = (pool: pg.Pool, table: string, companyId: string) =>
@@ -326,6 +344,133 @@ describe.skipIf(!hasDatabase)("demo", () => {
 
 		expect(await resetDemo(user)).toBeNull();
 		expect(await exists(real.companyId)).toBe(true);
+	});
+
+	describe("ceiling of active demos", () => {
+		const liveDemos = async () =>
+			(
+				await owner.query<{ n: number }>(
+					"SELECT count(*)::int AS n FROM companies WHERE NOT is_template AND expires_at > now()",
+				)
+			).rows[0].n;
+
+		test("refuses when the ceiling is reached and creates below it", async () => {
+			const live = await liveDemos();
+			const visitor = await newVisitor();
+
+			await expect(startDemo(visitor, live)).rejects.toBeInstanceOf(
+				DemoLimitReachedError,
+			);
+			const { rowCount } = await owner.query(
+				"SELECT 1 FROM memberships WHERE user_id = $1",
+				[visitor],
+			);
+			expect(rowCount).toBe(0);
+
+			companyIds.push(await startDemo(visitor, live + 1));
+		});
+
+		test("an expired demo does not count toward the ceiling", async () => {
+			const live = await liveDemos();
+			const old = await startDemo(await newVisitor());
+			companyIds.push(old);
+			await owner.query(
+				"UPDATE companies SET expires_at = now() - interval '1 minute' WHERE id = $1",
+				[old],
+			);
+
+			companyIds.push(await startDemo(await newVisitor(), live + 1));
+		});
+
+		test("simultaneous creations do not pass the ceiling", async () => {
+			const live = await liveDemos();
+			const visitors = await Promise.all([
+				newVisitor(),
+				newVisitor(),
+				newVisitor(),
+			]);
+
+			const results = await Promise.allSettled(
+				visitors.map((visitor) => startDemo(visitor, live + 1)),
+			);
+
+			const created = results.filter((r) => r.status === "fulfilled");
+			expect(created).toHaveLength(1);
+			companyIds.push(created[0].value);
+			for (const r of results) {
+				if (r.status === "rejected")
+					expect(r.reason).toBeInstanceOf(DemoLimitReachedError);
+			}
+		});
+
+		test("reset that hits the ceiling keeps the demo the user already had", async () => {
+			const visitor = await newVisitor();
+			const current = await startDemo(visitor);
+			companyIds.push(current);
+			// Sem o teto da própria demonstração (apagada no reset), ainda não cabe: desfaz tudo.
+			await expect(resetDemo(visitor, 0)).rejects.toBeInstanceOf(
+				DemoLimitReachedError,
+			);
+			expect(await exists(current)).toBe(true);
+		});
+	});
+
+	describe("POST /api/demo/start", () => {
+		const signUp = async () => {
+			const response = await auth.api.signUpEmail({
+				body: {
+					name: "Visitante de teste",
+					email: `teto-${randomUUID().slice(0, 8)}@teste.lona.test`,
+					password: "senha-de-teste-123",
+				},
+				asResponse: true,
+			});
+			const { user } = (await response.json()) as { user: { id: string } };
+			userIds.push(user.id);
+			const cookie = response.headers
+				.getSetCookie()
+				.map((c) => c.split(";")[0])
+				.join("; ");
+			return { id: user.id, cookie };
+		};
+
+		const start = (cookie: string) =>
+			app.handle(
+				new Request("http://localhost/api/demo/start", {
+					method: "POST",
+					headers: { cookie },
+				}),
+			);
+
+		test("a bot is refused with 403 and gets no demo", async () => {
+			const visitor = await signUp();
+			isBotMock.mockResolvedValueOnce(true);
+
+			expect((await start(visitor.cookie)).status).toBe(403);
+			const { rowCount } = await owner.query(
+				"SELECT 1 FROM memberships WHERE user_id = $1",
+				[visitor.id],
+			);
+			expect(rowCount).toBe(0);
+		});
+
+		test("a human gets the demo", async () => {
+			const visitor = await signUp();
+
+			const response = await start(visitor.cookie);
+
+			expect(response.status).toBe(200);
+			companyIds.push(
+				((await response.json()) as { companyId: string }).companyId,
+			);
+		});
+
+		test("the ceiling reached answers 503", async () => {
+			const visitor = await signUp();
+			vi.mocked(startDemo).mockRejectedValueOnce(new DemoLimitReachedError());
+
+			expect((await start(visitor.cookie)).status).toBe(503);
+		});
 	});
 
 	describe("daily routine /api/cron/clean", () => {
