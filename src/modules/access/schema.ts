@@ -1,10 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
+	bigint,
 	boolean,
 	char,
 	check,
 	foreignKey,
 	index,
+	integer,
 	jsonb,
 	numeric,
 	pgSchema,
@@ -189,12 +191,21 @@ export const users = auth.table(
 		emailVerified: boolean("email_verified").notNull().default(false),
 		image: text("image"),
 		isAnonymous: boolean("is_anonymous").notNull().default(false),
+		twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+		// Preenchido só nas pessoas fictícias de uma demonstração (uma cópia por demonstração, para o "ver como").
+		// Apagar a demonstração apaga as pessoas dela.
+		demoCompanyId: uuid("demo_company_id").references(() => companies.id, {
+			onDelete: "cascade",
+		}),
 		createdAt: timestampColumn("created_at"),
 		updatedAt: timestampColumn("updated_at").$onUpdate(() => new Date()),
 	},
 	(t) => [
 		// Limpeza dos visitantes anônimos antigos.
 		index("users_anonymous_idx").on(t.createdAt).where(sql`${t.isAnonymous}`),
+		index("users_demo_company_id_idx")
+			.on(t.demoCompanyId)
+			.where(sql`${t.demoCompanyId} IS NOT NULL`),
 	],
 );
 
@@ -211,6 +222,10 @@ export const sessions = auth.table(
 		userId: uuid("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
+		// "Ver como": o dono da demonstração que abriu esta sessão. Só o servidor grava; é daqui que o "voltar" sai.
+		impersonatedBy: uuid("impersonated_by").references(() => users.id, {
+			onDelete: "cascade",
+		}),
 	},
 	(t) => [index("sessions_user_id_idx").on(t.userId)],
 );
@@ -240,6 +255,32 @@ export const accounts = auth.table(
 	},
 	(t) => [index("accounts_user_id_idx").on(t.userId)],
 );
+
+// Segredo TOTP e códigos de recuperação do plugin twoFactor, ambos criptografados pelo Better Auth. Por usuário, sem company_id.
+export const twoFactor = auth.table("two_factors", {
+	id: id(),
+	secret: text("secret").notNull(),
+	backupCodes: text("backup_codes").notNull(),
+	userId: uuid("user_id")
+		.notNull()
+		.unique()
+		.references(() => users.id, { onDelete: "cascade" }),
+	// false até o usuário confirmar o primeiro código do app.
+	verified: boolean("verified").notNull().default(true),
+	failedVerificationCount: integer("failed_verification_count")
+		.notNull()
+		.default(0),
+	lockedUntil: timestamp("locked_until", { withTimezone: true }),
+});
+
+// Contador do rate limit do Better Auth (storage "database"): um registro por IP e rota, compartilhado entre as instâncias.
+export const rateLimit = auth.table("rate_limits", {
+	id: id(),
+	key: text("key").notNull().unique(),
+	count: integer("count").notNull(),
+	// Milissegundos desde 1970 (Date.now()), como o Better Auth grava.
+	lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
 
 export const verifications = auth.table(
 	"verifications",
@@ -287,5 +328,47 @@ export const memberships = pgTable(
 		// Exceção à regra de partir da empresa: achar as empresas de quem acabou de entrar.
 		index("memberships_user_id_idx").on(t.userId, t.companyId),
 		check("memberships_level_valid", sql`${t.level} IN ('view', 'operate')`),
+	],
+);
+
+// Convite de usuário por link único. No banco fica só o hash (sha256) do token; o token aparece uma vez, na criação.
+export const invites = pgTable(
+	"invites",
+	{
+		id: id(),
+		companyId: uuid("company_id")
+			.notNull()
+			.references(() => companies.id, { onDelete: "cascade" }),
+		tokenHash: text("token_hash").notNull(),
+		// O vínculo que o convite cria. null = todas as filiais (ADR 0006).
+		branchId: uuid("branch_id"),
+		roleId: uuid("role_id").notNull(),
+		level: text("level").$type<Level>().notNull(),
+		createdBy: uuid("created_by")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		// Marcados ao aceitar e ao revogar; convite pendente tem os dois nulos.
+		usedAt: timestamp("used_at", { withTimezone: true }),
+		usedBy: uuid("used_by").references(() => users.id, {
+			onDelete: "set null",
+		}),
+		revokedAt: timestamp("revoked_at", { withTimezone: true }),
+		createdAt: timestampColumn("created_at"),
+	},
+	(t) => [
+		// Apagar a filial ou o cargo leva os convites junto: o vínculo que eles criariam deixou de existir.
+		foreignKey({
+			columns: [t.companyId, t.branchId],
+			foreignColumns: [branches.companyId, branches.id],
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [t.companyId, t.roleId],
+			foreignColumns: [roles.companyId, roles.id],
+		}).onDelete("cascade"),
+		// Exceção à regra de partir da empresa: quem abre o link ainda não tem empresa, só o token.
+		unique("invites_token_hash_unq").on(t.tokenHash),
+		index("invites_company_id_idx").on(t.companyId, t.expiresAt),
+		check("invites_level_valid", sql`${t.level} IN ('view', 'operate')`),
 	],
 );

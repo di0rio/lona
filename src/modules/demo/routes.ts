@@ -1,7 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 import { Elysia } from "elysia";
+import { isBot } from "@/lib/bot";
 import { session } from "@/modules/access";
-import { deleteExpiredDemos, resetDemo, startDemo } from "./service";
+import {
+	DemoLimitReachedError,
+	deleteExpiredDemos,
+	resetDemo,
+	startDemo,
+} from "./service";
 
 // A Vercel chama a rotina agendada com `Authorization: Bearer <CRON_SECRET>`.
 function cronAuthorized(authorization: string | undefined) {
@@ -16,16 +22,25 @@ function cronAuthorized(authorization: string | undefined) {
 
 export const demoRoutes = new Elysia()
 	.use(session)
+	// Teto de demonstrações vivas atingido (ao iniciar ou ao resetar): 503, e a tela explica.
+	.onError(({ error, status }) => {
+		if (error instanceof DemoLimitReachedError)
+			return status(503, error.message);
+	})
 	.post(
 		"/demo/start",
-		async ({ userId }) => ({
-			companyId: await startDemo(userId),
-		}),
+		async ({ userId, viewingAs, status }) => {
+			if (viewingAs) return status(403, "Volte pro dono antes.");
+			if (await isBot()) return status(403, "Acesso negado.");
+			return { companyId: await startDemo(userId) };
+		},
 		{ session: true },
 	)
 	.post(
 		"/demo/reset",
-		async ({ userId, status }) => {
+		async ({ userId, viewingAs, status }) => {
+			// A pessoa fictícia não apaga a demonstração do dono nem ganha uma própria.
+			if (viewingAs) return status(403, "Volte pro dono antes.");
 			const companyId = await resetDemo(userId);
 			return companyId
 				? { companyId }

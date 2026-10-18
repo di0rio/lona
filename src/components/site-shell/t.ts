@@ -15,6 +15,7 @@ export default {
 			dark: { pt: "Escuro", en: "Dark" },
 			system: { pt: "Sistema", en: "System" },
 		},
+		account: { pt: "Segurança da conta", en: "Account security" },
 		signOut: { pt: "Sair", en: "Sign out" },
 	},
 	commandMenu: {
@@ -42,6 +43,15 @@ export default {
 			en: "Could not reset right now. Try again.",
 		},
 	},
+	viewAs: {
+		menu: { pt: "Ver como", en: "View as" },
+		prefix: { pt: "Você está como", en: "You are viewing as" },
+		back: { pt: "Voltar pro dono", en: "Back to the owner" },
+		error: {
+			pt: "Não foi possível agora. Tente de novo.",
+			en: "Could not do that right now. Try again.",
+		},
+	},
 	expired: {
 		title: { pt: "Sua demonstração acabou", en: "Your demonstration is over" },
 		text: {
@@ -56,6 +66,14 @@ export default {
 		error: {
 			pt: "Não foi possível começar agora. Tente de novo.",
 			en: "Could not start right now. Try again.",
+		},
+		rateLimited: {
+			pt: "Muitas tentativas. Espere um pouco e tente de novo.",
+			en: "Too many attempts. Wait a moment and try again.",
+		},
+		full: {
+			pt: "Muita gente testando agora. Tente de novo em alguns minutos.",
+			en: "Lots of people are testing right now. Try again in a few minutes.",
 		},
 	},
 };

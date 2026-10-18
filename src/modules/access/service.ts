@@ -1,7 +1,19 @@
-import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { createHash, randomBytes } from "node:crypto";
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	gt,
+	inArray,
+	isNull,
+	or,
+	sql,
+} from "drizzle-orm";
 import { type Transaction, withContext } from "@/db/client";
 import { branchCnpj, formatCnpj } from "./cnpj";
-import type { Permission } from "./permissions";
+import { type Limit, limits, type Permission } from "./permissions";
 import { readyRoles } from "./ready-roles";
 import {
 	branches,
@@ -9,11 +21,13 @@ import {
 	type CompanySettings,
 	companies,
 	defaultSettings,
+	invites,
 	type Level,
 	memberships,
 	roleLimits,
 	rolePermissions,
 	roles,
+	users,
 } from "./schema";
 
 type Writable = Pick<Transaction, "insert">;
@@ -495,6 +509,657 @@ export async function updateBranch(
 			return updated.length > 0;
 		} catch (error) {
 			return translateDuplicate(error);
+		}
+	});
+}
+
+export type RoleInput = {
+	name: string;
+	permissions: Permission[];
+	/** null = sem limite. */
+	limits: Record<Limit, number | null>;
+};
+
+export type RoleRow = RoleInput & {
+	id: string;
+	isPreset: boolean;
+	/** Quantos vínculos usam o cargo. */
+	members: number;
+};
+
+export type RolesView = { roles: RoleRow[]; canManage: boolean };
+
+/** Cargos da empresa ativa (os prontos primeiro), com permissões, limites e quantos vínculos usam cada um. */
+export async function listRoles(userId: string): Promise<RolesView | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		const rows = await tx
+			.select()
+			.from(roles)
+			.orderBy(desc(roles.isPreset), asc(roles.name));
+		const granted = await tx.select().from(rolePermissions);
+		const limitRows = await tx.select().from(roleLimits);
+		const used = await tx
+			.select({ roleId: memberships.roleId, total: count() })
+			.from(memberships)
+			.groupBy(memberships.roleId);
+		return {
+			roles: rows.map((row) => ({
+				id: row.id,
+				name: row.name,
+				isPreset: row.isPreset,
+				members: used.find((u) => u.roleId === row.id)?.total ?? 0,
+				permissions: granted
+					.filter((g) => g.roleId === row.id)
+					.map((g) => g.permission as Permission),
+				// Sem linha o cargo não tem folga nenhuma (0); NULL é sem limite.
+				limits: Object.fromEntries(
+					limits.map((key) => {
+						const found = limitRows.find(
+							(l) => l.roleId === row.id && l.limitKey === key,
+						);
+						return [key, found ? found.value : 0];
+					}),
+				) as Record<Limit, number | null>,
+			})),
+			canManage: await hasPermission(tx, userId, companyId, "roles.manage"),
+		};
+	});
+}
+
+/** Já existe cargo com esse nome na empresa; o banco garante (unique), aqui só traduzimos. */
+export class DuplicateRoleError extends Error {
+	constructor() {
+		super("Já existe cargo com esse nome.");
+	}
+}
+
+/** O cargo é usado por algum vínculo (FK restrict de memberships). */
+export class RoleInUseError extends Error {
+	constructor() {
+		super("Há vínculos usando este cargo.");
+	}
+}
+
+/** Os cargos prontos podem ser editados, mas não apagados. */
+/** Quem edita não pode tirar `roles.manage` do próprio cargo: a empresa ficaria sem ninguém para desfazer. */
+export class SelfLockoutError extends Error {
+	constructor(
+		message = "Você não pode tirar de você mesmo a permissão de gerenciar cargos.",
+	) {
+		super(message);
+	}
+}
+
+export class PresetRoleError extends Error {
+	constructor() {
+		super("Cargo pronto não pode ser apagado.");
+	}
+}
+
+/** Traduz unicidade (23505) e cargo em uso (FK restrict) do Postgres; qualquer outro erro segue como está. */
+function translateRoleError(error: unknown): never {
+	const cause = (error as { cause?: unknown }).cause ?? error;
+	const { code } = cause as { code?: string };
+	if (code === "23505") throw new DuplicateRoleError();
+	// ON DELETE RESTRICT levanta 23001; NO ACTION levantaria 23503.
+	if (code === "23001" || code === "23503") throw new RoleInUseError();
+	throw error;
+}
+
+async function writeRoleGrants(
+	tx: Transaction,
+	companyId: string,
+	roleId: string,
+	data: RoleInput,
+) {
+	await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, roleId));
+	await tx.delete(roleLimits).where(eq(roleLimits.roleId, roleId));
+	if (data.permissions.length > 0) {
+		await tx.insert(rolePermissions).values(
+			data.permissions.map((permission) => ({
+				companyId,
+				roleId,
+				permission,
+			})),
+		);
+	}
+	await tx.insert(roleLimits).values(
+		limits.map((limitKey) => ({
+			companyId,
+			roleId,
+			limitKey,
+			value: data.limits[limitKey],
+		})),
+	);
+}
+
+/** Cria um cargo (não pronto) na empresa ativa. Exige `roles.manage`. */
+export async function addRole(userId: string, data: RoleInput) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "roles.manage"))) {
+			throw new PermissionDeniedError("roles.manage");
+		}
+		try {
+			const [role] = await tx
+				.insert(roles)
+				.values({ companyId, name: data.name.trim() })
+				.returning({ id: roles.id });
+			await writeRoleGrants(tx, companyId, role.id, data);
+			return role.id;
+		} catch (error) {
+			return translateRoleError(error);
+		}
+	});
+}
+
+/** Troca nome, permissões e limites de um cargo (pronto ou criado). Exige `roles.manage`. false se não existe. */
+export async function updateRole(
+	userId: string,
+	roleId: string,
+	data: RoleInput,
+) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "roles.manage"))) {
+			throw new PermissionDeniedError("roles.manage");
+		}
+		if (!data.permissions.includes("roles.manage")) {
+			const [own] = await tx
+				.select({ id: memberships.id })
+				.from(memberships)
+				.where(
+					and(
+						eq(memberships.companyId, companyId),
+						eq(memberships.userId, userId),
+						eq(memberships.roleId, roleId),
+					),
+				)
+				.limit(1);
+			if (own) throw new SelfLockoutError();
+		}
+		try {
+			const updated = await tx
+				.update(roles)
+				.set({ name: data.name.trim() })
+				.where(eq(roles.id, roleId))
+				.returning({ id: roles.id });
+			if (updated.length === 0) return false;
+			await writeRoleGrants(tx, companyId, roleId, data);
+			return true;
+		} catch (error) {
+			return translateRoleError(error);
+		}
+	});
+}
+
+/** Apaga um cargo criado que nenhum vínculo usa. Exige `roles.manage`. false se não existe. */
+export async function removeRole(userId: string, roleId: string) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "roles.manage"))) {
+			throw new PermissionDeniedError("roles.manage");
+		}
+		const [role] = await tx
+			.select({ isPreset: roles.isPreset })
+			.from(roles)
+			.where(eq(roles.id, roleId));
+		if (!role) return false;
+		if (role.isPreset) throw new PresetRoleError();
+		try {
+			await tx.delete(roles).where(eq(roles.id, roleId));
+			return true;
+		} catch (error) {
+			return translateRoleError(error);
+		}
+	});
+}
+
+export type MembershipInput = {
+	/** null = todas as filiais. */
+	branchId: string | null;
+	roleId: string;
+	level: Level;
+};
+
+export type MembershipRow = MembershipInput & {
+	/** null quando é "todas" ou quando o usuário não enxerga essa filial. */
+	branchName: string | null;
+	roleName: string;
+};
+
+export type UserRow = {
+	id: string;
+	name: string;
+	/** null para visitante anônimo (o e-mail dele é só um marcador interno). */
+	email: string | null;
+	memberships: MembershipRow[];
+};
+
+export type InviteRow = {
+	id: string;
+	createdByName: string;
+	branchId: string | null;
+	/** null quando é "todas" ou quando o usuário não enxerga essa filial. */
+	branchName: string | null;
+	roleName: string;
+	level: Level;
+	expiresAt: Date;
+};
+
+export type UsersView = {
+	users: UserRow[];
+	/** Convites que ainda valem; só quem gerencia usuários os vê. */
+	invites: InviteRow[];
+	/** Filiais que o usuário enxerga, para escolher no vínculo. */
+	branches: { id: string; name: string; active: boolean }[];
+	roles: { id: string; name: string }[];
+	usesBranches: boolean;
+	canManage: boolean;
+};
+
+/**
+ * Usuários da empresa ativa (quem tem ao menos um vínculo nela) com seus vínculos. auth.users não tem RLS,
+ * então o recorte vem de partir dos vínculos, que têm.
+ */
+export async function listUsers(userId: string): Promise<UsersView | null> {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		const [company] = await tx
+			.select({ settings: companies.settings })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		const rows = await tx
+			.select({
+				userId: users.id,
+				name: users.name,
+				email: users.email,
+				isAnonymous: users.isAnonymous,
+				branchId: memberships.branchId,
+				branchName: branches.name,
+				roleId: memberships.roleId,
+				roleName: roles.name,
+				level: memberships.level,
+			})
+			.from(memberships)
+			.innerJoin(users, eq(users.id, memberships.userId))
+			.innerJoin(
+				roles,
+				and(
+					eq(roles.companyId, memberships.companyId),
+					eq(roles.id, memberships.roleId),
+				),
+			)
+			.leftJoin(
+				branches,
+				and(
+					eq(branches.companyId, memberships.companyId),
+					eq(branches.id, memberships.branchId),
+				),
+			)
+			.where(eq(memberships.companyId, companyId))
+			.orderBy(
+				asc(users.name),
+				asc(users.id),
+				sql`${memberships.branchId} IS NOT NULL`,
+				asc(branches.name),
+			);
+
+		// E-mail é dado pessoal (LGPD): só quem gerencia usuários vê.
+		const canManage = await hasPermission(
+			tx,
+			userId,
+			companyId,
+			"users.manage",
+		);
+		const byUser = new Map<string, UserRow>();
+		for (const row of rows) {
+			const user = byUser.get(row.userId) ?? {
+				id: row.userId,
+				name: row.name,
+				email: canManage && !row.isAnonymous ? row.email : null,
+				memberships: [],
+			};
+			user.memberships.push({
+				branchId: row.branchId,
+				branchName: row.branchName,
+				roleId: row.roleId,
+				roleName: row.roleName,
+				level: row.level,
+			});
+			byUser.set(row.userId, user);
+		}
+
+		const pending = canManage
+			? await tx
+					.select({
+						id: invites.id,
+						createdByName: users.name,
+						branchId: invites.branchId,
+						branchName: branches.name,
+						roleName: roles.name,
+						level: invites.level,
+						expiresAt: invites.expiresAt,
+					})
+					.from(invites)
+					.innerJoin(users, eq(users.id, invites.createdBy))
+					.innerJoin(
+						roles,
+						and(
+							eq(roles.companyId, invites.companyId),
+							eq(roles.id, invites.roleId),
+						),
+					)
+					.leftJoin(
+						branches,
+						and(
+							eq(branches.companyId, invites.companyId),
+							eq(branches.id, invites.branchId),
+						),
+					)
+					.where(
+						and(
+							eq(invites.companyId, companyId),
+							isNull(invites.usedAt),
+							isNull(invites.revokedAt),
+							gt(invites.expiresAt, sql`now()`),
+						),
+					)
+					.orderBy(asc(invites.expiresAt), asc(invites.id))
+			: [];
+
+		return {
+			users: [...byUser.values()],
+			invites: pending,
+			branches: await tx
+				.select({
+					id: branches.id,
+					name: branches.name,
+					active: branches.active,
+				})
+				.from(branches)
+				.orderBy(desc(branches.isHeadquarters), asc(branches.name)),
+			roles: await tx
+				.select({ id: roles.id, name: roles.name })
+				.from(roles)
+				.orderBy(desc(roles.isPreset), asc(roles.name)),
+			usesBranches: company.settings.uses_branches,
+			canManage,
+		};
+	});
+}
+
+/** O mesmo usuário e filial já têm vínculo; o banco garante (unique), aqui só traduzimos. */
+export class DuplicateMembershipError extends Error {
+	constructor() {
+		super(
+			"Esta pessoa já tem vínculo nessa filial. Use um vínculo só por filial.",
+		);
+	}
+}
+
+/** Cargo ou filial inexistente, filial inativa recebendo vínculo novo, ou filial escolhida numa empresa sem filiais. */
+export class InvalidMembershipError extends Error {}
+
+/** Traduz unicidade (23505) e chave estrangeira (23503) de memberships; qualquer outro erro segue como está. */
+function translateMembershipError(error: unknown): never {
+	const cause = (error as { cause?: unknown }).cause ?? error;
+	const { code } = cause as { code?: string };
+	if (code === "23505") throw new DuplicateMembershipError();
+	if (code === "23503") {
+		throw new InvalidMembershipError("Cargo ou filial não encontrado.");
+	}
+	throw error;
+}
+
+/**
+ * Troca todos os vínculos de um usuário pela lista enviada (lista vazia tira o usuário da empresa). Exige
+ * `users.manage`. false se o usuário não tem vínculo na empresa. Ninguém fica sem `users.manage` por conta própria.
+ * Escreve só a diferença (insere, atualiza, depois apaga) para o próprio vínculo do usuário nunca sumir no meio:
+ * o RLS confere o vínculo a cada comando.
+ */
+export async function updateUserMemberships(
+	userId: string,
+	targetId: string,
+	items: MembershipInput[],
+) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "users.manage"))) {
+			throw new PermissionDeniedError("users.manage");
+		}
+		const current = await tx
+			.select({ id: memberships.id, branchId: memberships.branchId })
+			.from(memberships)
+			.where(
+				and(
+					eq(memberships.companyId, companyId),
+					eq(memberships.userId, targetId),
+				),
+			);
+		if (current.length === 0) return false;
+
+		if (targetId === userId) {
+			const [keeps] = await tx
+				.select({ one: sql<number>`1` })
+				.from(rolePermissions)
+				.where(
+					and(
+						inArray(
+							rolePermissions.roleId,
+							items.map((i) => i.roleId),
+						),
+						eq(rolePermissions.permission, "users.manage"),
+					),
+				)
+				.limit(1);
+			if (!keeps) {
+				throw new SelfLockoutError(
+					"Você não pode ficar sem a permissão de gerenciar usuários.",
+				);
+			}
+		}
+
+		const [company] = await tx
+			.select({ settings: companies.settings })
+			.from(companies)
+			.where(eq(companies.id, companyId));
+		const branchRows = await tx
+			.select({ id: branches.id, active: branches.active })
+			.from(branches);
+		const roleIds = new Set(
+			(await tx.select({ id: roles.id }).from(roles)).map((r) => r.id),
+		);
+		const linked = new Set(current.map((c) => c.branchId));
+		for (const item of items) {
+			if (!roleIds.has(item.roleId)) {
+				throw new InvalidMembershipError("Cargo não encontrado.");
+			}
+			if (item.branchId === null) continue;
+			const branch = branchRows.find((b) => b.id === item.branchId);
+			if (!branch) throw new InvalidMembershipError("Filial não encontrada.");
+			if (!company.settings.uses_branches) {
+				throw new InvalidMembershipError(
+					"A empresa não usa filiais: o vínculo vale para todas.",
+				);
+			}
+			// Vínculo que já existia numa filial depois inativada pode continuar (e trocar de cargo ou nível).
+			if (!branch.active && !linked.has(item.branchId)) {
+				throw new InvalidMembershipError(
+					"Filial inativa não recebe vínculo novo.",
+				);
+			}
+		}
+
+		const existing = new Map(current.map((c) => [c.branchId, c.id]));
+		const kept: string[] = [];
+		try {
+			for (const item of items) {
+				const id = existing.get(item.branchId);
+				// Repetida na lista: cai no insert e o unique do banco recusa.
+				if (id && !kept.includes(id)) {
+					kept.push(id);
+					await tx
+						.update(memberships)
+						.set({ roleId: item.roleId, level: item.level })
+						.where(eq(memberships.id, id));
+				} else {
+					await tx
+						.insert(memberships)
+						.values({ companyId, userId: targetId, ...item });
+				}
+			}
+			const removed = current
+				.map((c) => c.id)
+				.filter((id) => !kept.includes(id));
+			if (removed.length > 0) {
+				await tx.delete(memberships).where(inArray(memberships.id, removed));
+			}
+		} catch (error) {
+			return translateMembershipError(error);
+		}
+		return true;
+	});
+}
+
+/** Hash sha256 do token: é o que o banco guarda e o que as funções lona_*_invite recebem. */
+const hashToken = (token: string) =>
+	createHash("sha256").update(token).digest("hex");
+
+/**
+ * Cria um convite com o vínculo já definido (mesmas regras de vínculo de `updateUserMemberships`). Vale 48 horas e
+ * uma vez só. O token volta aqui e em nenhum outro lugar: no banco fica só o hash. Exige `users.manage`.
+ */
+export async function createInvite(userId: string, input: MembershipInput) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "users.manage"))) {
+			throw new PermissionDeniedError("users.manage");
+		}
+		const [role] = await tx
+			.select({ id: roles.id })
+			.from(roles)
+			.where(eq(roles.id, input.roleId));
+		if (!role) throw new InvalidMembershipError("Cargo não encontrado.");
+		if (input.branchId !== null) {
+			const [branch] = await tx
+				.select({ active: branches.active })
+				.from(branches)
+				.where(eq(branches.id, input.branchId));
+			if (!branch) throw new InvalidMembershipError("Filial não encontrada.");
+			const [company] = await tx
+				.select({ settings: companies.settings })
+				.from(companies)
+				.where(eq(companies.id, companyId));
+			if (!company.settings.uses_branches) {
+				throw new InvalidMembershipError(
+					"A empresa não usa filiais: o vínculo vale para todas.",
+				);
+			}
+			if (!branch.active) {
+				throw new InvalidMembershipError(
+					"Filial inativa não recebe vínculo novo.",
+				);
+			}
+		}
+
+		const token = randomBytes(32).toString("base64url");
+		const [invite] = await tx
+			.insert(invites)
+			.values({
+				companyId,
+				tokenHash: hashToken(token),
+				branchId: input.branchId,
+				roleId: input.roleId,
+				level: input.level,
+				createdBy: userId,
+				expiresAt: sql`now() + interval '48 hours'`,
+			})
+			.returning({ id: invites.id, expiresAt: invites.expiresAt });
+		return { id: invite.id, token, expiresAt: invite.expiresAt };
+	});
+}
+
+/** Revoga um convite que ainda não foi usado. Exige `users.manage`. false se não existe, já foi usado ou revogado. */
+export async function revokeInvite(userId: string, inviteId: string) {
+	return inActiveCompany(userId, async (tx, companyId) => {
+		if (!(await hasPermission(tx, userId, companyId, "users.manage"))) {
+			throw new PermissionDeniedError("users.manage");
+		}
+		const revoked = await tx
+			.update(invites)
+			.set({ revokedAt: sql`now()` })
+			.where(
+				and(
+					eq(invites.id, inviteId),
+					isNull(invites.usedAt),
+					isNull(invites.revokedAt),
+				),
+			)
+			.returning({ id: invites.id });
+		return revoked.length > 0;
+	});
+}
+
+export type InviteInfo = {
+	companyName: string;
+	usesBranches: boolean;
+	inviterName: string;
+	roleName: string;
+	/** null = todas as filiais. */
+	branchName: string | null;
+	level: Level;
+};
+
+/**
+ * O que o convite oferece, para quem abriu o link (sem login e sem vínculo, então fora do RLS da empresa: vem da
+ * função lona_find_invite). null para token inexistente, vencido, usado ou revogado, sem dizer qual.
+ */
+export async function findInvite(token: string): Promise<InviteInfo | null> {
+	return withContext({}, async (tx) => {
+		const { rows } = await tx.execute<{
+			company_name: string;
+			uses_branches: boolean;
+			inviter_name: string;
+			role_name: string;
+			branch_name: string | null;
+			level: Level;
+		}>(sql`SELECT * FROM lona_find_invite(${hashToken(token)})`);
+		const row = rows[0];
+		return row
+			? {
+					companyName: row.company_name,
+					usesBranches: row.uses_branches,
+					inviterName: row.inviter_name,
+					roleName: row.role_name,
+					branchName: row.branch_name,
+					level: row.level,
+				}
+			: null;
+	});
+}
+
+/** Link vencido, usado, revogado ou inexistente: um erro só, para não vazar qual. */
+export class InvalidInviteError extends Error {}
+
+/** Visitante anônimo da demonstração não aceita convite; precisa criar uma conta. */
+export class AnonymousInviteError extends Error {}
+
+/**
+ * Aceita o convite: cria o vínculo e marca o convite como usado, de forma atômica (ver lona_accept_invite). Devolve a
+ * empresa do vínculo, que passa a ser a empresa ativa (userActiveCompany prefere empresa real a demonstração).
+ */
+export async function acceptInvite(userId: string, token: string) {
+	return withContext({ userId }, async (tx) => {
+		const [user] = await tx
+			.select({ isAnonymous: users.isAnonymous })
+			.from(users)
+			.where(eq(users.id, userId));
+		if (!user || user.isAnonymous) throw new AnonymousInviteError();
+		try {
+			const { rows } = await tx.execute<{ company_id: string | null }>(
+				sql`SELECT lona_accept_invite(${hashToken(token)}) AS company_id`,
+			);
+			const companyId = rows[0].company_id;
+			if (!companyId) throw new InvalidInviteError();
+			return companyId;
+		} catch (error) {
+			if (error instanceof InvalidInviteError) throw error;
+			return translateMembershipError(error);
 		}
 	});
 }
