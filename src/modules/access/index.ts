@@ -47,6 +47,7 @@ export {
 	type NewMembership,
 	PermissionDeniedError,
 	PresetRoleError,
+	RoleEscalationError,
 	type RoleInput,
 	RoleInUseError,
 	type RoleRow,

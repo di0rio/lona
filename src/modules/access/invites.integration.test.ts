@@ -20,6 +20,7 @@ import {
 	InvalidMembershipError,
 	listUsers,
 	PermissionDeniedError,
+	RoleEscalationError,
 	revokeInvite,
 	userActiveCompany,
 } from "./service";
@@ -238,6 +239,29 @@ describe.skipIf(!hasDatabase)("invites", () => {
 			PermissionDeniedError,
 		);
 		expect(await findInvite(invite.token)).not.toBeNull();
+	});
+
+	test("a manager does not invite someone as owner", async () => {
+		const manager = await newUser("gerente-a");
+		await owner.query(
+			"INSERT INTO memberships (company_id, user_id, role_id, level) VALUES ($1, $2, $3, 'operate')",
+			[companyA.companyId, manager, companyA.roleIds.gerente],
+		);
+		await expect(
+			createInvite(manager, {
+				branchId: null,
+				roleId: companyA.roleIds.dono,
+				level: "operate",
+			}),
+		).rejects.toBeInstanceOf(RoleEscalationError);
+		// Cargo com permissões que o gerente também tem, ele convida.
+		await expect(
+			createInvite(manager, {
+				branchId: null,
+				roleId: companyA.roleIds.gerente,
+				level: "operate",
+			}),
+		).resolves.toMatchObject({ token: expect.any(String) });
 	});
 
 	test("companies neither see nor revoke the invites of each other", async () => {
