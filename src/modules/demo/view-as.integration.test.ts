@@ -6,6 +6,7 @@ import {
 	auth,
 	createCompany,
 	createMembership,
+	listUsers,
 	viewAsTargets,
 } from "@/modules/access";
 import { connectAsOwner, drizzleAsOwner, hasDatabase } from "@/test/database";
@@ -104,6 +105,18 @@ describe.skipIf(!hasDatabase)('"ver como" na demonstração', () => {
 		};
 		expect(summary.company.id).toBe(visitor.companyId);
 		expect(summary.role).toBe("balconista");
+	});
+
+	test("the fictional people show their model e-mail, without the per-demo prefix", async () => {
+		const ownerOf = await newOwner();
+		const view = await listUsers(ownerOf.id);
+		const emails = (view?.users ?? []).flatMap((u) =>
+			u.email ? [u.email] : [],
+		);
+		expect(emails.length).toBeGreaterThan(1);
+		for (const email of emails) {
+			expect(email).not.toMatch(/^[0-9a-f-]{36}\./);
+		}
 	});
 
 	test("refuses on a real company (no expiry)", async () => {

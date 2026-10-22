@@ -813,7 +813,10 @@ export async function listUsers(userId: string): Promise<UsersView | null> {
 			const user = byUser.get(row.userId) ?? {
 				id: row.userId,
 				name: row.name,
-				email: canManage && !row.isAnonymous ? row.email : null,
+				email:
+					canManage && !row.isAnonymous
+						? modelEmail(row.userId, row.email)
+						: null,
 				memberships: [],
 			};
 			user.memberships.push({
@@ -883,6 +886,13 @@ export async function listUsers(userId: string): Promise<UsersView | null> {
 			canManage,
 		};
 	});
+}
+
+/** A cópia de cada pessoa fictícia ganha o e-mail `<id>.<e-mail do modelo>` (único por demonstração); mostra o do modelo. */
+function modelEmail(userId: string, email: string) {
+	return email.startsWith(`${userId}.`)
+		? email.slice(userId.length + 1)
+		: email;
 }
 
 /** O mesmo usuário e filial já têm vínculo; o banco garante (unique), aqui só traduzimos. */
