@@ -309,9 +309,11 @@ test("settings: opens from the menu, saves a toggle and keeps it after reloading
 		page.getByRole("heading", { name: "Como sua empresa trabalha" }),
 	).toBeVisible();
 	// Regressão: o breadcrumb ficava "Painel" em qualquer página.
-	await expect(page.getByRole("navigation", { name: "breadcrumb" })).toHaveText(
-		"Configurações",
-	);
+	await expect(
+		page
+			.getByRole("navigation", { name: "breadcrumb" })
+			.locator('[aria-current="page"]'),
+	).toHaveText("Configurações");
 
 	const quote = page.getByRole("switch", {
 		name: "Venda começa com orçamento",
@@ -391,9 +393,11 @@ test("branches: turning them on shows the menu item, then create, deactivate and
 	await page.getByRole("switch", { name: "Usa filiais" }).click();
 	await page.getByRole("link", { name: "Filiais" }).click();
 	await expect(page).toHaveURL(/\/painel\/filiais$/);
-	await expect(page.getByRole("navigation", { name: "breadcrumb" })).toHaveText(
-		"Filiais",
-	);
+	await expect(
+		page
+			.getByRole("navigation", { name: "breadcrumb" })
+			.locator('[aria-current="page"]'),
+	).toHaveText("Filiais");
 	await expect(page.getByRole("cell", { name: "Filial Bauru" })).toBeVisible();
 
 	await page.getByRole("button", { name: "Nova filial" }).click();

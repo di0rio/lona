@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LocaleSwitch } from "@/components/site-shell/locale-switch";
+import { LonaMark } from "@/components/site-shell/lona-mark";
 import { ThemeSwitch } from "@/components/site-shell/theme-switch";
 import { getT, showEnglish } from "@/i18n/server";
 
@@ -12,7 +13,11 @@ export default async function MarketingLayout({
 	return (
 		<>
 			<header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-6">
-				<Link className="font-semibold text-lg" href="/">
+				<Link
+					className="flex items-center gap-2.5 font-[650] text-[17px] lowercase tracking-[-0.03em]"
+					href="/"
+				>
+					<LonaMark />
 					{t.app.meta.title}
 				</Link>
 				<div className="flex items-center gap-2">

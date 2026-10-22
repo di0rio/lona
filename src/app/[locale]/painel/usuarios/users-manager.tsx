@@ -4,6 +4,9 @@ import { PlusIcon, Trash2Icon, UserPlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/site-shell/empty-state";
+import { InitialsAvatar } from "@/components/site-shell/initials-avatar";
+import { PageHeader } from "@/components/site-shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +35,8 @@ import type {
 } from "@/modules/access";
 
 type Copy = {
+	title: string;
+	description: string;
 	readOnly: string;
 	table: { name: string; email: string; memberships: string; actions: string };
 	empty: { title: string; text: string };
@@ -81,7 +86,7 @@ type Copy = {
 };
 
 const selectClass =
-	"h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm";
+	"h-9 w-full rounded-lg border border-border-strong bg-background px-3 text-sm shadow-[inset_0_1px_2px_oklch(0_0_0/3%)] outline-none transition-[box-shadow,border-color] duration-150 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-accent-soft";
 
 /** Lista de usuários da empresa; os vínculos de cada um se editam num Sheet. Sem users.manage, só consulta. */
 export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
@@ -104,19 +109,21 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
-			{view.canManage && (
-				<div>
-					<Button onClick={() => setInviting(true)}>
-						<UserPlusIcon />
-						{copy.invite.button}
-					</Button>
-				</div>
-			)}
+		<div className="flex flex-col gap-6">
+			<PageHeader
+				action={
+					view.canManage && (
+						<Button onClick={() => setInviting(true)}>
+							<UserPlusIcon />
+							{copy.invite.button}
+						</Button>
+					)
+				}
+				description={copy.description}
+				title={copy.title}
+			/>
 			{!view.canManage && (
-				<p className="rounded-lg border bg-muted p-3 text-sm">
-					{copy.readOnly}
-				</p>
+				<p className="rounded-xl bg-canvas p-3.5 text-sm">{copy.readOnly}</p>
 			)}
 			<Table>
 				<TableHeader>
@@ -130,14 +137,38 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 				<TableBody>
 					{view.users.map((user) => (
 						<TableRow key={user.id}>
-							<TableCell className="font-medium">{user.name}</TableCell>
+							<TableCell className="font-medium">
+								<div className="flex items-center gap-3">
+									<InitialsAvatar name={user.name} />
+									{user.name}
+								</div>
+							</TableCell>
 							<TableCell className="text-muted-foreground">
-								{user.email ?? copy.noEmail}
+								<span
+									className="block max-w-72 truncate"
+									title={user.email ?? undefined}
+								>
+									{user.email ?? copy.noEmail}
+								</span>
 							</TableCell>
 							<TableCell>
-								<ul className="flex flex-col gap-0.5">
+								<ul className="flex flex-wrap gap-1.5">
 									{user.memberships.map((m) => (
-										<li key={m.branchId ?? "all"}>{describe(m)}</li>
+										<li
+											className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 font-medium text-[12.5px] ring-1 ring-border"
+											key={m.branchId ?? "all"}
+										>
+											{/* Ponto cheio = opera; vazado = só consulta. */}
+											<span
+												aria-hidden="true"
+												className={
+													m.level === "operate"
+														? "size-1.5 rounded-full bg-primary"
+														: "size-1.5 rounded-full ring-[1.5px] ring-muted-foreground ring-inset"
+												}
+											/>
+											{describe(m)}
+										</li>
 									))}
 								</ul>
 							</TableCell>
@@ -155,10 +186,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 				</TableBody>
 			</Table>
 			{view.users.length === 0 && (
-				<div className="flex flex-col gap-1 rounded-lg border border-dashed p-4">
-					<p className="font-medium">{copy.empty.title}</p>
-					<p className="text-muted-foreground text-sm">{copy.empty.text}</p>
-				</div>
+				<EmptyState text={copy.empty.text} title={copy.empty.title} />
 			)}
 			{view.invites.length > 0 && (
 				<PendingInvites
@@ -285,7 +313,7 @@ function MembershipsForm({
 			>
 				{rows.map((row) => (
 					<div
-						className="flex flex-col gap-3 rounded-lg border p-3"
+						className="flex flex-col gap-3 rounded-xl border p-3"
 						key={row.key}
 					>
 						<div className="flex flex-col gap-1.5">
@@ -371,7 +399,7 @@ function MembershipsForm({
 					</div>
 				))}
 				{rows.length === 0 && (
-					<p className="rounded-lg border border-dashed p-3 text-sm">
+					<p className="rounded-xl border border-dashed p-3 text-sm">
 						{form.noMemberships}
 					</p>
 				)}

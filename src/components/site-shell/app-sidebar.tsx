@@ -36,6 +36,7 @@ import { stripLocale } from "@/i18n/path";
 import { authClient } from "@/lib/auth-client";
 import { viewAsStart } from "@/lib/view-as-client";
 import type { ViewAsTarget } from "@/modules/access";
+import { LonaMark } from "./lona-mark";
 import type { NavItem } from "./nav-items";
 
 export function AppSidebar({
@@ -77,10 +78,13 @@ export function AppSidebar({
 	}
 
 	return (
-		<Sidebar collapsible="icon">
+		<Sidebar collapsible="icon" variant="inset">
 			<SidebarHeader>
-				<div className="flex items-center gap-2 px-2 py-1.5">
-					<span className="truncate font-semibold text-sm">{companyName}</span>
+				<div className="flex items-center gap-2.5 px-2 py-1.5">
+					<LonaMark />
+					<span className="truncate font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
+						{companyName}
+					</span>
 				</div>
 			</SidebarHeader>
 			<SidebarContent>

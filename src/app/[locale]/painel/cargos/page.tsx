@@ -17,17 +17,11 @@ export default async function Cargos() {
 	if (!view) return null;
 
 	return (
-		<section className="flex max-w-3xl flex-col gap-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="font-semibold text-2xl">{copy.title}</h1>
-				<p className="text-muted-foreground">{copy.description}</p>
-			</div>
-			<RolesManager
-				canManage={view.canManage}
-				copy={copy}
-				permissions={[...permissions]}
-				roles={view.roles}
-			/>
-		</section>
+		<RolesManager
+			canManage={view.canManage}
+			copy={copy}
+			permissions={[...permissions]}
+			roles={view.roles}
+		/>
 	);
 }

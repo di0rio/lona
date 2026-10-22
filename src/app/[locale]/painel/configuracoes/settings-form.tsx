@@ -70,7 +70,7 @@ export function SettingsForm({
 
 	function toggle(key: Toggle, label: string, help: string) {
 		return (
-			<div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+			<div className="flex items-start justify-between gap-4 rounded-xl border p-4">
 				<div className="flex flex-col gap-1">
 					<span className="font-medium" id={`${key}-label`}>
 						{label}
@@ -94,12 +94,10 @@ export function SettingsForm({
 	return (
 		<div className="flex flex-col gap-4">
 			{!canConfigure && (
-				<p className="rounded-lg border bg-muted p-3 text-sm">
-					{copy.readOnly}
-				</p>
+				<p className="rounded-xl bg-canvas p-3.5 text-sm">{copy.readOnly}</p>
 			)}
 			{toggle("uses_branches", copy.usesBranches.label, copy.usesBranches.help)}
-			<fieldset className="flex flex-col gap-3 rounded-lg border p-4">
+			<fieldset className="flex flex-col gap-3 rounded-xl border p-4">
 				<legend className="px-1 font-medium">{flow.label}</legend>
 				<RadioGroup
 					disabled={!canConfigure}

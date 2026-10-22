@@ -8,7 +8,7 @@ export default async function NotFound() {
 
 	return (
 		<section className="flex flex-col items-start gap-4">
-			<h1 className="font-semibold text-2xl">{t.app.notFound.title}</h1>
+			<h1 className="page-title">{t.app.notFound.title}</h1>
 			<Button
 				nativeButton={false}
 				render={<Link href={localePath(locale, "/")} />}

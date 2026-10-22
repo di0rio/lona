@@ -7,6 +7,7 @@
 @theme inline {
 	--font-heading: var(--font-sans);
 	--font-sans: var(--font-sans);
+	--font-mono: var(--font-mono);
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -23,9 +24,11 @@
 	--color-ring: var(--ring);
 	--color-input: var(--input);
 	--color-border: var(--border);
+	--color-border-strong: var(--border-strong);
 	--color-destructive: var(--destructive);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent: var(--accent);
+	--color-accent-soft: var(--accent-soft);
 	--color-muted-foreground: var(--muted-foreground);
 	--color-muted: var(--muted);
 	--color-secondary-foreground: var(--secondary-foreground);
@@ -38,82 +41,121 @@
 	--color-card: var(--card);
 	--color-foreground: var(--foreground);
 	--color-background: var(--background);
+	--color-canvas: var(--canvas);
+	--shadow-sheet: var(--shadow-sheet);
+	--shadow-float: var(--shadow-float);
 	--radius-sm: calc(var(--radius) * 0.6);
 	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) * 1.4);
-	--radius-2xl: calc(var(--radius) * 1.8);
-	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-xl: 12px;
+	--radius-2xl: 14px;
+	--radius-3xl: calc(var(--radius) * 2);
 	--radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Curvas do DESIGN.md. Sobrescrevem o ease-out padrão do Tailwind e criam ease-drawer. */
+@theme {
+	--ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+	--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 :root {
+	--canvas: oklch(0.972 0.005 85);
 	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
+	--foreground: oklch(0.2 0.006 85);
 	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
+	--card-foreground: oklch(0.2 0.006 85);
 	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
+	--popover-foreground: oklch(0.2 0.006 85);
 	--primary: oklch(0.205 0 0);
 	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
+	--secondary: oklch(0.972 0.005 85);
+	--secondary-foreground: oklch(0.2 0.006 85);
+	--muted: oklch(0.972 0.005 85);
+	--muted-foreground: oklch(0.52 0.01 85);
+	--accent: oklch(0.972 0.005 85);
+	--accent-foreground: oklch(0.2 0.006 85);
 	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
+	--border: oklch(0.2 0.01 85 / 8%);
+	--border-strong: oklch(0.2 0.01 85 / 14%);
+	--input: oklch(0.2 0.01 85 / 14%);
+	--ring: oklch(0.205 0 0);
+	--road: oklch(0.82 0.15 85);
+	--shadow-sheet:
+		0 0 0 1px var(--border), 0 1px 2px oklch(0 0 0 / 4%),
+		0 8px 32px oklch(0 0 0 / 5%);
+	--shadow-float:
+		0 0 0 1px var(--border), 0 12px 40px oklch(0 0 0 / 12%),
+		0 2px 6px oklch(0 0 0 / 6%);
 	--chart-1: oklch(0.87 0 0);
 	--chart-2: oklch(0.556 0 0);
 	--chart-3: oklch(0.439 0 0);
 	--chart-4: oklch(0.371 0 0);
 	--chart-5: oklch(0.269 0 0);
-	--radius: 0.625rem;
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
+	--radius: 8px;
+	--sidebar: var(--canvas);
+	--sidebar-foreground: oklch(0.2 0.006 85);
 	--sidebar-primary: oklch(0.205 0 0);
 	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+	--sidebar-accent: oklch(1 0 0);
+	--sidebar-accent-foreground: oklch(0.2 0.006 85);
+	--sidebar-border: transparent;
+	--sidebar-ring: oklch(0.205 0 0);
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
+	--canvas: oklch(0.16 0.004 85);
+	--background: oklch(0.2 0.005 85);
+	--foreground: oklch(0.96 0.004 85);
+	--card: oklch(0.2 0.005 85);
+	--card-foreground: oklch(0.96 0.004 85);
+	--popover: oklch(0.2 0.005 85);
+	--popover-foreground: oklch(0.96 0.004 85);
 	--primary: oklch(0.922 0 0);
 	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.269 0 0);
-	--accent-foreground: oklch(0.985 0 0);
+	--secondary: oklch(0.16 0.004 85);
+	--secondary-foreground: oklch(0.96 0.004 85);
+	--muted: oklch(0.16 0.004 85);
+	--muted-foreground: oklch(0.7 0.01 85);
+	--accent: oklch(0.16 0.004 85);
+	--accent-foreground: oklch(0.96 0.004 85);
 	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
+	--border: oklch(1 0 0 / 8%);
+	--border-strong: oklch(1 0 0 / 14%);
+	--input: oklch(1 0 0 / 14%);
+	--ring: oklch(0.922 0 0);
+	--shadow-sheet: 0 0 0 1px var(--border), 0 8px 32px oklch(0 0 0 / 30%);
+	--shadow-float:
+		0 0 0 1px var(--border-strong), 0 16px 48px oklch(0 0 0 / 50%);
 	--chart-1: oklch(0.87 0 0);
 	--chart-2: oklch(0.556 0 0);
 	--chart-3: oklch(0.439 0 0);
 	--chart-4: oklch(0.371 0 0);
 	--chart-5: oklch(0.269 0 0);
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.488 0.243 264.376);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
+	--sidebar: var(--canvas);
+	--sidebar-foreground: oklch(0.96 0.004 85);
+	--sidebar-primary: oklch(0.922 0 0);
+	--sidebar-primary-foreground: oklch(0.205 0 0);
+	--sidebar-accent: oklch(0.2 0.005 85);
+	--sidebar-accent-foreground: oklch(0.96 0.004 85);
+	--sidebar-border: transparent;
+	--sidebar-ring: oklch(0.922 0 0);
+}
+
+/*
+ * Tons derivados da cor da empresa. Ficam fora de :root/.dark porque var(--primary) é resolvido onde a
+ * variável é declarada: o wrapper [data-color] precisa recalcular com o --primary dele.
+ * --stripe é a lona (listras de vitrine); --accent-soft é avatar, chip e halo de foco.
+ */
+:root,
+[data-color] {
+	--accent-soft: color-mix(in oklch, var(--primary) 10%, transparent);
+	--stripe: color-mix(in oklch, var(--primary) 4%, transparent);
+}
+.dark,
+.dark [data-color] {
+	--accent-soft: color-mix(in oklch, var(--primary) 15%, transparent);
+	--stripe: color-mix(in oklch, var(--primary) 5%, transparent);
 }
 
 /*
@@ -121,6 +163,7 @@
  * Claro: --primary escuro e saturado com --primary-foreground quase branco. Escuro: --primary claro com
  * --primary-foreground quase preto. As duas combinações passam WCAG AA (4.5:1); ver src/app/globals.test.ts.
  */
+[data-color="blue"],
 :root[data-color="blue"] {
 	--primary: oklch(0.53 0.15 260);
 	--primary-foreground: oklch(0.985 0 0);
@@ -129,6 +172,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.53 0.15 260);
 }
+.dark [data-color="blue"],
 .dark[data-color="blue"] {
 	--primary: oklch(0.63 0.15 260);
 	--primary-foreground: oklch(0.145 0 0);
@@ -138,6 +182,7 @@
 	--sidebar-ring: oklch(0.63 0.15 260);
 }
 
+[data-color="green"],
 :root[data-color="green"] {
 	--primary: oklch(0.51 0.15 145);
 	--primary-foreground: oklch(0.985 0 0);
@@ -146,6 +191,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.51 0.15 145);
 }
+.dark [data-color="green"],
 .dark[data-color="green"] {
 	--primary: oklch(0.63 0.15 145);
 	--primary-foreground: oklch(0.145 0 0);
@@ -155,6 +201,7 @@
 	--sidebar-ring: oklch(0.63 0.15 145);
 }
 
+[data-color="red"],
 :root[data-color="red"] {
 	--primary: oklch(0.55 0.15 25);
 	--primary-foreground: oklch(0.985 0 0);
@@ -163,6 +210,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.55 0.15 25);
 }
+.dark [data-color="red"],
 .dark[data-color="red"] {
 	--primary: oklch(0.63 0.15 25);
 	--primary-foreground: oklch(0.145 0 0);
@@ -172,6 +220,7 @@
 	--sidebar-ring: oklch(0.63 0.15 25);
 }
 
+[data-color="orange"],
 :root[data-color="orange"] {
 	--primary: oklch(0.54 0.15 50);
 	--primary-foreground: oklch(0.985 0 0);
@@ -180,6 +229,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.54 0.15 50);
 }
+.dark [data-color="orange"],
 .dark[data-color="orange"] {
 	--primary: oklch(0.63 0.15 50);
 	--primary-foreground: oklch(0.145 0 0);
@@ -189,6 +239,7 @@
 	--sidebar-ring: oklch(0.63 0.15 50);
 }
 
+[data-color="yellow"],
 :root[data-color="yellow"] {
 	--primary: oklch(0.53 0.15 95);
 	--primary-foreground: oklch(0.985 0 0);
@@ -197,6 +248,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.53 0.15 95);
 }
+.dark [data-color="yellow"],
 .dark[data-color="yellow"] {
 	--primary: oklch(0.63 0.15 95);
 	--primary-foreground: oklch(0.145 0 0);
@@ -206,6 +258,7 @@
 	--sidebar-ring: oklch(0.63 0.15 95);
 }
 
+[data-color="purple"],
 :root[data-color="purple"] {
 	--primary: oklch(0.54 0.15 300);
 	--primary-foreground: oklch(0.985 0 0);
@@ -214,6 +267,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.54 0.15 300);
 }
+.dark [data-color="purple"],
 .dark[data-color="purple"] {
 	--primary: oklch(0.63 0.15 300);
 	--primary-foreground: oklch(0.145 0 0);
@@ -223,6 +277,7 @@
 	--sidebar-ring: oklch(0.63 0.15 300);
 }
 
+[data-color="pink"],
 :root[data-color="pink"] {
 	--primary: oklch(0.55 0.15 350);
 	--primary-foreground: oklch(0.985 0 0);
@@ -231,6 +286,7 @@
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-ring: oklch(0.55 0.15 350);
 }
+.dark [data-color="pink"],
 .dark[data-color="pink"] {
 	--primary: oklch(0.63 0.15 350);
 	--primary-foreground: oklch(0.145 0 0);
@@ -245,9 +301,64 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-canvas text-foreground;
 	}
 	html {
 		@apply font-sans;
+	}
+}
+
+/* Hover só onde existe ponteiro de precisão: no toque ele "gruda" depois do tap. */
+@custom-variant hover {
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			@slot;
+		}
+	}
+}
+
+/* Título de página (24px), da tabela de tipografia do DESIGN.md. */
+@utility page-title {
+	font-size: 24px;
+	font-weight: 600;
+	letter-spacing: -0.025em;
+	line-height: 1.15;
+}
+
+/* Lona: listras verticais na cor da empresa. Só em vitrine e estado vazio, nunca atrás de texto corrido. */
+@utility bg-tarp {
+	background-image: repeating-linear-gradient(
+		90deg,
+		var(--stripe) 0 22px,
+		transparent 22px 44px
+	);
+}
+/* Tracejado da estrada: no máximo um por tela. */
+@utility road-dash {
+	height: 3px;
+	border-radius: 2px;
+	background-image: repeating-linear-gradient(
+		90deg,
+		var(--road) 0 18px,
+		transparent 18px 32px
+	);
+}
+
+/* Movimento reduzido: sem deslize e sem escala, ficam cor e opacidade. */
+@media (prefers-reduced-motion: reduce) {
+	[data-slot="dialog-content"],
+	[data-slot="dropdown-menu-content"],
+	[data-slot="tooltip-content"] {
+		scale: none;
+	}
+	[data-slot="sheet-content"] {
+		translate: none;
+	}
+}
+
+@keyframes bar-grow {
+	from {
+		transform: scaleY(0.15);
+		opacity: 0;
 	}
 }

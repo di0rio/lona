@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHeader } from "@/components/site-shell/page-header";
 import { getT } from "@/i18n/server";
 import { companySettings, sessionUser } from "@/modules/access";
 import { SettingsForm } from "./settings-form";
@@ -17,11 +18,8 @@ export default async function Configuracoes() {
 	if (!view) return null;
 
 	return (
-		<section className="flex max-w-2xl flex-col gap-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="font-semibold text-2xl">{copy.title}</h1>
-				<p className="text-muted-foreground">{copy.description}</p>
-			</div>
+		<section className="flex max-w-3xl flex-col gap-6">
+			<PageHeader description={copy.description} title={copy.title} />
 			<SettingsForm
 				canConfigure={view.canConfigure}
 				copy={copy}

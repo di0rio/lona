@@ -4,6 +4,8 @@ import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/site-shell/empty-state";
+import { PageHeader } from "@/components/site-shell/page-header";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -25,6 +27,8 @@ import { api } from "@/lib/api";
 import type { BranchRow } from "@/modules/access";
 
 type Copy = {
+	title: string;
+	description: string;
 	readOnly: string;
 	table: {
 		name: string;
@@ -106,18 +110,21 @@ export function BranchesManager({
 
 	const header = copy.table;
 	return (
-		<div className="flex flex-col gap-4">
-			{canConfigure ? (
-				<div>
-					<Button onClick={() => setEditing(null)}>
-						<PlusIcon />
-						{copy.new}
-					</Button>
-				</div>
-			) : (
-				<p className="rounded-lg border bg-muted p-3 text-sm">
-					{copy.readOnly}
-				</p>
+		<div className="flex flex-col gap-6">
+			<PageHeader
+				action={
+					canConfigure && (
+						<Button onClick={() => setEditing(null)}>
+							<PlusIcon />
+							{copy.new}
+						</Button>
+					)
+				}
+				description={copy.description}
+				title={copy.title}
+			/>
+			{!canConfigure && (
+				<p className="rounded-xl bg-canvas p-3.5 text-sm">{copy.readOnly}</p>
 			)}
 			<Table>
 				<TableHeader>
@@ -140,13 +147,17 @@ export function BranchesManager({
 							<TableCell className="font-medium">
 								{branch.name}
 								{branch.isHeadquarters && (
-									<span className="ml-2 rounded bg-muted px-1.5 py-0.5 font-normal text-xs">
+									<span className="ml-2 rounded-full bg-canvas px-2 py-0.5 font-normal text-xs ring-1 ring-border">
 										{header.headquarters}
 									</span>
 								)}
 							</TableCell>
-							<TableCell>{branch.code}</TableCell>
-							<TableCell>{branch.cnpj}</TableCell>
+							<TableCell className="font-mono text-[12.5px]">
+								{branch.code}
+							</TableCell>
+							<TableCell className="font-mono text-[12.5px]">
+								{branch.cnpj}
+							</TableCell>
 							<TableCell>
 								{branch.active ? header.active : header.inactive}
 							</TableCell>
@@ -175,10 +186,7 @@ export function BranchesManager({
 				</TableBody>
 			</Table>
 			{branches.length === 1 && (
-				<div className="flex flex-col gap-1 rounded-lg border border-dashed p-4">
-					<p className="font-medium">{copy.empty.title}</p>
-					<p className="text-muted-foreground text-sm">{copy.empty.text}</p>
-				</div>
+				<EmptyState text={copy.empty.text} title={copy.empty.title} />
 			)}
 			<Dialog
 				onOpenChange={(open) => !open && setEditing(undefined)}

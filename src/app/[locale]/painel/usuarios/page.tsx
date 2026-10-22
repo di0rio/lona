@@ -16,13 +16,5 @@ export default async function Usuarios() {
 	const view = user ? await listUsers(user.id) : null;
 	if (!view) return null;
 
-	return (
-		<section className="flex max-w-4xl flex-col gap-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="font-semibold text-2xl">{copy.title}</h1>
-				<p className="text-muted-foreground">{copy.description}</p>
-			</div>
-			<UsersManager copy={copy} view={view} />
-		</section>
-	);
+	return <UsersManager copy={copy} view={view} />;
 }

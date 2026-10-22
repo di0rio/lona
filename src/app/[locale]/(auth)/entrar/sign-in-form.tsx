@@ -105,7 +105,9 @@ export function SignInForm({
 		return (
 			<Card className="w-full max-w-sm">
 				<CardHeader>
-					<CardTitle className="text-lg">{stepCopy.title}</CardTitle>
+					<CardTitle className="text-[30px] leading-[1.1] font-semibold tracking-[-0.03em]">
+						{stepCopy.title}
+					</CardTitle>
 					<CardDescription>{stepCopy.description}</CardDescription>
 				</CardHeader>
 				<form key={step} onSubmit={submitCode}>
@@ -152,7 +154,9 @@ export function SignInForm({
 	return (
 		<Card className="w-full max-w-sm">
 			<CardHeader>
-				<CardTitle className="text-lg">{copy.title}</CardTitle>
+				<CardTitle className="text-[30px] leading-[1.1] font-semibold tracking-[-0.03em]">
+					{copy.title}
+				</CardTitle>
 				<CardDescription>{copy.description}</CardDescription>
 			</CardHeader>
 			<form onSubmit={submit}>

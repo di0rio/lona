@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AuthShell } from "@/components/site-shell/auth-shell";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -31,14 +30,12 @@ export default async function Convite({
 	// Vencido, usado, revogado ou inexistente: a mesma mensagem, para não dizer qual.
 	if (!invite) {
 		return (
-			<AuthShell>
-				<Card className="w-full max-w-sm">
-					<CardHeader>
-						<CardTitle className="text-lg">{copy.invalid.title}</CardTitle>
-						<CardDescription>{copy.invalid.text}</CardDescription>
-					</CardHeader>
-				</Card>
-			</AuthShell>
+			<Card className="w-full max-w-sm">
+				<CardHeader>
+					<CardTitle className="text-lg">{copy.invalid.title}</CardTitle>
+					<CardDescription>{copy.invalid.text}</CardDescription>
+				</CardHeader>
+			</Card>
 		);
 	}
 
@@ -49,44 +46,42 @@ export default async function Convite({
 	const query = `?convite=${encodeURIComponent(token)}`;
 
 	return (
-		<AuthShell>
-			<Card className="w-full max-w-sm">
-				<CardHeader>
-					<CardTitle className="text-lg">
-						{invite.inviterName} {copy.invited} {invite.companyName} {copy.as}{" "}
-						{invite.roleName}
-						{where}
-					</CardTitle>
-					<CardDescription>
-						{!user ? copy.needAccount : user.anonymous ? copy.anonymous : null}
-					</CardDescription>
-				</CardHeader>
-				{user && !user.anonymous ? (
-					<CardContent>
-						<AcceptButton
-							copy={copy}
-							dashboardHref={localePath(locale, "/painel")}
-							token={token}
-						/>
-					</CardContent>
-				) : (
-					<CardFooter className="flex-col items-stretch gap-3">
-						<Button
-							nativeButton={false}
-							render={<Link href={localePath(locale, `/cadastrar${query}`)} />}
-						>
-							{copy.register}
-						</Button>
-						<Button
-							nativeButton={false}
-							render={<Link href={localePath(locale, `/entrar${query}`)} />}
-							variant="outline"
-						>
-							{copy.signIn}
-						</Button>
-					</CardFooter>
-				)}
-			</Card>
-		</AuthShell>
+		<Card className="w-full max-w-sm">
+			<CardHeader>
+				<CardTitle className="text-lg">
+					{invite.inviterName} {copy.invited} {invite.companyName} {copy.as}{" "}
+					{invite.roleName}
+					{where}
+				</CardTitle>
+				<CardDescription>
+					{!user ? copy.needAccount : user.anonymous ? copy.anonymous : null}
+				</CardDescription>
+			</CardHeader>
+			{user && !user.anonymous ? (
+				<CardContent>
+					<AcceptButton
+						copy={copy}
+						dashboardHref={localePath(locale, "/painel")}
+						token={token}
+					/>
+				</CardContent>
+			) : (
+				<CardFooter className="flex-col items-stretch gap-3">
+					<Button
+						nativeButton={false}
+						render={<Link href={localePath(locale, `/cadastrar${query}`)} />}
+					>
+						{copy.register}
+					</Button>
+					<Button
+						nativeButton={false}
+						render={<Link href={localePath(locale, `/entrar${query}`)} />}
+						variant="outline"
+					>
+						{copy.signIn}
+					</Button>
+				</CardFooter>
+			)}
+		</Card>
 	);
 }

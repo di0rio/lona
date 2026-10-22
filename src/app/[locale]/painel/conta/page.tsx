@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/site-shell/page-header";
 import { localePath } from "@/i18n/path";
 import { getT } from "@/i18n/server";
 import { sessionUser } from "@/modules/access";
@@ -18,11 +19,8 @@ export default async function Conta() {
 	if (!user) return null;
 
 	return (
-		<section className="flex max-w-2xl flex-col gap-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="font-semibold text-2xl">{copy.title}</h1>
-				<p className="text-muted-foreground">{copy.description}</p>
-			</div>
+		<section className="flex max-w-3xl flex-col gap-6">
+			<PageHeader description={copy.description} title={copy.title} />
 			{user.anonymous ? (
 				<div className="flex flex-col items-start gap-3">
 					<p>{copy.anonymous}</p>

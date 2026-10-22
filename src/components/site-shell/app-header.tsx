@@ -7,17 +7,20 @@ import {
 	BreadcrumbItem,
 	BreadcrumbList,
 	BreadcrumbPage,
+	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
-/** Breadcrumb simples (só o título da página de hoje) + gatilho da busca. Cresce para vários segmentos quando houver sub-rotas. */
+/** Breadcrumb "Empresa › Página" + gatilho da busca. Cresce para mais segmentos quando houver sub-rotas. */
 export function AppHeader({
+	companyName,
 	title,
 	searchLabel,
 	onSearchClick,
 }: {
+	companyName: string;
 	title: string;
 	searchLabel: string;
 	onSearchClick: () => void;
@@ -29,11 +32,15 @@ export function AppHeader({
 	}, []);
 
 	return (
-		<header className="flex h-12 items-center justify-between gap-2 border-b px-4">
-			<div className="flex items-center gap-2">
+		<header className="flex h-12 items-center justify-between gap-2 border-b px-4 md:px-6">
+			<div className="flex min-w-0 items-center gap-2">
 				<SidebarTrigger />
 				<Breadcrumb>
 					<BreadcrumbList>
+						<BreadcrumbItem className="hidden max-w-40 sm:inline-flex">
+							<span className="truncate">{companyName}</span>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator className="hidden sm:block" />
 						<BreadcrumbItem>
 							<BreadcrumbPage>{title}</BreadcrumbPage>
 						</BreadcrumbItem>
@@ -43,12 +50,13 @@ export function AppHeader({
 			<Button
 				aria-label={searchLabel}
 				onClick={onSearchClick}
+				className="bg-canvas text-muted-foreground hover:bg-[color-mix(in_oklch,var(--canvas),var(--foreground)_4%)] sm:min-w-[220px] sm:justify-start"
 				size="sm"
-				variant="outline"
+				variant="ghost"
 			>
 				<SearchIcon />
 				<span className="hidden sm:inline">{searchLabel}</span>
-				<KbdGroup>
+				<KbdGroup className="sm:ml-auto">
 					<Kbd>{mac ? "⌘" : "Ctrl"}</Kbd>
 					<Kbd>K</Kbd>
 				</KbdGroup>
