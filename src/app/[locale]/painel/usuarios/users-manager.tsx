@@ -95,7 +95,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 	const [inviting, setInviting] = useState(false);
 
 	// Sem filiais ligadas o vínculo é sempre "todas" e a filial nem aparece (ADR 0003).
-	const describe = (
+	const describeMembership = (
 		m: Pick<MembershipRow, "branchId" | "branchName" | "roleName" | "level">,
 	) => {
 		const where = !view.usesBranches
@@ -167,7 +167,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 														: "size-1.5 rounded-full ring-[1.5px] ring-muted-foreground ring-inset"
 												}
 											/>
-											{describe(m)}
+											{describeMembership(m)}
 										</li>
 									))}
 								</ul>
@@ -191,7 +191,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 			{view.invites.length > 0 && (
 				<PendingInvites
 					copy={copy}
-					describe={describe}
+					describeMembership={describeMembership}
 					invites={view.invites}
 				/>
 			)}
@@ -429,11 +429,11 @@ function MembershipsForm({
 function PendingInvites({
 	invites,
 	copy,
-	describe,
+	describeMembership,
 }: {
 	invites: InviteRow[];
 	copy: Copy;
-	describe: (m: InviteRow) => string;
+	describeMembership: (m: InviteRow) => string;
 }) {
 	const router = useRouter();
 	const text = copy.invite.pending;
@@ -461,7 +461,7 @@ function PendingInvites({
 					{invites.map((invite) => (
 						<TableRow key={invite.id}>
 							<TableCell>{invite.createdByName}</TableCell>
-							<TableCell>{describe(invite)}</TableCell>
+							<TableCell>{describeMembership(invite)}</TableCell>
 							<TableCell>
 								{/* Fuso e idioma do navegador: o servidor pode renderizar diferente. */}
 								<time

@@ -20,6 +20,7 @@ import {
 	listUsers,
 	PermissionDeniedError,
 	PresetRoleError,
+	RoleEscalationError,
 	RoleInUseError,
 	removeRole,
 	revokeInvite,
@@ -311,6 +312,9 @@ export const accessRoutes = new Elysia({ prefix: "/access" })
 				if (error instanceof PermissionDeniedError) {
 					return status(403, "Só quem gerencia usuários altera vínculos.");
 				}
+				if (error instanceof RoleEscalationError) {
+					return status(403, error.message);
+				}
 				if (
 					error instanceof SelfLockoutError ||
 					error instanceof DuplicateMembershipError ||
@@ -352,6 +356,9 @@ export const accessRoutes = new Elysia({ prefix: "/access" })
 			} catch (error) {
 				if (error instanceof PermissionDeniedError) {
 					return status(403, "Só quem gerencia usuários cria convites.");
+				}
+				if (error instanceof RoleEscalationError) {
+					return status(403, error.message);
 				}
 				if (error instanceof InvalidMembershipError) {
 					return status(409, { message: error.message });
