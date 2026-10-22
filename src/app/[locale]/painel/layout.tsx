@@ -21,6 +21,7 @@ export default async function PainelLayout({
 			branchesTitle={t.app.painel.filiais.nav}
 			rolesTitle={t.app.painel.cargos.nav}
 			usersTitle={t.app.painel.usuarios.nav}
+			paymentsTitle={t.app.painel.pagamentos.nav}
 			settingsTitle={t.app.painel.configuracoes.nav}
 			locale={locale}
 			signOutTo={localePath(locale, "/")}

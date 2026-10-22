@@ -56,6 +56,7 @@ export function AppShell({
 	branchesTitle,
 	rolesTitle,
 	usersTitle,
+	paymentsTitle,
 	settingsTitle,
 	locale,
 	copy,
@@ -70,6 +71,7 @@ export function AppShell({
 	branchesTitle: string;
 	rolesTitle: string;
 	usersTitle: string;
+	paymentsTitle: string;
 	settingsTitle: string;
 	locale: Locale;
 	copy: Copy;
@@ -135,6 +137,7 @@ export function AppShell({
 			branches: branchesTitle,
 			roles: rolesTitle,
 			users: usersTitle,
+			payments: paymentsTitle,
 			settings: settingsTitle,
 		},
 		locale,

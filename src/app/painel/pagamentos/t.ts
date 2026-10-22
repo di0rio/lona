@@ -1,0 +1,192 @@
+export default {
+	title: { pt: "Pagamentos", en: "Payments" },
+	nav: { pt: "Pagamentos", en: "Payments" },
+	description: {
+		pt: "Formas de pagamento, taxas das operadoras de cartão e as condições que você oferece na venda.",
+		en: "Payment methods, card acquirer fees and the terms you offer at the sale.",
+	},
+	readOnly: {
+		pt: "Só quem gerencia pagamentos cria e altera. Você pode ver como está tudo, mas não mudar.",
+		en: "Only people who manage payments create and change them. You can see how everything is set up, but not change it.",
+	},
+	tabs: {
+		methods: { pt: "Formas", en: "Methods" },
+		acquirers: { pt: "Operadoras e taxas", en: "Acquirers and fees" },
+		terms: { pt: "Condições", en: "Terms" },
+	},
+	edit: { pt: "Editar", en: "Edit" },
+	view: { pt: "Ver", en: "View" },
+	active: { pt: "Ativa", en: "Active" },
+	inactive: { pt: "Inativa", en: "Inactive" },
+	actions: { pt: "Ações", en: "Actions" },
+	save: { pt: "Salvar", en: "Save" },
+	saving: { pt: "Salvando...", en: "Saving..." },
+	error: {
+		pt: "Não foi possível salvar agora. Tente de novo.",
+		en: "Could not save right now. Try again.",
+	},
+	kind: {
+		cash: { pt: "Dinheiro", en: "Cash" },
+		pix: { pt: "Pix", en: "Pix" },
+		debit_card: { pt: "Cartão de débito", en: "Debit card" },
+		credit_card: { pt: "Cartão de crédito", en: "Credit card" },
+		bank_slip: { pt: "Boleto", en: "Bank slip" },
+		on_account: { pt: "Faturado", en: "On account" },
+	},
+	methods: {
+		new: { pt: "Nova forma", en: "New method" },
+		empty: {
+			title: { pt: "Nenhuma forma ainda", en: "No methods yet" },
+			text: {
+				pt: "Cadastre as formas que a empresa aceita: dinheiro, Pix, cartão, boleto.",
+				en: "Add the methods the company accepts: cash, Pix, card, bank slip.",
+			},
+		},
+		table: {
+			name: { pt: "Nome", en: "Name" },
+			kind: { pt: "Tipo", en: "Type" },
+			acquirer: { pt: "Operadora", en: "Acquirer" },
+			active: { pt: "Situação", en: "Status" },
+		},
+		form: {
+			newTitle: { pt: "Nova forma de pagamento", en: "New payment method" },
+			editTitle: { pt: "Editar forma de pagamento", en: "Edit payment method" },
+			viewTitle: { pt: "Forma de pagamento", en: "Payment method" },
+			name: { pt: "Nome", en: "Name" },
+			nameRequired: {
+				pt: "Informe o nome da forma.",
+				en: "Enter the method name.",
+			},
+			kind: { pt: "Tipo", en: "Type" },
+			acquirer: { pt: "Operadora", en: "Acquirer" },
+			acquirerRequired: {
+				pt: "Escolha a operadora do cartão.",
+				en: "Choose the card acquirer.",
+			},
+			acquirerChoose: { pt: "Escolha...", en: "Choose..." },
+			active: { pt: "Ativa", en: "Active" },
+		},
+		created: { pt: "Forma criada.", en: "Method created." },
+		updated: { pt: "Forma salva.", en: "Method saved." },
+	},
+	acquirers: {
+		new: { pt: "Nova operadora", en: "New acquirer" },
+		empty: {
+			title: { pt: "Nenhuma operadora ainda", en: "No acquirers yet" },
+			text: {
+				pt: "Cadastre a operadora da maquininha para lançar as taxas dela.",
+				en: "Add the card machine acquirer to enter its fees.",
+			},
+		},
+		form: {
+			newTitle: { pt: "Nova operadora", en: "New acquirer" },
+			editTitle: { pt: "Editar operadora", en: "Edit acquirer" },
+			viewTitle: { pt: "Operadora", en: "Acquirer" },
+			name: { pt: "Nome", en: "Name" },
+			nameRequired: {
+				pt: "Informe o nome da operadora.",
+				en: "Enter the acquirer name.",
+			},
+			active: { pt: "Ativa", en: "Active" },
+		},
+		validity: { pt: "Vigência", en: "In force from" },
+		validityCurrent: { pt: "vigente", en: "current" },
+		validityFuture: { pt: "futura", en: "future" },
+		validityPast: { pt: "antiga", en: "past" },
+		newValidity: { pt: "Nova vigência", en: "New validity" },
+		newValidityTitle: { pt: "Nova vigência", en: "New validity" },
+		newValidityHelp: {
+			pt: "As taxas da vigência que está na tela são copiadas para a nova data. Depois é só ajustar o que mudou.",
+			en: "The fees shown on screen are copied to the new date. Then adjust what changed.",
+		},
+		newValidityDate: { pt: "Começa em", en: "Starts on" },
+		newValidityCreate: { pt: "Criar vigência", en: "Create validity" },
+		newValidityRequired: {
+			pt: "Informe a data de início.",
+			en: "Enter the start date.",
+		},
+		table: {
+			modality: { pt: "Modalidade", en: "Type" },
+			fee: { pt: "Taxa", en: "Fee" },
+			days: { pt: "Dias para receber", en: "Days to receive" },
+			anticipation: { pt: "Antecipação", en: "Anticipation" },
+		},
+		modality: {
+			debit: { pt: "Débito", en: "Debit" },
+			credit: { pt: "Crédito à vista", en: "Credit, single payment" },
+			merchant_installments: { pt: "Lojista", en: "Merchant installments" },
+			issuer_installments: { pt: "Emissor", en: "Issuer installments" },
+		},
+		perMonth: { pt: "a.m.", en: "p.m." },
+		daysHelp: {
+			pt: "Débito, crédito e emissor: dias até cair o valor todo. Lojista: dias de cada parcela. Antecipação é a taxa ao mês, vazia quando não antecipa.",
+			en: "Debit, credit and issuer: days until the whole amount arrives. Merchant: days of each installment. Anticipation is the monthly fee, empty when not anticipating.",
+		},
+		invalidPct: {
+			pt: "Use uma taxa de 0 a 99,99.",
+			en: "Use a fee from 0 to 99.99.",
+		},
+		invalidDays: {
+			pt: "Use um número inteiro de dias.",
+			en: "Use a whole number of days.",
+		},
+		feeSaved: { pt: "Taxa salva.", en: "Fee saved." },
+		validityCreated: { pt: "Vigência criada.", en: "Validity created." },
+		created: { pt: "Operadora criada.", en: "Acquirer created." },
+		updated: { pt: "Operadora salva.", en: "Acquirer saved." },
+	},
+	terms: {
+		new: { pt: "Nova condição", en: "New term" },
+		empty: {
+			title: { pt: "Nenhuma condição ainda", en: "No terms yet" },
+			text: {
+				pt: "Crie as condições que aparecem na venda, como Boleto 28 dias ou Cartão 3x.",
+				en: "Create the terms offered at the sale, like Bank slip 28 days or Card 3x.",
+			},
+		},
+		table: {
+			name: { pt: "Nome", en: "Name" },
+			method: { pt: "Forma", en: "Method" },
+			installments: { pt: "Parcelas e dias", en: "Installments and days" },
+			active: { pt: "Situação", en: "Status" },
+		},
+		cash: { pt: "À vista", en: "Single payment" },
+		issuer: { pt: "emissor", en: "issuer" },
+		form: {
+			newTitle: { pt: "Nova condição de pagamento", en: "New payment term" },
+			editTitle: {
+				pt: "Editar condição de pagamento",
+				en: "Edit payment term",
+			},
+			viewTitle: { pt: "Condição de pagamento", en: "Payment term" },
+			name: { pt: "Nome", en: "Name" },
+			nameRequired: {
+				pt: "Informe o nome da condição.",
+				en: "Enter the term name.",
+			},
+			method: { pt: "Forma de pagamento", en: "Payment method" },
+			methodChoose: { pt: "Escolha...", en: "Choose..." },
+			methodRequired: {
+				pt: "Escolha a forma de pagamento.",
+				en: "Choose the payment method.",
+			},
+			days: { pt: "Dias das parcelas", en: "Installment days" },
+			daysHelp: {
+				pt: "Dias depois da venda, separados por barra: 0 é à vista, 30/60/90 são três parcelas. No cartão, o recebimento segue a taxa da operadora.",
+				en: "Days after the sale, separated by slashes: 0 is a single payment, 30/60/90 are three installments. On cards, receipt follows the acquirer fee.",
+			},
+			daysInvalid: {
+				pt: "Use de 1 a 12 números de dias, sem diminuir (ex.: 30/60/90).",
+				en: "Use 1 to 12 day numbers, never decreasing (e.g. 30/60/90).",
+			},
+			issuer: { pt: "Parcelado emissor", en: "Issuer installments" },
+			issuerHelp: {
+				pt: "O cliente parcela no banco e a empresa recebe tudo de uma vez.",
+				en: "The customer pays in installments to the bank and the company receives it all at once.",
+			},
+			active: { pt: "Ativa", en: "Active" },
+		},
+		created: { pt: "Condição criada.", en: "Term created." },
+		updated: { pt: "Condição salva.", en: "Term saved." },
+	},
+};
