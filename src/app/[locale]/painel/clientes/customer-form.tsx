@@ -179,7 +179,8 @@ export function CustomerForm({
 					phone: form.phoneInvalid,
 					city: form.cityRequired,
 					state: form.stateRequired,
-					creditLimit: form.creditLimitInvalid,
+					// Sem o campo na tela (autônomo), o erro do limite vira a mensagem geral.
+					creditLimit: isFleet ? form.creditLimitInvalid : undefined,
 				},
 				copy,
 			),

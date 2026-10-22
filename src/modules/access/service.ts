@@ -297,7 +297,7 @@ export async function grantedPermissions(
 }
 
 /** Alguma das ligações do usuário na empresa ativa tem um cargo com a permissão? (Conferido dentro da transação.) */
-export async function hasPermission(
+async function hasPermission(
 	tx: Transaction,
 	userId: string,
 	companyId: string,

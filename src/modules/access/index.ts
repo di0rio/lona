@@ -34,7 +34,6 @@ export {
 	findInvite,
 	grantedPermissions,
 	HeadquartersLockedError,
-	hasPermission,
 	InvalidInviteError,
 	InvalidMembershipError,
 	type InviteInfo,

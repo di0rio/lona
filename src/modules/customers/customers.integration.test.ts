@@ -362,6 +362,8 @@ describe.skipIf(!hasDatabase)("customers", () => {
 			false,
 		);
 		expect(await customerDetail(boss.id, randomUUID())).toBeNull();
+		// A página do detalhe passa o id da URL sem conferir: id malformado é "não existe", não erro do Postgres.
+		expect(await customerDetail(boss.id, "nao-e-um-id")).toBeNull();
 	});
 
 	describe("routes", () => {

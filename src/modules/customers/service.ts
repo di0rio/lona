@@ -118,6 +118,8 @@ function translateDuplicate(error: unknown): never {
 
 const LIST_LIMIT = 100;
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Texto fixo: o Drizzle tira o nome da tabela das colunas numa seleção de tabela única, e aqui as duas tabelas têm
 // company_id.
 const vehicleCount = sql<number>`(
@@ -193,6 +195,8 @@ export async function customerDetail(
 	userId: string,
 	customerId: string,
 ): Promise<CustomerDetail | null> {
+	// O id vem da URL do detalhe: malformado é cliente que não existe, não erro do Postgres (22P02).
+	if (!UUID.test(customerId)) return null;
 	return inActiveCompany(userId, async (tx, companyId) => {
 		const can = await requireView(tx, userId, companyId);
 		const [customer] = await tx
