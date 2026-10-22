@@ -43,6 +43,13 @@
       "when": 1792211413834,
       "tag": "0005_anti_abuse",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792685963556,
+      "tag": "0006_payments",
+      "breakpoints": true
     }
   ]
 }

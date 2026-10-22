@@ -133,6 +133,7 @@ As horas de trabalho de um mecânico cobradas numa OS.
 **Faturado**:
 Venda ou OS paga a prazo, que vira títulos a receber.
 _Evitar_: fiado, crediário
+No código: `on_account` (tipo de forma de pagamento)
 
 **Título**:
 Uma parcela a receber de um cliente ou a pagar a um fornecedor, com valor e vencimento. Pertence à filial que faturou ou comprou.
@@ -141,27 +142,39 @@ _Evitar_: boleto (é só uma forma de pagamento), parcela (fora do contexto de u
 **Forma de pagamento**:
 Como o dinheiro chega (dinheiro, Pix, débito, crédito, boleto, faturado), com a taxa cobrada e em quantos dias o dinheiro cai. Cada empresa cadastra as suas.
 _Evitar_: meio de pagamento, método
+No código: `payment_method`
 
 **Condição de pagamento**:
 Um modelo de parcelamento reaproveitável ("à vista", "30/60/90", "entrada + 3x", "28/56 dias"); cada parcela vira um título.
 _Evitar_: plano de pagamento, prazo (sozinho)
+No código: `payment_term`
 
 **Operadora**:
 A empresa da maquininha (Stone, Cielo, PagBank...) que repassa o dinheiro das vendas no cartão, descontada a taxa.
 _Evitar_: adquirente, credenciadora (na interface)
+No código: `acquirer`
 
 **Taxa**:
 O percentual que a operadora desconta de cada venda no cartão. Muda por modalidade e número de parcelas, e pode mudar com o tempo.
 _Evitar_: MDR (na interface), tarifa
+No código: `fee` (tabela `acquirer_fees`)
+
+**Vigência**:
+A data a partir da qual uma taxa vale. A taxa vigente é a de vigência mais recente que não está no futuro; as antigas ficam como histórico.
+_Evitar_: validade, início
+No código: `validFrom`/`valid_from`
 
 **Parcelado lojista**:
 Venda parcelada sem juros para o cliente, em que a empresa paga a taxa e recebe uma parcela por mês.
+No código: `merchant_installments` (modalidade da taxa)
 
 **Parcelado emissor**:
-Venda parcelada em que o cliente paga os juros ao banco do cartão e a empresa recebe o valor todo de uma vez, com a taxa do crédito à vista.
+Venda parcelada em que o cliente paga os juros ao banco do cartão e a empresa recebe o valor todo de uma vez, com uma taxa própria, em geral igual à do crédito à vista.
+No código: `issuer_installments` (modalidade da taxa)
 
 **Antecipação**:
 Receber da operadora antes do prazo, pagando uma taxa extra.
+No código: `anticipation`
 
 **Recebimento**:
 A baixa de um título a receber quando o dinheiro chega.
