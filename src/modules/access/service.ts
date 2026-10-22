@@ -273,7 +273,7 @@ export class PermissionDeniedError extends Error {
 }
 
 /** Alguma das ligações do usuário na empresa ativa tem um cargo com a permissão? (Conferido dentro da transação.) */
-async function hasPermission(
+export async function hasPermission(
 	tx: Transaction,
 	userId: string,
 	companyId: string,
@@ -350,7 +350,7 @@ export type CompanySettingsView = {
 };
 
 /** Roda `fn` na empresa ativa do usuário, já com o contexto do RLS; null se ele não tem empresa ativa. */
-async function inActiveCompany<T>(
+export async function inActiveCompany<T>(
 	userId: string,
 	fn: (tx: Transaction, companyId: string) => Promise<T>,
 ): Promise<T | null> {

@@ -2,8 +2,10 @@ import {
 	BuildingIcon,
 	LayoutDashboardIcon,
 	type LucideIcon,
+	PackageIcon,
 	SettingsIcon,
 	ShieldCheckIcon,
+	TruckIcon,
 	UsersIcon,
 } from "lucide-react";
 import type { Locale } from "@/i18n/generated";
@@ -15,6 +17,8 @@ export type NavItem = { title: string; href: string; icon: LucideIcon };
 export function navItems(
 	copy: {
 		dashboard: string;
+		parts: string;
+		suppliers: string;
 		branches: string;
 		roles: string;
 		users: string;
@@ -28,6 +32,16 @@ export function navItems(
 			title: copy.dashboard,
 			href: localePath(locale, "/painel"),
 			icon: LayoutDashboardIcon,
+		},
+		{
+			title: copy.parts,
+			href: localePath(locale, "/painel/pecas"),
+			icon: PackageIcon,
+		},
+		{
+			title: copy.suppliers,
+			href: localePath(locale, "/painel/fornecedores"),
+			icon: TruckIcon,
 		},
 		...(usesBranches
 			? [

@@ -53,6 +53,8 @@ export function AppShell({
 	summary,
 	userName,
 	dashboardTitle,
+	partsTitle,
+	suppliersTitle,
 	branchesTitle,
 	rolesTitle,
 	usersTitle,
@@ -67,6 +69,8 @@ export function AppShell({
 	summary: DashboardSummary | null;
 	userName: string;
 	dashboardTitle: string;
+	partsTitle: string;
+	suppliersTitle: string;
 	branchesTitle: string;
 	rolesTitle: string;
 	usersTitle: string;
@@ -132,6 +136,8 @@ export function AppShell({
 	const items = navItems(
 		{
 			dashboard: dashboardTitle,
+			parts: partsTitle,
+			suppliers: suppliersTitle,
 			branches: branchesTitle,
 			roles: rolesTitle,
 			users: usersTitle,

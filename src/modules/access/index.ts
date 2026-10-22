@@ -1,7 +1,7 @@
 // API pública do módulo access: é só o que outros módulos podem importar.
 
 export { auth } from "./auth";
-export { branchCnpj, formatCnpj } from "./cnpj";
+export { branchCnpj, formatCnpj, isValidCnpj } from "./cnpj";
 export {
 	type Limit,
 	limits,
@@ -33,10 +33,12 @@ export {
 	dashboardSummary,
 	findInvite,
 	HeadquartersLockedError,
+	hasPermission,
 	InvalidInviteError,
 	InvalidMembershipError,
 	type InviteInfo,
 	type InviteRow,
+	inActiveCompany,
 	listBranches,
 	listRoles,
 	listUsers,
