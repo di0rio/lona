@@ -1,5 +1,6 @@
 import {
 	BuildingIcon,
+	ContactIcon,
 	LayoutDashboardIcon,
 	type LucideIcon,
 	SettingsIcon,
@@ -15,6 +16,7 @@ export type NavItem = { title: string; href: string; icon: LucideIcon };
 export function navItems(
 	copy: {
 		dashboard: string;
+		customers: string;
 		branches: string;
 		roles: string;
 		users: string;
@@ -22,6 +24,7 @@ export function navItems(
 	},
 	locale: Locale,
 	usesBranches: boolean,
+	canViewCustomers: boolean,
 ): NavItem[] {
 	return [
 		{
@@ -29,6 +32,15 @@ export function navItems(
 			href: localePath(locale, "/painel"),
 			icon: LayoutDashboardIcon,
 		},
+		...(canViewCustomers
+			? [
+					{
+						title: copy.customers,
+						href: localePath(locale, "/painel/clientes"),
+						icon: ContactIcon,
+					},
+				]
+			: []),
 		...(usesBranches
 			? [
 					{
