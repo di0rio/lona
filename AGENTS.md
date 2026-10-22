@@ -17,4 +17,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Antes de mexer em interface, leia `DESIGN.md`: tokens, tipografia, movimento e componentes seguem ele.
 - Toda feature nova vem com teste (integração no Vitest para service e RLS, e2e no Playwright para o fluxo da tela).
 - Todo bug corrigido vem com um teste de regressão: primeiro um teste que falha reproduzindo o bug, depois a correção que faz ele passar. Commit `fix:` sem arquivo `*.test.ts` ou `*.spec.ts` alterado é barrado no CI.
-- Antes de abrir PR: `bun run lint`, `bun run typecheck`, `bun run test` e `bun run test:e2e` verdes. O CI roda os mesmos comandos e a `main` só aceita merge com ele verde.
+- Durante o trabalho, rode só os testes afetados (`bun run test:changed`, `bun run test:e2e:changed`, ou o arquivo de teste direto). Antes de abrir PR: `bun run lint`, `bun run typecheck`, `bun run test` e `bun run test:e2e` verdes. O CI roda os mesmos comandos e a `main` só aceita merge com ele verde.

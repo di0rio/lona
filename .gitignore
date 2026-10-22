@@ -8,6 +8,7 @@
 # testing
 /coverage
 /test-results/
+/e2e/.test-users
 /playwright-report/
 
 # misc

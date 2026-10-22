@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import pg from "pg";
+import { rememberE2eUser } from "../src/test/cleanup";
 import { totpCode } from "../src/test/totp";
 
 // Conexão do dono só para preparar o cenário (vencer a demonstração) e limpar o que o teste criou.
@@ -28,6 +29,7 @@ async function sessionUser(page: Page) {
 	const session = (await response.json()) as { user: { id: string } } | null;
 	if (!session) throw new Error("sem sessão");
 	userIds.add(session.user.id);
+	rememberE2eUser(session.user.id);
 	return session.user.id;
 }
 
@@ -43,7 +45,10 @@ const countdown = /\d:\d{2}:\d{2}/;
 test.afterEach(async ({ page }) => {
 	const response = await page.request.get("/api/auth/get-session");
 	const session = (await response.json()) as { user: { id: string } } | null;
-	if (session) userIds.add(session.user.id);
+	if (session) {
+		userIds.add(session.user.id);
+		rememberE2eUser(session.user.id);
+	}
 });
 
 test.afterAll(async () => {
