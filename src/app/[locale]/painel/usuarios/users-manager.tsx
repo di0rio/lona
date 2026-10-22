@@ -90,7 +90,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 	const [inviting, setInviting] = useState(false);
 
 	// Sem filiais ligadas o vínculo é sempre "todas" e a filial nem aparece (ADR 0003).
-	const describe = (
+	const describeMembership = (
 		m: Pick<MembershipRow, "branchId" | "branchName" | "roleName" | "level">,
 	) => {
 		const where = !view.usesBranches
@@ -137,7 +137,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 							<TableCell>
 								<ul className="flex flex-col gap-0.5">
 									{user.memberships.map((m) => (
-										<li key={m.branchId ?? "all"}>{describe(m)}</li>
+										<li key={m.branchId ?? "all"}>{describeMembership(m)}</li>
 									))}
 								</ul>
 							</TableCell>
@@ -163,7 +163,7 @@ export function UsersManager({ view, copy }: { view: UsersView; copy: Copy }) {
 			{view.invites.length > 0 && (
 				<PendingInvites
 					copy={copy}
-					describe={describe}
+					describeMembership={describeMembership}
 					invites={view.invites}
 				/>
 			)}
@@ -401,11 +401,11 @@ function MembershipsForm({
 function PendingInvites({
 	invites,
 	copy,
-	describe,
+	describeMembership,
 }: {
 	invites: InviteRow[];
 	copy: Copy;
-	describe: (m: InviteRow) => string;
+	describeMembership: (m: InviteRow) => string;
 }) {
 	const router = useRouter();
 	const text = copy.invite.pending;
@@ -433,7 +433,7 @@ function PendingInvites({
 					{invites.map((invite) => (
 						<TableRow key={invite.id}>
 							<TableCell>{invite.createdByName}</TableCell>
-							<TableCell>{describe(invite)}</TableCell>
+							<TableCell>{describeMembership(invite)}</TableCell>
 							<TableCell>
 								{/* Fuso e idioma do navegador: o servidor pode renderizar diferente. */}
 								<time
