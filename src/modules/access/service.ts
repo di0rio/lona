@@ -187,6 +187,8 @@ export type DashboardSummary = {
 	branch: { name: string; code: string };
 	role: string;
 	level: Level;
+	/** Todas as permissões do usuário na empresa ativa (a casca filtra o menu por elas). */
+	permissions: Permission[];
 };
 
 /** Empresa, filial atual (a matriz, ou a primeira que o usuário consulta) e cargo, para a tela provisória do painel. */
@@ -261,6 +263,7 @@ export async function summaryOf(
 		branch: { name: branch.name, code: branch.code },
 		role: membership.role,
 		level: membership.level,
+		permissions: await grantedPermissions(tx, userId, active.companyId),
 	};
 }
 
@@ -271,8 +274,30 @@ export class PermissionDeniedError extends Error {
 	}
 }
 
+/** Todas as permissões que os cargos do usuário dão na empresa (conferido dentro da transação). */
+export async function grantedPermissions(
+	tx: Transaction,
+	userId: string,
+	companyId: string,
+) {
+	const rows = await tx
+		.selectDistinct({ permission: rolePermissions.permission })
+		.from(memberships)
+		.innerJoin(
+			rolePermissions,
+			and(
+				eq(rolePermissions.companyId, memberships.companyId),
+				eq(rolePermissions.roleId, memberships.roleId),
+			),
+		)
+		.where(
+			and(eq(memberships.companyId, companyId), eq(memberships.userId, userId)),
+		);
+	return rows.map((row) => row.permission as Permission);
+}
+
 /** Alguma das ligações do usuário na empresa ativa tem um cargo com a permissão? (Conferido dentro da transação.) */
-async function hasPermission(
+export async function hasPermission(
 	tx: Transaction,
 	userId: string,
 	companyId: string,
@@ -306,7 +331,7 @@ export type CompanySettingsView = {
 };
 
 /** Roda `fn` na empresa ativa do usuário, já com o contexto do RLS; null se ele não tem empresa ativa. */
-async function inActiveCompany<T>(
+export async function inActiveCompany<T>(
 	userId: string,
 	fn: (tx: Transaction, companyId: string) => Promise<T>,
 ): Promise<T | null> {
