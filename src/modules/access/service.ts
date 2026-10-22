@@ -8,6 +8,7 @@ import {
 	gt,
 	inArray,
 	isNull,
+	notInArray,
 	or,
 	sql,
 } from "drizzle-orm";
@@ -277,6 +278,49 @@ async function hasPermission(
 		)
 		.limit(1);
 	return Boolean(row);
+}
+
+/** Quem chama tentou dar ou tirar um cargo com permissão que ele mesmo não tem; a rota converte em 403. */
+export class RoleEscalationError extends Error {
+	constructor() {
+		super(
+			"Você só pode dar ou tirar cargos com permissões que você também tem.",
+		);
+	}
+}
+
+/** Sem isso, quem gerencia usuários se daria (ou daria a outra pessoa) um cargo maior que o seu, como o de dono. */
+async function assertHoldsRolePermissions(
+	tx: Transaction,
+	userId: string,
+	companyId: string,
+	roleIds: string[],
+) {
+	const own = tx
+		.select({ permission: rolePermissions.permission })
+		.from(memberships)
+		.innerJoin(
+			rolePermissions,
+			and(
+				eq(rolePermissions.companyId, memberships.companyId),
+				eq(rolePermissions.roleId, memberships.roleId),
+			),
+		)
+		.where(
+			and(eq(memberships.companyId, companyId), eq(memberships.userId, userId)),
+		);
+	const [missing] = await tx
+		.select({ one: sql<number>`1` })
+		.from(rolePermissions)
+		.where(
+			and(
+				eq(rolePermissions.companyId, companyId),
+				inArray(rolePermissions.roleId, roleIds),
+				notInArray(rolePermissions.permission, own),
+			),
+		)
+		.limit(1);
+	if (missing) throw new RoleEscalationError();
 }
 
 export type CompanySettingsView = {
@@ -910,7 +954,8 @@ function translateMembershipError(error: unknown): never {
 
 /**
  * Troca todos os vínculos de um usuário pela lista enviada (lista vazia tira o usuário da empresa). Exige
- * `users.manage`. false se o usuário não tem vínculo na empresa. Ninguém fica sem `users.manage` por conta própria.
+ * `users.manage` e todas as permissões dos cargos dados e tirados. false se o usuário não tem vínculo na empresa.
+ * Ninguém fica sem `users.manage` por conta própria.
  * Escreve só a diferença (insere, atualiza, depois apaga) para o próprio vínculo do usuário nunca sumir no meio:
  * o RLS confere o vínculo a cada comando.
  */
@@ -924,7 +969,11 @@ export async function updateUserMemberships(
 			throw new PermissionDeniedError("users.manage");
 		}
 		const current = await tx
-			.select({ id: memberships.id, branchId: memberships.branchId })
+			.select({
+				id: memberships.id,
+				branchId: memberships.branchId,
+				roleId: memberships.roleId,
+			})
 			.from(memberships)
 			.where(
 				and(
@@ -933,6 +982,11 @@ export async function updateUserMemberships(
 				),
 			);
 		if (current.length === 0) return false;
+		// Os cargos atuais também: rebaixar ou tirar o dono é tirar dele permissões que quem chama não tem.
+		await assertHoldsRolePermissions(tx, userId, companyId, [
+			...current.map((c) => c.roleId),
+			...items.map((i) => i.roleId),
+		]);
 
 		if (targetId === userId) {
 			const [keeps] = await tx
@@ -1023,7 +1077,8 @@ const hashToken = (token: string) =>
 
 /**
  * Cria um convite com o vínculo já definido (mesmas regras de vínculo de `updateUserMemberships`). Vale 48 horas e
- * uma vez só. O token volta aqui e em nenhum outro lugar: no banco fica só o hash. Exige `users.manage`.
+ * uma vez só. O token volta aqui e em nenhum outro lugar: no banco fica só o hash. Exige `users.manage` e todas
+ * as permissões do cargo do convite.
  */
 export async function createInvite(userId: string, input: MembershipInput) {
 	return inActiveCompany(userId, async (tx, companyId) => {
@@ -1035,6 +1090,7 @@ export async function createInvite(userId: string, input: MembershipInput) {
 			.from(roles)
 			.where(eq(roles.id, input.roleId));
 		if (!role) throw new InvalidMembershipError("Cargo não encontrado.");
+		await assertHoldsRolePermissions(tx, userId, companyId, [input.roleId]);
 		if (input.branchId !== null) {
 			const [branch] = await tx
 				.select({ active: branches.active })
