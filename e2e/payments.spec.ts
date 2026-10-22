@@ -64,14 +64,28 @@ test("payments: see the demo fees and terms, edit a fee inline and create a term
 		"1,09",
 	);
 	const credit = stone.getByLabel("Crédito à vista: Taxa", { exact: true });
+	// Esc desfaz a edição: volta ao valor anterior e não salva.
+	const before = await credit.inputValue();
+	await credit.fill("9,99");
+	await credit.press("Escape");
+	await expect(credit).toHaveValue(before);
+	await expect(page.getByText("Taxa salva.")).toHaveCount(0);
+
 	await credit.fill("3,10");
 	await credit.press("Enter");
 	await expect(page.getByText("Taxa salva.")).toBeVisible();
+	await expect(credit).toHaveValue("3,10");
 
 	// Valor inválido é recusado e volta ao anterior.
 	await credit.fill("abc");
 	await credit.press("Enter");
 	await expect(page.getByText("Use uma taxa de 0 a 99,99.")).toBeVisible();
+	await expect(credit).toHaveValue("3,10");
+
+	// Vigência antiga é só consulta: nenhuma célula editável.
+	await stone.getByLabel("Vigência").selectOption("2025-01-01");
+	await expect(stone.locator("input")).toHaveCount(0);
+	await stone.getByLabel("Vigência").selectOption("2026-03-01");
 	await expect(credit).toHaveValue("3,10");
 
 	await termsTab(page).click();
@@ -88,6 +102,19 @@ test("payments: see the demo fees and terms, edit a fee inline and create a term
 	await sheet.getByRole("button", { name: "Salvar" }).click();
 	await expect(sheet).toBeHidden();
 
+	// Dias das parcelas: "30/60/90" é aceito; dias diminuindo são recusados.
+	await page.getByRole("button", { name: "Nova condição" }).click();
+	await sheet.getByLabel("Nome").fill("Pix 3x");
+	await sheet.getByLabel("Forma de pagamento").selectOption({ label: "Pix" });
+	await sheet.getByLabel("Dias das parcelas").fill("60/30");
+	await sheet.getByRole("button", { name: "Salvar" }).click();
+	await expect(
+		sheet.getByText("Use de 1 a 12 números de dias, sem diminuir"),
+	).toBeVisible();
+	await sheet.getByLabel("Dias das parcelas").fill("30/60/90");
+	await sheet.getByRole("button", { name: "Salvar" }).click();
+	await expect(sheet).toBeHidden();
+
 	await page.reload();
 	await acquirersTab(page).click();
 	await expect(
@@ -99,6 +126,9 @@ test("payments: see the demo fees and terms, edit a fee inline and create a term
 	const row = page.getByRole("row", { name: /Pix 2x/ });
 	await expect(row).toContainText("0/30");
 	await expect(row).toContainText("Pix");
+	await expect(page.getByRole("row", { name: /Pix 3x/ })).toContainText(
+		"30/60/90",
+	);
 });
 
 test("payments: view as the counter clerk is read-only", async ({ page }) => {
@@ -116,7 +146,18 @@ test("payments: view as the counter clerk is read-only", async ({ page }) => {
 	await acquirersTab(page).click();
 	await expect(page.locator('[data-acquirer="Stone"]')).toBeVisible();
 	await expect(page.getByLabel("Débito: Taxa", { exact: true })).toHaveCount(0);
+	// Nenhum campo editável na área de operadoras.
+	await expect(page.getByRole("tabpanel").locator("input")).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Nova vigência" })).toHaveCount(
 		0,
 	);
+	// "Ver" abre a operadora só para consulta, sem botão de salvar.
+	await page
+		.locator('[data-acquirer="Stone"]')
+		.getByRole("button", { name: "Ver" })
+		.click();
+	await expect(page.getByRole("dialog")).toBeVisible();
+	await expect(
+		page.getByRole("dialog").getByRole("button", { name: "Salvar" }),
+	).toHaveCount(0);
 });

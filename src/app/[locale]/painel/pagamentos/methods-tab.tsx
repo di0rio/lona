@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { Field } from "@/components/field";
 import { EmptyState } from "@/components/site-shell/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ import type {
 	PaymentMethodRow,
 	PaymentsView,
 } from "@/modules/payments";
-import { type Copy, Field, failure, selectClass } from "./shared";
+import { type Copy, failure, selectClass } from "./shared";
 
 const kinds: MethodKind[] = [
 	"cash",
@@ -245,6 +246,7 @@ function MethodForm({
 				{method && (
 					<div className="flex items-center gap-2">
 						<Switch
+							disabled={!view.canManage}
 							aria-label={form.active}
 							checked={active}
 							onCheckedChange={setActive}

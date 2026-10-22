@@ -2,8 +2,9 @@
 
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Field } from "@/components/field";
 import { EmptyState } from "@/components/site-shell/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,14 +31,7 @@ import type {
 	Modality,
 	PaymentsView,
 } from "@/modules/payments";
-import {
-	type Copy,
-	dateText,
-	Field,
-	failure,
-	pctText,
-	selectClass,
-} from "./shared";
+import { type Copy, dateText, failure, pctText, selectClass } from "./shared";
 
 type FeeLine = { modality: Modality; installments: number };
 
@@ -141,6 +135,8 @@ function AcquirerCard({
 	// A vigência escolhida pode ainda não ter taxa nenhuma (operadora nova ou data recém-criada).
 	const options = [...new Set([...dates, selected])].sort().reverse();
 	const rows = acquirer.fees.filter((f) => f.validFrom === selected);
+	// Vigência que já foi substituída por outra mais nova vira só consulta.
+	const isPast = current !== undefined && selected < current;
 
 	function status(date: string) {
 		if (date > today) return text.validityFuture;
@@ -211,7 +207,7 @@ function AcquirerCard({
 					{feeLines.map((line) => (
 						<FeeRow
 							acquirer={acquirer}
-							canManage={canManage}
+							canManage={canManage && !isPast}
 							copy={copy}
 							fee={rows.find(
 								(f) =>
@@ -225,6 +221,9 @@ function AcquirerCard({
 					))}
 				</TableBody>
 			</Table>
+			{canManage && isPast && (
+				<p className="text-muted-foreground text-sm">{text.pastNote}</p>
+			)}
 			<p className="text-muted-foreground text-xs">{text.daysHelp}</p>
 			<Sheet onOpenChange={setCreating} open={creating}>
 				<SheetContent className="data-[side=right]:sm:max-w-md">
@@ -265,6 +264,10 @@ function FeeRow({
 }) {
 	const router = useRouter();
 	const text = copy.acquirers;
+	// Linha sem taxa nasce com este prazo; a tela mostra no campo de dias.
+	const defaultDays = line.modality === "debit" ? 1 : 30;
+	// Evita dois salvamentos ao mesmo tempo na linha (dois POST seguidos dariam 409).
+	const saving = useRef(false);
 	const label =
 		line.modality === "merchant_installments"
 			? `${text.modality[line.modality]} ${line.installments}x`
@@ -276,6 +279,8 @@ function FeeRow({
 			Pick<AcquirerFeeRow, "feePct" | "daysToReceive" | "anticipationFeePct">
 		>,
 	) {
+		if (saving.current) return false;
+		saving.current = true;
 		const { error } = fee
 			? await api().payments.fees({ id: fee.id }).patch(patch)
 			: await api().payments.fees.post({
@@ -283,10 +288,11 @@ function FeeRow({
 					modality: line.modality,
 					installments: line.installments,
 					feePct: patch.feePct ?? "0",
-					daysToReceive: line.modality === "debit" ? 1 : 30,
+					daysToReceive: defaultDays,
 					anticipationFeePct: null,
 					validFrom,
 				});
+		saving.current = false;
 		if (error) {
 			toast.error(failure(error, copy.error));
 			return false;
@@ -334,11 +340,13 @@ function FeeRow({
 			</TableCell>
 			<TableCell className="text-right">
 				<EditableCell
-					canManage={canManage && Boolean(fee)}
+					canManage={canManage}
+					disabled={!fee}
 					inputMode="numeric"
 					key={`days-${fee?.daysToReceive}`}
 					label={`${label}: ${text.table.days}`}
 					onCommit={saveDays}
+					placeholder={String(defaultDays)}
 					value={fee ? String(fee.daysToReceive) : ""}
 				/>
 			</TableCell>
@@ -363,6 +371,8 @@ function EditableCell({
 	suffix,
 	inputMode = "decimal",
 	canManage,
+	disabled,
+	placeholder = "-",
 	onCommit,
 }: {
 	value: string;
@@ -370,9 +380,12 @@ function EditableCell({
 	suffix?: string;
 	inputMode?: "decimal" | "numeric";
 	canManage: boolean;
+	disabled?: boolean;
+	placeholder?: string;
 	onCommit: (value: string) => Promise<boolean>;
 }) {
 	const [text, setText] = useState(value);
+	const cancelled = useRef(false);
 
 	if (!canManage) {
 		return (
@@ -388,8 +401,14 @@ function EditableCell({
 				aria-label={label}
 				autoComplete="off"
 				className="h-8 w-20 text-right tabular-nums"
+				disabled={disabled}
 				inputMode={inputMode}
 				onBlur={async () => {
+					// O blur do Esc roda com o texto digitado ainda no closure: sem a marca, ele salvaria.
+					if (cancelled.current) {
+						cancelled.current = false;
+						return;
+					}
 					if (text.trim() === value) return;
 					if (!(await onCommit(text))) setText(value);
 				}}
@@ -397,11 +416,12 @@ function EditableCell({
 				onKeyDown={(event) => {
 					if (event.key === "Enter") event.currentTarget.blur();
 					if (event.key === "Escape") {
+						cancelled.current = true;
 						setText(value);
 						event.currentTarget.blur();
 					}
 				}}
-				placeholder="-"
+				placeholder={placeholder}
 				value={text}
 			/>
 			{suffix && (
@@ -478,6 +498,7 @@ function AcquirerForm({
 				{acquirer && (
 					<div className="flex items-center gap-2">
 						<Switch
+							disabled={!canManage}
 							aria-label={form.active}
 							checked={active}
 							onCheckedChange={setActive}
@@ -514,6 +535,7 @@ function ValidityForm({
 	copy: Copy;
 	onDone: (date: string) => void;
 }) {
+	const router = useRouter();
 	const text = copy.acquirers;
 	const [date, setDate] = useState("");
 	const [error, setError] = useState("");
@@ -521,6 +543,7 @@ function ValidityForm({
 
 	async function submit(event: FormEvent) {
 		event.preventDefault();
+		if (rows.length === 0) return setError(text.newValidityNoRows);
 		if (!date) return setError(text.newValidityRequired);
 		setError("");
 		setSaving(true);
@@ -538,8 +561,17 @@ function ValidityForm({
 			),
 		);
 		setSaving(false);
-		const failed = results.find((r) => r.error)?.error;
-		if (failed) return setError(failure(failed, copy.error));
+		const failed = results.filter((r) => r.error);
+		const first = failed[0]?.error;
+		if (first) {
+			// As que deram certo já existem: atualiza a tela para mostrar o estado real.
+			router.refresh();
+			return setError(
+				failed.length === results.length
+					? failure(first, copy.error)
+					: `${failed.length} ${text.newValidityPartial}`,
+			);
+		}
 		onDone(date);
 	}
 

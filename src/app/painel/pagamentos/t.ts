@@ -96,11 +96,23 @@ export default {
 		newValidity: { pt: "Nova vigência", en: "New validity" },
 		newValidityTitle: { pt: "Nova vigência", en: "New validity" },
 		newValidityHelp: {
-			pt: "As taxas da vigência que está na tela são copiadas para a nova data. Depois é só ajustar o que mudou.",
-			en: "The fees shown on screen are copied to the new date. Then adjust what changed.",
+			pt: "As taxas da vigência que está na tela são copiadas para a nova data. Depois é só ajustar o que mudou. Uma data que já passou muda qual vigência está valendo.",
+			en: "The fees shown on screen are copied to the new date. Then adjust what changed. A date in the past changes which validity is current.",
 		},
 		newValidityDate: { pt: "Começa em", en: "Starts on" },
 		newValidityCreate: { pt: "Criar vigência", en: "Create validity" },
+		newValidityNoRows: {
+			pt: "Esta vigência não tem taxas para copiar. Cadastre as taxas antes.",
+			en: "This validity has no fees to copy. Add the fees first.",
+		},
+		newValidityPartial: {
+			pt: "taxas não puderam ser copiadas. Confira a nova vigência e tente de novo.",
+			en: "fees could not be copied. Check the new validity and try again.",
+		},
+		pastNote: {
+			pt: "Vigência antiga: só consulta. Para mudar taxas, crie uma nova vigência.",
+			en: "Old validity: view only. To change fees, create a new validity.",
+		},
 		newValidityRequired: {
 			pt: "Informe a data de início.",
 			en: "Enter the start date.",
@@ -119,8 +131,8 @@ export default {
 		},
 		perMonth: { pt: "a.m.", en: "p.m." },
 		daysHelp: {
-			pt: "Débito, crédito e emissor: dias até cair o valor todo. Lojista: dias de cada parcela. Antecipação é a taxa ao mês, vazia quando não antecipa.",
-			en: "Debit, credit and issuer: days until the whole amount arrives. Merchant: days of each installment. Anticipation is the monthly fee, empty when not anticipating.",
+			pt: "Débito, crédito e emissor: dias até cair o valor todo. Lojista: dias de cada parcela. Antecipação é a taxa ao mês, vazia quando não antecipa. Linha nova começa com o prazo em cinza (1 dia no débito, 30 nos demais); depois de salvar a taxa, ajuste o prazo.",
+			en: "Debit, credit and issuer: days until the whole amount arrives. Merchant: days of each installment. Anticipation is the monthly fee, empty when not anticipating. A new line starts with the gray number of days (1 for debit, 30 for the others); after saving the fee, adjust the days.",
 		},
 		invalidPct: {
 			pt: "Use uma taxa de 0 a 99,99.",

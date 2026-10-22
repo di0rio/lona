@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { Field } from "@/components/field";
 import { EmptyState } from "@/components/site-shell/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import type { PaymentsView, PaymentTermRow } from "@/modules/payments";
-import { type Copy, Field, failure, selectClass } from "./shared";
+import { type Copy, failure, selectClass } from "./shared";
 
 /** "30/60, 90" -> [30, 60, 90]; null se algum item não for um número inteiro de dias. */
 function parseDays(text: string) {
@@ -263,6 +264,7 @@ function TermForm({
 				{canIssuer && (
 					<div className="flex items-start gap-2">
 						<Switch
+							disabled={!view.canManage}
 							aria-label={form.issuer}
 							checked={issuer}
 							onCheckedChange={setIssuer}
@@ -278,6 +280,7 @@ function TermForm({
 				{term && (
 					<div className="flex items-center gap-2">
 						<Switch
+							disabled={!view.canManage}
 							aria-label={form.active}
 							checked={active}
 							onCheckedChange={setActive}
