@@ -15,6 +15,7 @@ export type ScheduleInput = {
 	amountCents: number;
 	saleDate: string; // YYYY-MM-DD
 	kind: MethodKind;
+	/** Em cartão só a quantidade de parcelas conta: as datas de recebimento vêm da taxa da operadora. */
 	installmentDays: number[];
 	issuerInstallments: boolean;
 	fees: Fee[];
@@ -105,6 +106,10 @@ function feeInForce(
 export function scheduleInstallments(input: ScheduleInput): Schedule {
 	const { amountCents, saleDate, kind, installmentDays } = input;
 	const parts = installmentDays.length;
+	// O valor da venda nunca pode sumir em silêncio.
+	if (parts < 1 || !Number.isInteger(amountCents) || amountCents < 0) {
+		throw new Error("Invalid schedule input");
+	}
 	const isCard = kind === "debit_card" || kind === "credit_card";
 
 	if (!isCard) {

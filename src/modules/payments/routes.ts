@@ -22,7 +22,7 @@ const idParams = t.Object({ id });
 // Percentual como texto decimal, de 0.00 a 99.99.
 const pct = t.String({ pattern: "^[0-9]{1,2}(\\.[0-9]{1,2})?$" });
 const date = t.String({
-	pattern: "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+	pattern: "^[1-9][0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
 });
 const days = t.Integer({ minimum: 0, maximum: 999 });
 

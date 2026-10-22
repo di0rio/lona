@@ -171,6 +171,12 @@ export async function seedPaymentsTemplate(db: Db, companyId: string) {
 				method: "Crédito Cielo",
 				days: [0, 30, 60, 90, 120, 150],
 			},
+			{
+				name: "Cartão 6x emissor",
+				method: "Crédito Stone",
+				days: [30, 60, 90, 120, 150, 180],
+				issuer: true,
+			},
 			{ name: "Boleto 28 dias", method: "Boleto", days: [28] },
 			{ name: "Faturado 30/60/90", method: "Faturado", days: [30, 60, 90] },
 			{ name: "Entrada + 30/60", method: "Faturado", days: [0, 30, 60] },
@@ -179,6 +185,7 @@ export async function seedPaymentsTemplate(db: Db, companyId: string) {
 			name: t.name,
 			paymentMethodId: methodId(t.method),
 			installmentDays: t.days,
+			issuerInstallments: t.issuer ?? false,
 		})),
 	);
 }

@@ -145,6 +145,13 @@ export class DuplicatePaymentError extends Error {
 /** Os dados enviados quebram uma regra de pagamento; a rota converte em 422. */
 export class InvalidPaymentError extends Error {}
 
+// Um PATCH sem nenhum campo viraria UPDATE sem SET e estouraria como erro 500.
+function assertPatchNotEmpty(patch: object) {
+	if (Object.values(patch).every((value) => value === undefined)) {
+		throw new InvalidPaymentError("Nada para alterar.");
+	}
+}
+
 const duplicateField: Record<string, "name" | "validFrom"> = {
 	acquirers_company_id_name_unq: "name",
 	payment_methods_company_id_name_unq: "name",
@@ -206,6 +213,7 @@ export async function updateAcquirer(
 	patch: Partial<AcquirerInput & { active: boolean }>,
 ) {
 	return asManager(userId, async (tx) => {
+		assertPatchNotEmpty(patch);
 		const updated = await tx
 			.update(acquirers)
 			.set({ name: patch.name?.trim(), active: patch.active })
@@ -234,6 +242,7 @@ function assertValidFrom(date: string | undefined) {
 	const parsed = new Date(`${date}T00:00:00Z`);
 	if (
 		Number.isNaN(parsed.getTime()) ||
+		parsed.getUTCFullYear() < 1 ||
 		parsed.toISOString().slice(0, 10) !== date
 	) {
 		throw new InvalidPaymentError("Data de vigência inválida.");
@@ -288,6 +297,7 @@ export async function updateFee(
 	>,
 ) {
 	return asManager(userId, async (tx) => {
+		assertPatchNotEmpty(patch);
 		assertValidFrom(patch.validFrom);
 		const updated = await tx
 			.update(acquirerFees)
@@ -370,6 +380,7 @@ export async function updateMethod(
 	patch: Partial<{ name: string; acquirerId: string; active: boolean }>,
 ) {
 	return asManager(userId, async (tx) => {
+		assertPatchNotEmpty(patch);
 		const [current] = await tx
 			.select({ kind: paymentMethods.kind })
 			.from(paymentMethods)
@@ -461,11 +472,13 @@ export async function updateTerm(
 	patch: Partial<Omit<TermInput, "paymentMethodId"> & { active: boolean }>,
 ) {
 	return asManager(userId, async (tx) => {
+		assertPatchNotEmpty(patch);
 		const [current] = await tx
 			.select({
 				installmentDays: paymentTerms.installmentDays,
 				issuerInstallments: paymentTerms.issuerInstallments,
 				kind: paymentMethods.kind,
+				methodActive: paymentMethods.active,
 			})
 			.from(paymentTerms)
 			.innerJoin(
@@ -477,6 +490,9 @@ export async function updateTerm(
 			)
 			.where(eq(paymentTerms.id, termId));
 		if (!current) return false;
+		if (patch.active === true && !current.methodActive) {
+			throw new InvalidPaymentError("Forma de pagamento inativa.");
+		}
 		assertTerm(
 			current.kind,
 			patch.installmentDays ?? current.installmentDays,

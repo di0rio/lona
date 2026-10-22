@@ -77,6 +77,7 @@ SELECT lona_protect_table('payment_terms');
 --> statement-breakpoint
 
 -- Cargos prontos que já existem (empresas reais e o modelo) ganham a permissão nova.
+-- Roda como dono do banco, que ignora o RLS (como o resto das migrações).
 INSERT INTO role_permissions (company_id, role_id, permission)
 SELECT company_id, id, 'payment_methods.manage'
 FROM roles

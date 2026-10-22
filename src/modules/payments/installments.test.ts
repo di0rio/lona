@@ -178,4 +178,10 @@ describe("scheduleInstallments with card", () => {
 		expect(installments[0].anticipationCents).toBe(0);
 		expect(installments[0].receiveDate).toBe("2026-03-11");
 	});
+
+	test("refuses input that would make the sale amount vanish", () => {
+		expect(() => schedule({ installmentDays: [] })).toThrow();
+		expect(() => schedule({ amountCents: 100.5 })).toThrow();
+		expect(() => schedule({ amountCents: -1 })).toThrow();
+	});
 });

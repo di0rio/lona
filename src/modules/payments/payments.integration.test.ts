@@ -272,6 +272,10 @@ describe.skipIf(!hasDatabase)("payments", () => {
 		await expect(
 			addFee(ownerA, fee(cielo, { validFrom: "2026-02-30" })),
 		).rejects.toBeInstanceOf(InvalidPaymentError);
+		// Ano 0000 também passa no Date do JS, mas o Postgres recusa.
+		await expect(
+			addFee(ownerA, fee(cielo, { validFrom: "0000-01-01" })),
+		).rejects.toBeInstanceOf(InvalidPaymentError);
 		// Cartão sem operadora, e dinheiro com operadora.
 		await expect(
 			addMethod(ownerA, {
@@ -337,6 +341,33 @@ describe.skipIf(!hasDatabase)("payments", () => {
 				issuerInstallments: true,
 			}),
 		).toBeTruthy();
+	});
+
+	test("update rejects an empty patch and re-activating a term of an inactive method", async () => {
+		const current = await view(ownerA);
+		const id = crypto.randomUUID();
+		// Sem campo nenhum o UPDATE não teria SET e viraria erro 500.
+		for (const update of [
+			updateAcquirer,
+			updateFee,
+			updateMethod,
+			updateTerm,
+		]) {
+			await expect(update(ownerA, id, {})).rejects.toBeInstanceOf(
+				InvalidPaymentError,
+			);
+		}
+
+		const term = current.terms.find((t) => t.name === "Emissor 6x");
+		const methodId = term?.paymentMethodId as string;
+		await updateMethod(ownerA, methodId, { active: false });
+		await expect(
+			updateTerm(ownerA, term?.id as string, { active: true }),
+		).rejects.toBeInstanceOf(InvalidPaymentError);
+		await updateMethod(ownerA, methodId, { active: true });
+		expect(await updateTerm(ownerA, term?.id as string, { active: true })).toBe(
+			true,
+		);
 	});
 
 	test("RLS isolates the four tables between companies", async () => {
@@ -490,7 +521,7 @@ describe.skipIf(!hasDatabase)("payments", () => {
 			acquirers: 2,
 			acquirer_fees: 2 * 2 * 14,
 			payment_methods: 8,
-			payment_terms: 9,
+			payment_terms: 10,
 		});
 	});
 });
