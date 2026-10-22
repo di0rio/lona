@@ -25,6 +25,7 @@ export default async function Conta() {
 				<div className="flex flex-col items-start gap-3">
 					<p>{copy.anonymous}</p>
 					<Link
+						prefetch={false}
 						className="font-medium underline"
 						href={localePath(locale, "/cadastrar")}
 					>

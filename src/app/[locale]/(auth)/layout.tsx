@@ -20,6 +20,7 @@ export default async function AuthLayout({
 			<div className="flex flex-col bg-background px-6 py-6 md:px-12">
 				<header className="flex items-center justify-between">
 					<Link
+						prefetch={false}
 						className="flex items-center gap-2.5 font-[650] text-[17px] lowercase tracking-[-0.03em]"
 						href="/"
 					>

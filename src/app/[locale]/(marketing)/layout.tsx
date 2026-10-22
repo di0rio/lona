@@ -14,6 +14,7 @@ export default async function MarketingLayout({
 		<>
 			<header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-6">
 				<Link
+					prefetch={false}
 					className="flex items-center gap-2.5 font-[650] text-[17px] lowercase tracking-[-0.03em]"
 					href="/"
 				>

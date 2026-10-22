@@ -25,6 +25,7 @@ export function LocaleSwitch({
 		>
 			{languages.map((language) => (
 				<Link
+					prefetch={false}
 					aria-current={language === locale ? "page" : undefined}
 					className={cn(
 						"rounded-md px-2 py-0.5 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",

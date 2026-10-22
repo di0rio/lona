@@ -11,7 +11,7 @@ export default async function NotFound() {
 			<h1 className="page-title">{t.app.notFound.title}</h1>
 			<Button
 				nativeButton={false}
-				render={<Link href={localePath(locale, "/")} />}
+				render={<Link prefetch={false} href={localePath(locale, "/")} />}
 				variant="outline"
 			>
 				{t.app.notFound.home}

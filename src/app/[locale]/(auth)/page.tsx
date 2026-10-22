@@ -44,6 +44,7 @@ export default async function Home() {
 			<p className="text-muted-foreground text-sm">
 				{copy.haveAccount}{" "}
 				<Link
+					prefetch={false}
 					className="font-medium text-foreground underline-offset-4 hover:underline"
 					href={localePath(locale, "/entrar")}
 				>
@@ -51,6 +52,7 @@ export default async function Home() {
 				</Link>
 				{" · "}
 				<Link
+					prefetch={false}
 					className="font-medium text-foreground underline-offset-4 hover:underline"
 					href={localePath(locale, "/cadastrar")}
 				>
