@@ -14,6 +14,7 @@ import {
 	InvalidMembershipError,
 	listUsers,
 	PermissionDeniedError,
+	RoleEscalationError,
 	SelfLockoutError,
 	updateUserMemberships,
 } from "./service";
@@ -300,6 +301,47 @@ describe.skipIf(!hasDatabase)("users", () => {
 		]);
 		await updateUserMemberships(ownerA, manager, [
 			{ branchId: null, roleId: role("gerente"), level: "operate" },
+		]);
+	});
+
+	test("a manager neither hands out nor takes away a role with permissions they lack", async () => {
+		const asOwner = [
+			{ branchId: null, roleId: role("dono"), level: "operate" as const },
+		];
+		await expect(
+			updateUserMemberships(manager, manager, asOwner),
+		).rejects.toThrow(RoleEscalationError);
+		await expect(
+			updateUserMemberships(manager, clerk, asOwner),
+		).rejects.toThrow(RoleEscalationError);
+		await expect(
+			updateUserMemberships(manager, ownerA, [
+				{ branchId: null, roleId: role("balconista"), level: "operate" },
+			]),
+		).rejects.toThrow(RoleEscalationError);
+		await expect(updateUserMemberships(manager, ownerA, [])).rejects.toThrow(
+			RoleEscalationError,
+		);
+		expect(await membershipsOf(ownerA, manager)).toMatchObject([
+			{ roleName: "gerente" },
+		]);
+		expect(await membershipsOf(ownerA, clerk)).toMatchObject([
+			{ roleName: "balconista" },
+		]);
+		expect(await membershipsOf(ownerA, ownerA)).toMatchObject([
+			{ roleName: "dono" },
+		]);
+
+		// Cargo com permissões que o gerente também tem, ele pode dar.
+		await updateUserMemberships(manager, clerk, [
+			{ branchId: null, roleId: role("mecânico"), level: "operate" },
+		]);
+		await updateUserMemberships(manager, clerk, [
+			{
+				branchId: companyA.headquartersId,
+				roleId: role("balconista"),
+				level: "operate",
+			},
 		]);
 	});
 
