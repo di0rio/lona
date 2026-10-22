@@ -8,6 +8,7 @@ const origem = `http://localhost:${porta}`;
 
 export default defineConfig({
 	testDir: "./e2e",
+	globalSetup: "./src/test/global-setup.ts",
 	// Os testes criam demonstrações no mesmo banco; em série, cada um limpa o que criou sem pisar no outro.
 	workers: 1,
 	// O primeiro teste pega servidor e conexões com o Neon frios, e cada etapa (limite de taxa, cópia) é uma ida ao banco.
