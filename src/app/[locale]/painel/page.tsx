@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/site-shell/page-header";
 import { getT } from "@/i18n/server";
-import { dashboardSummary, sessionUser } from "@/modules/access";
+import { panelShell, sessionUser } from "@/modules/access";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const { t } = await getT();
@@ -14,7 +14,10 @@ export default async function Painel() {
 	const copy = t.app.painel;
 	const user = await sessionUser();
 	// A casca já redirecionou/mostrou a tela de demonstração vencida; aqui a sessão e a empresa existem.
-	const summary = user ? await dashboardSummary(user.id) : null;
+	// Mesma chamada da casca: o cache do React faz o banco ser consultado uma vez por pedido.
+	const summary = user
+		? (await panelShell(user.id, user.viewingAs)).summary
+		: null;
 	if (!summary) return null;
 
 	return (

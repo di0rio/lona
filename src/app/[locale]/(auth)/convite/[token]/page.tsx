@@ -69,13 +69,23 @@ export default async function Convite({
 				<CardFooter className="flex-col items-stretch gap-3">
 					<Button
 						nativeButton={false}
-						render={<Link href={localePath(locale, `/cadastrar${query}`)} />}
+						render={
+							<Link
+								prefetch={false}
+								href={localePath(locale, `/cadastrar${query}`)}
+							/>
+						}
 					>
 						{copy.register}
 					</Button>
 					<Button
 						nativeButton={false}
-						render={<Link href={localePath(locale, `/entrar${query}`)} />}
+						render={
+							<Link
+								prefetch={false}
+								href={localePath(locale, `/entrar${query}`)}
+							/>
+						}
 						variant="outline"
 					>
 						{copy.signIn}

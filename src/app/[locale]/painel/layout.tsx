@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/site-shell/app-shell";
 import { localePath } from "@/i18n/path";
 import { getT } from "@/i18n/server";
-import { dashboardSummary, sessionUser, viewAsTargets } from "@/modules/access";
+import { panelShell, sessionUser } from "@/modules/access";
 
 export default async function PainelLayout({
 	children,
@@ -11,11 +11,7 @@ export default async function PainelLayout({
 	const user = await sessionUser();
 	if (!user) redirect(localePath(locale, "/entrar"));
 
-	const [summary, targets] = await Promise.all([
-		dashboardSummary(user.id),
-		// Quem já está "como alguém" não escolhe outra pessoa: volta pro dono primeiro.
-		user.viewingAs ? [] : viewAsTargets(user.id),
-	]);
+	const { summary, targets } = await panelShell(user.id, user.viewingAs);
 	const shell = t.components["site-shell"];
 
 	return (

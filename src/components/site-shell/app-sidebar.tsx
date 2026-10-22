@@ -93,7 +93,7 @@ export function AppSidebar({
 						<SidebarMenuItem key={item.href}>
 							<SidebarMenuButton
 								isActive={pathname === item.href}
-								render={<Link href={item.href} />}
+								render={<Link prefetch={false} href={item.href} />}
 							>
 								<item.icon />
 								<span>{item.title}</span>
@@ -155,7 +155,9 @@ export function AppSidebar({
 									</>
 								)}
 								<DropdownMenuSeparator />
-								<DropdownMenuItem render={<Link href={accountHref} />}>
+								<DropdownMenuItem
+									render={<Link prefetch={false} href={accountHref} />}
+								>
 									<LockKeyholeIcon /> {copy.account}
 								</DropdownMenuItem>
 								{!viewingAs && (

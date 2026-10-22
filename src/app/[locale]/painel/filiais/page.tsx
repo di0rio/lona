@@ -25,6 +25,7 @@ export default async function Filiais() {
 				<h1 className="page-title">{copy.off.title}</h1>
 				<p className="text-muted-foreground">{copy.off.text}</p>
 				<Link
+					prefetch={false}
 					className={buttonVariants()}
 					href={localePath(locale, "/painel/configuracoes")}
 				>

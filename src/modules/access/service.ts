@@ -146,22 +146,38 @@ export async function createMembership(tx: Writable, data: NewMembership) {
  * Dentro de uma transação que já tem o contexto do usuário, passe `tx` para não abrir outra.
  */
 export async function userActiveCompany(userId: string, tx?: Transaction) {
-	const find = async (t: Transaction) => {
-		const { rows } = await t.execute<{
-			company_id: string;
-			name: string;
-			expires_at: Date | null;
-		}>(sql`SELECT * FROM lona_user_companies() LIMIT 1`);
-		const company = rows[0];
-		return company
-			? {
-					companyId: company.company_id,
-					name: company.name,
-					expiresAt: company.expires_at,
-				}
-			: null;
-	};
-	return tx ? find(tx) : withContext({ userId }, find);
+	return tx
+		? findActiveCompany(tx, false)
+		: withContext({ userId }, (t) => findActiveCompany(t, false));
+}
+
+/**
+ * Como `userActiveCompany`, e já seta a empresa achada no contexto do RLS, na mesma ida ao banco.
+ * A transação precisa ter o contexto do usuário.
+ */
+export function enterActiveCompany(tx: Transaction) {
+	return findActiveCompany(tx, true);
+}
+
+async function findActiveCompany(tx: Transaction, enter: boolean) {
+	// O LIMIT 1 fica na subconsulta: set_config é volátil e só pode rodar na linha que sobrou.
+	const { rows } = await tx.execute<{
+		company_id: string;
+		name: string;
+		expires_at: Date | null;
+	}>(
+		enter
+			? sql`SELECT c.*, set_config('app.company_id', c.company_id::text, true) FROM (SELECT * FROM lona_user_companies() LIMIT 1) c`
+			: sql`SELECT * FROM lona_user_companies() LIMIT 1`,
+	);
+	const company = rows[0];
+	return company
+		? {
+				companyId: company.company_id,
+				name: company.name,
+				expiresAt: company.expires_at,
+			}
+		: null;
 }
 
 export type DashboardSummary = {
@@ -182,66 +198,70 @@ export async function dashboardSummary(
 	return withContext(
 		{ userId },
 		async (tx) => {
-			const active = await userActiveCompany(userId, tx);
-			if (!active) return null;
-
-			await tx.execute(
-				sql`SELECT set_config('app.company_id', ${active.companyId}, true)`,
-			);
-
-			// lona_user_companies() não devolve cor nem configurações; um SELECT extra na mesma transação evita migration só pra isso.
-			const [companyRow] = await tx
-				.select({ color: companies.color, settings: companies.settings })
-				.from(companies)
-				.where(eq(companies.id, active.companyId))
-				.limit(1);
-
-			const [branch] = await tx
-				.select({ id: branches.id, name: branches.name, code: branches.code })
-				.from(branches)
-				.orderBy(desc(branches.isHeadquarters), asc(branches.name))
-				.limit(1);
-			if (!branch) return null;
-
-			// Vínculo específico da filial primeiro; o de "todas" cobre quando não houver.
-			const [membership] = await tx
-				.select({ role: roles.name, level: memberships.level })
-				.from(memberships)
-				.innerJoin(
-					roles,
-					and(
-						eq(roles.companyId, memberships.companyId),
-						eq(roles.id, memberships.roleId),
-					),
-				)
-				.where(
-					and(
-						eq(memberships.userId, userId),
-						or(
-							isNull(memberships.branchId),
-							eq(memberships.branchId, branch.id),
-						),
-					),
-				)
-				.orderBy(sql`${memberships.branchId} IS NULL`)
-				.limit(1);
-			if (!membership) return null;
-
-			return {
-				company: {
-					id: active.companyId,
-					name: active.name,
-					expiresAt: active.expiresAt,
-					color: companyRow?.color ?? "gray",
-				},
-				usesBranches: companyRow?.settings.uses_branches ?? false,
-				branch: { name: branch.name, code: branch.code },
-				role: membership.role,
-				level: membership.level,
-			};
+			const active = await enterActiveCompany(tx);
+			return active ? summaryOf(tx, userId, active) : null;
 		},
 		{ repeatableRead: true },
 	);
+}
+
+/**
+ * O resumo da empresa `active`, dentro de uma transação que já tem o contexto dela (`enterActiveCompany`).
+ * Quem precisa de mais coisas da mesma empresa lê tudo numa transação só.
+ */
+export async function summaryOf(
+	tx: Transaction,
+	userId: string,
+	active: NonNullable<Awaited<ReturnType<typeof userActiveCompany>>>,
+): Promise<DashboardSummary | null> {
+	// lona_user_companies() não devolve cor nem configurações; juntar com a filial evita migration e uma ida ao banco.
+	const [branch] = await tx
+		.select({
+			id: branches.id,
+			name: branches.name,
+			code: branches.code,
+			color: companies.color,
+			settings: companies.settings,
+		})
+		.from(branches)
+		.innerJoin(companies, eq(companies.id, branches.companyId))
+		.orderBy(desc(branches.isHeadquarters), asc(branches.name))
+		.limit(1);
+	if (!branch) return null;
+
+	// Vínculo específico da filial primeiro; o de "todas" cobre quando não houver.
+	const [membership] = await tx
+		.select({ role: roles.name, level: memberships.level })
+		.from(memberships)
+		.innerJoin(
+			roles,
+			and(
+				eq(roles.companyId, memberships.companyId),
+				eq(roles.id, memberships.roleId),
+			),
+		)
+		.where(
+			and(
+				eq(memberships.userId, userId),
+				or(isNull(memberships.branchId), eq(memberships.branchId, branch.id)),
+			),
+		)
+		.orderBy(sql`${memberships.branchId} IS NULL`)
+		.limit(1);
+	if (!membership) return null;
+
+	return {
+		company: {
+			id: active.companyId,
+			name: active.name,
+			expiresAt: active.expiresAt,
+			color: branch.color,
+		},
+		usesBranches: branch.settings.uses_branches,
+		branch: { name: branch.name, code: branch.code },
+		role: membership.role,
+		level: membership.level,
+	};
 }
 
 /** Lançado quando o usuário não tem a permissão que a ação pede; a rota converte em 403. */
@@ -293,12 +313,8 @@ async function inActiveCompany<T>(
 	return withContext(
 		{ userId },
 		async (tx) => {
-			const active = await userActiveCompany(userId, tx);
-			if (!active) return null;
-			await tx.execute(
-				sql`SELECT set_config('app.company_id', ${active.companyId}, true)`,
-			);
-			return fn(tx, active.companyId);
+			const active = await enterActiveCompany(tx);
+			return active ? fn(tx, active.companyId) : null;
 		},
 		{ repeatableRead: true },
 	);

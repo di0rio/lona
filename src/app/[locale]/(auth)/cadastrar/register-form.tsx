@@ -143,7 +143,7 @@ export function RegisterForm({
 					</Button>
 					<p className="text-center text-muted-foreground text-sm">
 						{copy.alreadyRegistered}{" "}
-						<Link className="underline" href={signInHref}>
+						<Link prefetch={false} className="underline" href={signInHref}>
 							{copy.signIn}
 						</Link>
 					</p>

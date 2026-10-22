@@ -197,7 +197,7 @@ export function SignInForm({
 					</Button>
 					<p className="text-center text-muted-foreground text-sm">
 						{copy.noAccountYet}{" "}
-						<Link className="underline" href={registerHref}>
+						<Link prefetch={false} className="underline" href={registerHref}>
 							{copy.register}
 						</Link>
 					</p>
