@@ -23,18 +23,17 @@ Referências: _Designing Fluid Interfaces_ (Apple, WWDC 2018) e a filosofia de d
 
 Tokens em `src/app/globals.css`, todos em OKLCH e com versão clara e escura.
 
-| Token | Claro | Escuro | Uso |
-| --- | --- | --- | --- |
-| `--canvas` | `oklch(0.972 0.005 85)` | `oklch(0.16 0.004 85)` | Fundo da página e do menu lateral |
-| `--background` / `--card` | `oklch(1 0 0)` | `oklch(0.2 0.005 85)` | Folha de conteúdo, cards, popovers |
-| `--foreground` | `oklch(0.2 0.006 85)` | `oklch(0.96 0.004 85)` | Texto principal |
-| `--muted-foreground` | `oklch(0.52 0.01 85)` | `oklch(0.7 0.01 85)` | Texto de apoio |
-| `--border` | `oklch(0.2 0.01 85 / 8%)` | `oklch(1 0 0 / 8%)` | Linha fina |
-| `--border-strong` | `oklch(0.2 0.01 85 / 14%)` | `oklch(1 0 0 / 14%)` | Borda de campo |
-| `--primary` | cor da empresa | cor da empresa | Ação principal, foco, item ativo |
-| `--accent-soft` | `primary` a 10% | `primary` a 15% | Avatar, chip ativo, fundo de destaque |
-| `--road` | `oklch(0.82 0.15 85)` | igual | Tracejado da estrada |
-
+| Token                     | Claro                      | Escuro                 | Uso                                   |
+| ------------------------- | -------------------------- | ---------------------- | ------------------------------------- |
+| `--canvas`                | `oklch(0.972 0.005 85)`    | `oklch(0.16 0.004 85)` | Fundo da página e do menu lateral     |
+| `--background` / `--card` | `oklch(1 0 0)`             | `oklch(0.2 0.005 85)`  | Folha de conteúdo, cards, popovers    |
+| `--foreground`            | `oklch(0.2 0.006 85)`      | `oklch(0.96 0.004 85)` | Texto principal                       |
+| `--muted-foreground`      | `oklch(0.52 0.01 85)`      | `oklch(0.7 0.01 85)`   | Texto de apoio                        |
+| `--border`                | `oklch(0.2 0.01 85 / 8%)`  | `oklch(1 0 0 / 8%)`    | Linha fina                            |
+| `--border-strong`         | `oklch(0.2 0.01 85 / 14%)` | `oklch(1 0 0 / 14%)`   | Borda de campo                        |
+| `--primary`               | cor da empresa             | cor da empresa         | Ação principal, foco, item ativo      |
+| `--accent-soft`           | `primary` a 10%            | `primary` a 15%        | Avatar, chip ativo, fundo de destaque |
+| `--road`                  | `oklch(0.82 0.15 85)`      | igual                  | Tracejado da estrada                  |
 - **Cor da empresa:** as 8 cores (cinza, azul, verde, vermelho, laranja, amarelo, roxo, rosa) continuam com os mesmos valores de `--primary`, que passam no teste de contraste WCAG AA de `globals.test.ts`. Cinza é o padrão.
 - **Uma ação principal por tela.** Os outros botões usam `outline` ou `ghost`.
 - **Texto secundário** usa `--muted-foreground`, nunca `opacity`.
@@ -43,17 +42,17 @@ Tokens em `src/app/globals.css`, todos em OKLCH e com versão clara e escura.
 
 Geist (sans) e Geist Mono, pelo `next/font`.
 
-| Papel | Tamanho | Peso | Tracking | Entrelinha |
-| --- | --- | --- | --- | --- |
-| Título de página | 24px | 600 | -0.025em | 1.15 |
-| Título de login | 30px | 600 | -0.03em | 1.1 |
-| Número de métrica | 24px | 600 | -0.03em | 1.1 |
-| Título de seção/card | 15px | 600 | -0.01em | 1.3 |
-| Corpo | 14px | 400 | 0 | 1.5 |
-| Apoio | 12.5-13px | 400 | 0 | 1.45 |
-| Cabeçalho de tabela | 12.5px | 500 | 0 | - |
-| Célula de tabela | 13.5px | 400 | 0 | - |
-| Mono (CNPJ, código) | 12.5px | 400 | 0 | - |
+| Papel                | Tamanho   | Peso | Tracking | Entrelinha |
+| -------------------- | --------- | ---- | -------- | ---------- |
+| Título de página     | 24px      | 600  | -0.025em | 1.15       |
+| Título de login      | 30px      | 600  | -0.03em  | 1.1        |
+| Número de métrica    | 24px      | 600  | -0.03em  | 1.1        |
+| Título de seção/card | 15px      | 600  | -0.01em  | 1.3        |
+| Corpo                | 14px      | 400  | 0        | 1.5        |
+| Apoio                | 12.5-13px | 400  | 0        | 1.45       |
+| Cabeçalho de tabela  | 12.5px    | 500  | 0        | -          |
+| Célula de tabela     | 13.5px    | 400  | 0        | -          |
+| Mono (CNPJ, código)  | 12.5px    | 400  | 0        | -          |
 
 O tracking aperta conforme o texto cresce. O corpo fica perto de 0.
 
@@ -68,22 +67,22 @@ O tracking aperta conforme o texto cresce. O corpo fica perto de 0.
 
 ## Movimento
 
-| Token | Valor | Uso |
-| --- | --- | --- |
-| `--ease-out` | `cubic-bezier(0.23, 1, 0.32, 1)` | Entradas, pressão, hover |
-| `--ease-drawer` | `cubic-bezier(0.32, 0.72, 0, 1)` | Sheet, switch, toast |
+| Token           | Valor                            | Uso                      |
+| --------------- | -------------------------------- | ------------------------ |
+| `--ease-out`    | `cubic-bezier(0.23, 1, 0.32, 1)` | Entradas, pressão, hover |
+| `--ease-drawer` | `cubic-bezier(0.32, 0.72, 0, 1)` | Sheet, switch, toast     |
 
-| Interação | Duração | Como |
-| --- | --- | --- |
-| Pressionar botão | 100ms `--ease-out` | `scale(0.97)` no `:active` |
-| Hover de linha ou cor | 120-160ms `ease` | Só com `@media (hover: hover) and (pointer: fine)` |
-| Switch | 200ms `--ease-drawer` | A bolinha desliza |
-| Popover e menu | 150ms `--ease-out` | `scale(0.96)` + opacidade, com origem no gatilho (`--transform-origin`) |
-| Dialog | 150ms `--ease-out` | `scale(0.96)` + opacidade, centralizado |
-| Sheet | 250ms `--ease-drawer` | Entra e sai pelo mesmo lado |
-| Toast | 250ms `--ease-drawer` | Padrão do Sonner, sem blur |
-| Navegar entre páginas, item ativo do menu, números | 0ms | Sem animação |
-| Ctrl+K e atalhos | 0ms | Sem animação |
+| Interação                                          | Duração               | Como                                                                    |
+| -------------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
+| Pressionar botão                                   | 100ms `--ease-out`    | `scale(0.97)` no `:active`                                              |
+| Hover de linha ou cor                              | 120-160ms `ease`      | Só com `@media (hover: hover) and (pointer: fine)`                      |
+| Switch                                             | 200ms `--ease-drawer` | A bolinha desliza                                                       |
+| Popover e menu                                     | 150ms `--ease-out`    | `scale(0.96)` + opacidade, com origem no gatilho (`--transform-origin`) |
+| Dialog                                             | 150ms `--ease-out`    | `scale(0.96)` + opacidade, centralizado                                 |
+| Sheet                                              | 250ms `--ease-drawer` | Entra e sai pelo mesmo lado                                             |
+| Toast                                              | 250ms `--ease-drawer` | Padrão do Sonner, sem blur                                              |
+| Navegar entre páginas, item ativo do menu, números | 0ms                   | Sem animação                                                            |
+| Ctrl+K e atalhos                                   | 0ms                   | Sem animação                                                            |
 
 Regras:
 - Anime só `transform`, `opacity` e `filter`. Nunca `height`, `width` ou `margin`.
