@@ -5,7 +5,6 @@ O que entra na v1 e o que fica para a v2. Antes de construir algo fora da v1, co
 ## v1
 
 Construída nesta ordem, cada etapa testada antes da próxima:
-
 1. **Base**: empresas, filiais, cargos, vínculos com consultar e operar, RLS e demonstração.
    - 1a (feita): banco, RLS, cargos prontos, Better Auth (anônimo e e-mail/senha), cópia do modelo e expiração.
    - 1b: casca do app (sidebar, breadcrumb, Ctrl+K, tema claro/escuro, cor de destaque), "como sua empresa trabalha", telas de filiais, cargos, usuários e vínculos, "ver como" na demonstração, 2FA por app autenticador, convite de usuário por link, proteção contra abuso na demonstração, primeiro deploy.
