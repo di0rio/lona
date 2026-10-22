@@ -13,7 +13,7 @@ function format(ms: number) {
 	return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-/** Contagem regressiva fixa no topo. Ao zerar, pede a página de novo: o servidor já não encontra a empresa. */
+/** Faixa fina com a contagem regressiva, logo abaixo do cabeçalho. Ao zerar, pede a página de novo: o servidor já não encontra a empresa. */
 export function Countdown({
 	expiresAt,
 	copy,
@@ -47,21 +47,18 @@ export function Countdown({
 	const close = remaining !== null && remaining <= WARNING_AT_MS;
 
 	return (
-		<div className="sticky top-0 z-10 flex flex-col gap-1 border-b bg-background/95 px-4 py-3 backdrop-blur">
-			<div className="flex items-center justify-between gap-3">
-				<p className="flex items-baseline gap-2 text-sm">
-					<span className="text-muted-foreground">{copy.label}</span>
-					<span className="font-mono font-semibold tabular-nums">
-						{remaining === null ? "-:--:--" : format(remaining)}
-					</span>
-				</p>
-				{action}
-			</div>
-			{close && (
-				<p
-					className="text-destructive text-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
-					role="status"
+		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b bg-canvas px-4 py-1 md:px-6">
+			<p className="flex shrink-0 items-baseline gap-2 text-[13px]">
+				<span className="text-muted-foreground">{copy.label}</span>
+				<span
+					className={`font-mono font-semibold tabular-nums ${close ? "text-destructive" : ""}`}
 				>
+					{remaining === null ? "-:--:--" : format(remaining)}
+				</span>
+			</p>
+			{action}
+			{close && (
+				<p className="basis-full text-destructive text-[13px]" role="status">
 					{copy.warning}
 				</p>
 			)}

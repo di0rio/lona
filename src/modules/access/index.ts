@@ -64,4 +64,5 @@ export {
 	userActiveCompany,
 } from "./service";
 export { sessionUser } from "./session";
+export { panelShell } from "./shell";
 export { type ViewAsTarget, viewAsTargets } from "./view-as";

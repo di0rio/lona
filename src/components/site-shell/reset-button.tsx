@@ -28,7 +28,7 @@ export function ResetButton({
 
 	return (
 		<div className="flex flex-col items-start gap-2">
-			<Button disabled={busy} onClick={reset} variant="outline">
+			<Button disabled={busy} onClick={reset} size="sm" variant="outline">
 				{busy ? copy.resetting : copy.button}
 			</Button>
 			{error && (

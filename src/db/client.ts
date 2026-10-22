@@ -44,15 +44,16 @@ export function withContext<T>(
 	// (ex.: resetar a demonstração) pode apagar a empresa entre as duas leituras.
 	options?: { repeatableRead?: boolean },
 ): Promise<T> {
-	return db.transaction(async (tx) => {
-		if (options?.repeatableRead) {
-			await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`);
-		}
-		await tx.execute(
-			sql`SELECT set_config('app.user_id', ${context.userId ?? ""}, true), set_config('app.company_id', ${context.companyId ?? ""}, true)`,
-		);
-		return fn(tx);
-	});
+	return db.transaction(
+		async (tx) => {
+			await tx.execute(
+				sql`SELECT set_config('app.user_id', ${context.userId ?? ""}, true), set_config('app.company_id', ${context.companyId ?? ""}, true)`,
+			);
+			return fn(tx);
+		},
+		// No próprio BEGIN: um SET TRANSACTION separado seria mais uma ida ao banco.
+		options?.repeatableRead ? { isolationLevel: "repeatable read" } : undefined,
+	);
 }
 
 /** Só pra Better Auth, que lê e grava as tabelas de autenticação (sem RLS de empresa). */

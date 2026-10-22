@@ -22,9 +22,10 @@ export default async function Filiais() {
 	if (!view.usesBranches) {
 		return (
 			<section className="flex max-w-xl flex-col items-start gap-4">
-				<h1 className="font-semibold text-2xl">{copy.off.title}</h1>
+				<h1 className="page-title">{copy.off.title}</h1>
 				<p className="text-muted-foreground">{copy.off.text}</p>
 				<Link
+					prefetch={false}
 					className={buttonVariants()}
 					href={localePath(locale, "/painel/configuracoes")}
 				>
@@ -35,17 +36,11 @@ export default async function Filiais() {
 	}
 
 	return (
-		<section className="flex max-w-3xl flex-col gap-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="font-semibold text-2xl">{copy.title}</h1>
-				<p className="text-muted-foreground">{copy.description}</p>
-			</div>
-			<BranchesManager
-				branches={view.branches}
-				canConfigure={view.canConfigure}
-				cnpjRoot={view.cnpjRoot}
-				copy={copy}
-			/>
-		</section>
+		<BranchesManager
+			branches={view.branches}
+			canConfigure={view.canConfigure}
+			cnpjRoot={view.cnpjRoot}
+			copy={copy}
+		/>
 	);
 }

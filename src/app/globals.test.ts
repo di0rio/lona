@@ -102,3 +102,18 @@ describe("contrast of --primary x --primary-foreground per company color", () =>
 		}
 	}
 });
+
+describe("company color reaches the wrapper and portals", () => {
+	// A casca põe data-color num div (e no <html>, para dialogs e menus em portal). Com seletor só
+	// `:root[data-color]` o div nunca recebia a cor: tudo ficava cinza.
+	for (const color of colors.filter((c) => c !== "gray")) {
+		it(`${color} applies to a plain [data-color] element too`, () => {
+			expect(css).toContain(
+				`[data-color="${color}"],\n:root[data-color="${color}"]`,
+			);
+			expect(css).toContain(
+				`.dark [data-color="${color}"],\n.dark[data-color="${color}"]`,
+			);
+		});
+	}
+});

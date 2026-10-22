@@ -83,7 +83,9 @@ export function RegisterForm({
 	return (
 		<Card className="w-full max-w-sm">
 			<CardHeader>
-				<CardTitle className="text-lg">{copy.title}</CardTitle>
+				<CardTitle className="text-[30px] leading-[1.1] font-semibold tracking-[-0.03em]">
+					{copy.title}
+				</CardTitle>
 				<CardDescription>{copy.description}</CardDescription>
 			</CardHeader>
 			<form onSubmit={submit}>
@@ -141,7 +143,7 @@ export function RegisterForm({
 					</Button>
 					<p className="text-center text-muted-foreground text-sm">
 						{copy.alreadyRegistered}{" "}
-						<Link className="underline" href={signInHref}>
+						<Link prefetch={false} className="underline" href={signInHref}>
 							{copy.signIn}
 						</Link>
 					</p>

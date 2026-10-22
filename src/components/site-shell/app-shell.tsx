@@ -82,6 +82,16 @@ export function AppShell({
 }) {
 	const [searchOpen, setSearchOpen] = useState(false);
 	const pathname = stripLocale(usePathname());
+	const color = summary?.company.color;
+
+	// Dialog, Sheet e menus renderizam num portal fora do wrapper [data-color]; sem isto eles ficariam cinza.
+	useEffect(() => {
+		if (!color) return;
+		document.documentElement.dataset.color = color;
+		return () => {
+			delete document.documentElement.dataset.color;
+		};
+	}, [color]);
 
 	useEffect(() => {
 		function onKeyDown(event: KeyboardEvent) {
@@ -102,7 +112,7 @@ export function AppShell({
 					id="conteudo"
 					tabIndex={-1}
 				>
-					<h1 className="font-semibold text-2xl">{copy.expired.title}</h1>
+					<h1 className="page-title">{copy.expired.title}</h1>
 					<p className="max-w-prose text-muted-foreground">
 						{copy.expired.text}
 					</p>
@@ -153,12 +163,13 @@ export function AppShell({
 					}}
 				/>
 				<SidebarInset>
-					<AppHeader
-						onSearchClick={() => setSearchOpen(true)}
-						searchLabel={copy.search}
-						title={title}
-					/>
-					<div className="sticky top-0 z-10">
+					<div className="sticky top-0 z-10 bg-background md:rounded-t-2xl">
+						<AppHeader
+							companyName={summary.company.name}
+							onSearchClick={() => setSearchOpen(true)}
+							searchLabel={copy.search}
+							title={title}
+						/>
 						{viewingAs && (
 							<ViewAsBanner
 								copy={copy.viewAs}
@@ -174,7 +185,9 @@ export function AppShell({
 							/>
 						)}
 					</div>
-					<div className="flex flex-1 flex-col gap-6 p-4">{children}</div>
+					<div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 md:p-6">
+						{children}
+					</div>
 				</SidebarInset>
 			</SidebarProvider>
 			<CommandMenu
