@@ -18,6 +18,7 @@ export default async function PainelLayout({
 		<AppShell
 			copy={shell}
 			dashboardTitle={t.app.painel.title}
+			customersTitle={t.app.painel.clientes.nav}
 			branchesTitle={t.app.painel.filiais.nav}
 			rolesTitle={t.app.painel.cargos.nav}
 			usersTitle={t.app.painel.usuarios.nav}
