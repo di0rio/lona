@@ -10,6 +10,7 @@ Construída nesta ordem, cada etapa testada antes da próxima:
    - 1b: casca do app (sidebar, breadcrumb, Ctrl+K, tema claro/escuro, cor de destaque), "como sua empresa trabalha", telas de filiais, cargos, usuários e vínculos, "ver como" na demonstração, 2FA por app autenticador, convite de usuário por link, proteção contra abuso na demonstração, primeiro deploy.
 2. **Cadastros**: clientes (frotista e autônomo), veículos, fornecedores, peças com aplicação, formas e condições de pagamento com operadora e taxas.
 3. **Estoque e compras**: estoque por filial, custo médio, mínimo, pedido de compra com entradas parciais gerando títulos a pagar.
+   - A peça (etapa 2) é da empresa e só tem o preço de venda. Quantidade, custo médio e mínimo variam por filial (ADR 0003), então entram aqui numa tabela própria de estoque por filial e peça, sem mexer na peça.
 4. **Venda de balcão**: com orçamento opcional, faturado dentro do limite de crédito, liberação por PIN ou pedido.
 5. **OS**: fluxo simples ou completo (aberta, orçamento, aprovada, em execução, concluída, faturada), tela do mecânico pensada para celular.
 6. **Financeiro**: receber, pagar, caixa por filial com conferência, fluxo de caixa 30/60/90.

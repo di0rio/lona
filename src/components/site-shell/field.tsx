@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Campo de formulário: rótulo, controle, ajuda e erro embaixo. */
+/** Campo de formulário: rótulo, ajuda opcional e erro embaixo em --destructive (DESIGN.md). O input leva `id` e, se quiser, `aria-describedby` com `${id}-help` e `${id}-error`. */
 export function Field({
 	id,
 	label,
@@ -26,7 +26,7 @@ export function Field({
 				</p>
 			)}
 			{error && (
-				<p className="text-destructive text-sm" id={`${id}-error`}>
+				<p className="text-destructive text-sm" id={`${id}-error`} role="alert">
 					{error}
 				</p>
 			)}

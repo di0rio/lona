@@ -78,31 +78,43 @@ No código: `visitor`
 **Cliente**:
 Quem compra peças ou serviços da empresa.
 _Evitar_: consumidor, comprador
+No código: `customer`
 
 **Frotista**:
-Cliente com vários veículos que compra faturado a prazo, dentro de um limite de crédito.
+Cliente com vários veículos que compra faturado a prazo, dentro de um limite de crédito. É uma empresa, identificada pelo CNPJ.
 _Evitar_: transportadora (como tipo de cliente), cliente PJ
+No código: `fleet_owner` (valor de `customers.kind`)
 
 **Autônomo**:
-Cliente com um caminhão próprio que compra no balcão.
+Cliente com um caminhão próprio que compra no balcão. É uma pessoa, identificada pelo CPF, e não tem limite de crédito.
 _Evitar_: caminhoneiro (como tipo de cliente), cliente PF
+No código: `owner_operator` (valor de `customers.kind`)
 
 **Veículo**:
 Um caminhão de um cliente, identificado pela placa, com modelo e número de eixos.
 _Evitar_: caminhão (no cadastro), frota (para um veículo só)
+No código: `vehicle`
+
+**Bloqueado**:
+Situação do cliente que a empresa impediu de comprar, por decisão de alguém, até ser reativado. O contrário é **ativo**.
+_Evitar_: inativo, suspenso
+No código: `blocked` (valor de `customers.status`; ativo é `active`)
 
 ## Estoque e compras
 
 **Peça**:
 Um item vendido ou aplicado em serviço, com código, marca e os veículos em que serve.
 _Evitar_: produto, item, mercadoria
+No código: `part`
 
 **Aplicação**:
 Os modelos de veículo e eixos em que uma peça serve.
 _Evitar_: compatibilidade
+No código: `partApplication`
 
 **Fornecedor**:
 Empresa de quem se compram peças.
+No código: `supplier`
 
 **Pedido de compra**:
 O que a empresa encomenda de um fornecedor. Pode chegar de uma vez ou em várias entradas.
@@ -182,6 +194,7 @@ _Evitar_: entrada (é usado para mercadoria)
 
 **Limite de crédito**:
 O valor máximo em títulos a receber em aberto que um frotista pode ter, somando todas as filiais da empresa.
+No código: `credit_limit`
 
 **Caixa**:
 O dinheiro de uma filial num dia: abre, recebe e paga, e fecha com conferência.

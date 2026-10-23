@@ -85,7 +85,7 @@ WHERE is_preset AND name IN ('dono', 'gerente', 'financeiro')
 ON CONFLICT DO NOTHING;
 --> statement-breakpoint
 
--- Copiadores da demonstração, na ordem das chaves estrangeiras (as posições 50-69 são de outros módulos).
+-- Copiadores da demonstração, na ordem das chaves estrangeiras; não dependem de tabelas de outros módulos.
 CREATE FUNCTION lona_copy_acquirers(p_template uuid, p_company uuid) RETURNS void
 LANGUAGE plpgsql AS $$
 BEGIN

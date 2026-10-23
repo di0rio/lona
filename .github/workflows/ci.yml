@@ -45,14 +45,15 @@ jobs:
         id: prazo
         run: echo "em=$(date -u --date '+2 hours' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
-      # Cada execução ganha uma cópia da branch dev, então CI e máquina local nunca mexem nos mesmos dados.
+      # Cada execução ganha uma cópia da branch dev-limpo, então CI e máquina local nunca mexem nos mesmos dados.
+      # Só migration já mergeada na main entra na dev-limpo: branch de PR roda migration na própria cópia, nunca na compartilhada.
       - name: Cria branch temporária no Neon
         id: banco
         uses: neondatabase/create-branch-action@v6
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
-          parent_branch: dev
+          parent_branch: dev-limpo
           branch_name: ${{ env.BRANCH_NEON }}
           expires_at: ${{ steps.prazo.outputs.em }}
 
@@ -105,6 +106,25 @@ jobs:
           if git diff --name-only "$BASE...$HEAD" | grep -qE '\.(test|spec)\.tsx?$'; then exit 0; fi
           echo "::error::Este PR corrige bug mas não tem teste de regressão. Adicione um teste que falhava antes da correção."
           echo "$fixes"
+          exit 1
+
+  # Commit e PR sem linha de atribuição de IA (pedido do dono do projeto). O hook .githooks/commit-msg já tira localmente.
+  sem-coautor:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Nenhum commit com Co-Authored-By de IA
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          found=$(git log --format='%h %s%n%b' "$BASE..$HEAD" | grep -iE '^co-authored-by:.*(claude|anthropic)' || true)
+          if [ -z "$found" ]; then exit 0; fi
+          echo "::error::Há commit com Co-Authored-By de IA. Reescreva as mensagens (git rebase) sem essa linha."
+          echo "$found"
           exit 1
 
   gitleaks:

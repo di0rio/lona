@@ -1,5 +1,5 @@
 {
-  "id": "fb4793b5-e66d-40c9-a309-882610e4fa49",
+  "id": "0988b9b5-e794-4797-862b-0d2672c3fb5b",
   "prevId": "86bd9656-dfbb-45ed-996c-833718c919c0",
   "version": "7",
   "dialect": "postgresql",
@@ -1350,8 +1350,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.acquirer_fees": {
-      "name": "acquirer_fees",
+    "public.customers": {
+      "name": "customers",
       "schema": "",
       "columns": {
         "id": {
@@ -1364,241 +1364,6 @@
         "company_id": {
           "name": "company_id",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "acquirer_id": {
-          "name": "acquirer_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "modality": {
-          "name": "modality",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "installments": {
-          "name": "installments",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fee_pct": {
-          "name": "fee_pct",
-          "type": "numeric(5, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "days_to_receive": {
-          "name": "days_to_receive",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "anticipation": {
-          "name": "anticipation",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "anticipation_fee_pct": {
-          "name": "anticipation_fee_pct",
-          "type": "numeric(5, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "valid_from": {
-          "name": "valid_from",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "acquirer_fees_company_id_companies_id_fk": {
-          "name": "acquirer_fees_company_id_companies_id_fk",
-          "tableFrom": "acquirer_fees",
-          "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "acquirer_fees_company_id_acquirer_id_acquirers_company_id_id_fk": {
-          "name": "acquirer_fees_company_id_acquirer_id_acquirers_company_id_id_fk",
-          "tableFrom": "acquirer_fees",
-          "tableTo": "acquirers",
-          "columnsFrom": [
-            "company_id",
-            "acquirer_id"
-          ],
-          "columnsTo": [
-            "company_id",
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "acquirer_fees_company_id_id_unq": {
-          "name": "acquirer_fees_company_id_id_unq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "company_id",
-            "id"
-          ]
-        },
-        "acquirer_fees_validity_unq": {
-          "name": "acquirer_fees_validity_unq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "company_id",
-            "acquirer_id",
-            "modality",
-            "installments",
-            "valid_from"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "acquirer_fees_modality_valid": {
-          "name": "acquirer_fees_modality_valid",
-          "value": "\"acquirer_fees\".\"modality\" IN ('debit', 'credit', 'merchant_installments', 'issuer_installments')"
-        },
-        "acquirer_fees_installments_valid": {
-          "name": "acquirer_fees_installments_valid",
-          "value": "(\"acquirer_fees\".\"modality\" = 'merchant_installments' AND \"acquirer_fees\".\"installments\" BETWEEN 2 AND 12) OR (\"acquirer_fees\".\"modality\" <> 'merchant_installments' AND \"acquirer_fees\".\"installments\" = 1)"
-        },
-        "acquirer_fees_fee_pct_range": {
-          "name": "acquirer_fees_fee_pct_range",
-          "value": "\"acquirer_fees\".\"fee_pct\" >= 0 AND \"acquirer_fees\".\"fee_pct\" < 100"
-        },
-        "acquirer_fees_days_not_negative": {
-          "name": "acquirer_fees_days_not_negative",
-          "value": "\"acquirer_fees\".\"days_to_receive\" >= 0"
-        },
-        "acquirer_fees_anticipation_pct": {
-          "name": "acquirer_fees_anticipation_pct",
-          "value": "\"acquirer_fees\".\"anticipation\" = (\"acquirer_fees\".\"anticipation_fee_pct\" IS NOT NULL) AND (\"acquirer_fees\".\"anticipation_fee_pct\" IS NULL OR (\"acquirer_fees\".\"anticipation_fee_pct\" >= 0 AND \"acquirer_fees\".\"anticipation_fee_pct\" < 100))"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.acquirers": {
-      "name": "acquirers",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "uuidv7()"
-        },
-        "company_id": {
-          "name": "company_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "active": {
-          "name": "active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "acquirers_company_id_companies_id_fk": {
-          "name": "acquirers_company_id_companies_id_fk",
-          "tableFrom": "acquirers",
-          "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "acquirers_company_id_id_unq": {
-          "name": "acquirers_company_id_id_unq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "company_id",
-            "id"
-          ]
-        },
-        "acquirers_company_id_name_unq": {
-          "name": "acquirers_company_id_name_unq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "company_id",
-            "name"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.payment_methods": {
-      "name": "payment_methods",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "uuidv7()"
-        },
-        "company_id": {
-          "name": "company_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -1608,18 +1373,49 @@
           "primaryKey": false,
           "notNull": true
         },
-        "acquirer_id": {
-          "name": "acquirer_id",
-          "type": "uuid",
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document": {
+          "name": "document",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "active": {
-          "name": "active",
-          "type": "boolean",
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credit_limit": {
+          "name": "credit_limit",
+          "type": "numeric(12, 2)",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": "'0'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
         },
         "created_at": {
           "name": "created_at",
@@ -1627,73 +1423,97 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "payment_methods_company_id_companies_id_fk": {
-          "name": "payment_methods_company_id_companies_id_fk",
-          "tableFrom": "payment_methods",
-          "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
         },
-        "payment_methods_company_id_acquirer_id_acquirers_company_id_id_fk": {
-          "name": "payment_methods_company_id_acquirer_id_acquirers_company_id_id_fk",
-          "tableFrom": "payment_methods",
-          "tableTo": "acquirers",
-          "columnsFrom": [
-            "company_id",
-            "acquirer_id"
-          ],
-          "columnsTo": [
-            "company_id",
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
+      "indexes": {
+        "customers_search_idx": {
+          "name": "customers_search_idx",
+          "columns": [
+            {
+              "expression": "company_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            },
+            {
+              "expression": "document",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "payment_methods_company_id_id_unq": {
-          "name": "payment_methods_company_id_id_unq",
+        "customers_company_id_id_unq": {
+          "name": "customers_company_id_id_unq",
           "nullsNotDistinct": false,
           "columns": [
             "company_id",
             "id"
           ]
         },
-        "payment_methods_company_id_name_unq": {
-          "name": "payment_methods_company_id_name_unq",
+        "customers_company_id_document_unq": {
+          "name": "customers_company_id_document_unq",
           "nullsNotDistinct": false,
           "columns": [
             "company_id",
-            "name"
+            "document"
           ]
         }
       },
       "policies": {},
       "checkConstraints": {
-        "payment_methods_kind_valid": {
-          "name": "payment_methods_kind_valid",
-          "value": "\"payment_methods\".\"kind\" IN ('cash', 'pix', 'debit_card', 'credit_card', 'bank_slip', 'on_account')"
+        "customers_kind_valid": {
+          "name": "customers_kind_valid",
+          "value": "\"customers\".\"kind\" IN ('fleet_owner', 'owner_operator')"
         },
-        "payment_methods_card_has_acquirer": {
-          "name": "payment_methods_card_has_acquirer",
-          "value": "(\"payment_methods\".\"kind\" IN ('debit_card', 'credit_card')) = (\"payment_methods\".\"acquirer_id\" IS NOT NULL)"
+        "customers_status_valid": {
+          "name": "customers_status_valid",
+          "value": "\"customers\".\"status\" IN ('active', 'blocked')"
+        },
+        "customers_document_format": {
+          "name": "customers_document_format",
+          "value": "(\"customers\".\"kind\" = 'fleet_owner' AND \"customers\".\"document\" ~ '^[0-9]{14}$') OR (\"customers\".\"kind\" = 'owner_operator' AND \"customers\".\"document\" ~ '^[0-9]{11}$')"
+        },
+        "customers_phone_format": {
+          "name": "customers_phone_format",
+          "value": "\"customers\".\"phone\" IS NULL OR \"customers\".\"phone\" ~ '^[0-9]{10,11}$'"
+        },
+        "customers_credit_limit_not_negative": {
+          "name": "customers_credit_limit_not_negative",
+          "value": "\"customers\".\"credit_limit\" >= 0"
+        },
+        "customers_credit_limit_fleet_owner_only": {
+          "name": "customers_credit_limit_fleet_owner_only",
+          "value": "\"customers\".\"kind\" = 'fleet_owner' OR \"customers\".\"credit_limit\" = 0"
         }
       },
       "isRLSEnabled": false
     },
-    "public.payment_terms": {
-      "name": "payment_terms",
+    "public.vehicles": {
+      "name": "vehicles",
       "schema": "",
       "columns": {
         "id": {
@@ -1709,37 +1529,35 @@
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payment_method_id": {
-          "name": "payment_method_id",
+        "customer_id": {
+          "name": "customer_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "installment_days": {
-          "name": "installment_days",
-          "type": "smallint[]",
+        "plate": {
+          "name": "plate",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "issuer_installments": {
-          "name": "issuer_installments",
-          "type": "boolean",
+        "model": {
+          "name": "model",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": false
+          "notNull": true
         },
-        "active": {
-          "name": "active",
-          "type": "boolean",
+        "axles": {
+          "name": "axles",
+          "type": "smallint",
           "primaryKey": false,
-          "notNull": true,
-          "default": true
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -1747,11 +1565,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
-        "payment_terms_method_idx": {
-          "name": "payment_terms_method_idx",
+        "vehicles_company_id_customer_id_idx": {
+          "name": "vehicles_company_id_customer_id_idx",
           "columns": [
             {
               "expression": "company_id",
@@ -1760,7 +1585,7 @@
               "nulls": "last"
             },
             {
-              "expression": "payment_method_id",
+              "expression": "customer_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1773,55 +1598,46 @@
         }
       },
       "foreignKeys": {
-        "payment_terms_company_id_companies_id_fk": {
-          "name": "payment_terms_company_id_companies_id_fk",
-          "tableFrom": "payment_terms",
-          "tableTo": "companies",
+        "vehicles_company_id_customer_id_customers_company_id_id_fk": {
+          "name": "vehicles_company_id_customer_id_customers_company_id_id_fk",
+          "tableFrom": "vehicles",
+          "tableTo": "customers",
           "columnsFrom": [
-            "company_id"
+            "company_id",
+            "customer_id"
           ],
           "columnsTo": [
+            "company_id",
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "payment_terms_company_id_payment_method_id_payment_methods_company_id_id_fk": {
-          "name": "payment_terms_company_id_payment_method_id_payment_methods_company_id_id_fk",
-          "tableFrom": "payment_terms",
-          "tableTo": "payment_methods",
-          "columnsFrom": [
-            "company_id",
-            "payment_method_id"
-          ],
-          "columnsTo": [
-            "company_id",
-            "id"
-          ],
-          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "payment_terms_company_id_name_unq": {
-          "name": "payment_terms_company_id_name_unq",
+        "vehicles_company_id_plate_unq": {
+          "name": "vehicles_company_id_plate_unq",
           "nullsNotDistinct": false,
           "columns": [
             "company_id",
-            "name"
+            "plate"
           ]
         }
       },
       "policies": {},
       "checkConstraints": {
-        "payment_terms_installments_count": {
-          "name": "payment_terms_installments_count",
-          "value": "cardinality(\"payment_terms\".\"installment_days\") BETWEEN 1 AND 12"
+        "vehicles_plate_format": {
+          "name": "vehicles_plate_format",
+          "value": "\"vehicles\".\"plate\" ~ '^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$'"
         },
-        "payment_terms_first_day_not_negative": {
-          "name": "payment_terms_first_day_not_negative",
-          "value": "\"payment_terms\".\"installment_days\"[1] >= 0"
+        "vehicles_axles_range": {
+          "name": "vehicles_axles_range",
+          "value": "\"vehicles\".\"axles\" BETWEEN 2 AND 9"
+        },
+        "vehicles_year_range": {
+          "name": "vehicles_year_range",
+          "value": "\"vehicles\".\"year\" IS NULL OR \"vehicles\".\"year\" BETWEEN 1950 AND 2100"
         }
       },
       "isRLSEnabled": false

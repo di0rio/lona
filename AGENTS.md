@@ -14,6 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Cada módulo vive em `src/modules/<module>/` (`schema.ts`, `service.ts`, `routes.ts`, `index.ts`). Um módulo só usa outro pelo `index.ts` dele, nunca importando as tabelas de outro módulo.
 - Toda consulta de negócio passa pelo helper de transação com contexto (`src/db/`, `withContext`), que seta a empresa e o usuário para o RLS. Nunca rode consulta de negócio fora dele.
 - Confira a documentação da versão instalada de cada biblioteca antes de escrever código para ela.
+- O banco compartilhado de desenvolvimento (branch `dev-limpo` do Neon) só recebe migration que já está na `main`. Para testar uma migration nova, crie uma branch própria do Neon a partir da `dev-limpo` e aponte o `.env.local` do seu worktree para ela.
 - Antes de mexer em interface, leia `DESIGN.md`: tokens, tipografia, movimento e componentes seguem ele.
 - Toda feature nova vem com teste (integração no Vitest para service e RLS, e2e no Playwright para o fluxo da tela).
 - Todo bug corrigido vem com um teste de regressão: primeiro um teste que falha reproduzindo o bug, depois a correção que faz ele passar. Commit `fix:` sem arquivo `*.test.ts` ou `*.spec.ts` alterado é barrado no CI.

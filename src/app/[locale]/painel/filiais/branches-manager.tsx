@@ -4,8 +4,8 @@ import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
-import { Field } from "@/components/field";
 import { EmptyState } from "@/components/site-shell/empty-state";
+import { Field } from "@/components/site-shell/field";
 import { PageHeader } from "@/components/site-shell/page-header";
 import { Button } from "@/components/ui/button";
 import {

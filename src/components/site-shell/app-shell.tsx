@@ -53,6 +53,9 @@ export function AppShell({
 	summary,
 	userName,
 	dashboardTitle,
+	customersTitle,
+	partsTitle,
+	suppliersTitle,
 	branchesTitle,
 	rolesTitle,
 	usersTitle,
@@ -68,6 +71,9 @@ export function AppShell({
 	summary: DashboardSummary | null;
 	userName: string;
 	dashboardTitle: string;
+	customersTitle: string;
+	partsTitle: string;
+	suppliersTitle: string;
 	branchesTitle: string;
 	rolesTitle: string;
 	usersTitle: string;
@@ -134,6 +140,9 @@ export function AppShell({
 	const items = navItems(
 		{
 			dashboard: dashboardTitle,
+			customers: customersTitle,
+			parts: partsTitle,
+			suppliers: suppliersTitle,
 			branches: branchesTitle,
 			roles: rolesTitle,
 			users: usersTitle,
@@ -142,6 +151,7 @@ export function AppShell({
 		},
 		locale,
 		summary.usesBranches,
+		summary.permissions,
 	);
 	const accountHref = localePath(locale, "/painel/conta");
 	const title =

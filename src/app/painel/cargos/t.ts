@@ -95,7 +95,14 @@ export default {
 			},
 		},
 		inventory: {
-			view: { pt: "Consultar o estoque", en: "View stock" },
+			view: {
+				pt: "Consultar peças e estoque",
+				en: "View parts and stock",
+			},
+			manage_parts: {
+				pt: "Cadastrar e alterar peças",
+				en: "Add and change parts",
+			},
 			view_other_branches: {
 				pt: "Consultar o estoque de outras filiais",
 				en: "View other branches' stock",
@@ -103,7 +110,14 @@ export default {
 			adjust: { pt: "Ajustar o estoque", en: "Adjust stock" },
 		},
 		purchasing: {
-			view: { pt: "Ver as compras", en: "View purchases" },
+			view: {
+				pt: "Ver fornecedores e compras",
+				en: "View suppliers and purchases",
+			},
+			manage_suppliers: {
+				pt: "Cadastrar e alterar fornecedores",
+				en: "Add and change suppliers",
+			},
 			create_order: {
 				pt: "Fazer pedido de compra",
 				en: "Create purchase orders",
