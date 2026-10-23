@@ -11,6 +11,7 @@ import {
 	drizzleAsOwner,
 	hasDatabase,
 } from "@/test/database";
+import { config } from "../../../vercel";
 import {
 	DemoLimitReachedError,
 	deleteExpiredDemos,
@@ -507,6 +508,16 @@ describe.skipIf(!hasDatabase)("demo", () => {
 			).toBeGreaterThanOrEqual(1);
 			expect(await exists(expired)).toBe(false);
 			expect(await exists(templateId)).toBe(true);
+		});
+
+		// Regressão: o vercel.ts ainda chamava /api/cron/limpar depois que a rota virou /api/cron/clean.
+		test("the schedule in vercel.ts calls an existing route", async () => {
+			for (const cron of config.crons ?? []) {
+				const response = await app.handle(
+					new Request(`http://localhost${cron.path}`),
+				);
+				expect(response.status, cron.path).toBe(401);
+			}
 		});
 
 		test("without CRON_SECRET configured, never authorizes", async () => {
