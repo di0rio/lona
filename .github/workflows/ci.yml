@@ -108,6 +108,25 @@ jobs:
           echo "$fixes"
           exit 1
 
+  # Commit e PR sem linha de atribuição de IA (pedido do dono do projeto). O hook .githooks/commit-msg já tira localmente.
+  sem-coautor:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Nenhum commit com Co-Authored-By de IA
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          found=$(git log --format='%h %s%n%b' "$BASE..$HEAD" | grep -iE '^co-authored-by:.*(claude|anthropic)' || true)
+          if [ -z "$found" ]; then exit 0; fi
+          echo "::error::Há commit com Co-Authored-By de IA. Reescreva as mensagens (git rebase) sem essa linha."
+          echo "$found"
+          exit 1
+
   gitleaks:
     runs-on: ubuntu-latest
     steps:
