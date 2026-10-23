@@ -28,8 +28,12 @@ const storageKey = (userId: string) => `lona:tour:${userId}`;
 export function useTour(userId: string, enabled: boolean) {
 	const [open, setOpen] = useState(false);
 
+	// Desligar fecha o tour: quem abre "Ver como" no meio dele não o leva para a pessoa fictícia.
 	useEffect(() => {
-		if (!enabled) return;
+		if (!enabled) {
+			setOpen(false);
+			return;
+		}
 		try {
 			if (!localStorage.getItem(storageKey(userId))) setOpen(true);
 		} catch {

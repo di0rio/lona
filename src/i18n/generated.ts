@@ -592,7 +592,7 @@ export const translations = {
 						},
 						viewAs: {
 							title: "Ver como",
-							text: "Abra o sistema como outra pessoa da empresa e veja só o que o cargo dela enxerga.",
+							text: "No seu menu, aqui embaixo, abra o sistema como outra pessoa da empresa e veja só o que o cargo dela enxerga.",
 						},
 						countdown: {
 							title: "Contador da demonstração",
@@ -1199,7 +1199,7 @@ export const translations = {
 						},
 						viewAs: {
 							title: "View as",
-							text: "Open the system as someone else in the company and see only what their role sees.",
+							text: "From your menu down here, open the system as someone else in the company and see only what their role sees.",
 						},
 						countdown: {
 							title: "Demonstration timer",

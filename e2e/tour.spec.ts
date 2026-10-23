@@ -105,6 +105,20 @@ test("Ver o tour in the user menu shows the tour again from the first step", asy
 	await expect(tour).toBeFocused();
 });
 
+test("opening Ver como in the middle of the tour closes it", async ({
+	page,
+}) => {
+	await startDemo(page);
+	await expect(page.getByRole("dialog", { name: "Menu lateral" })).toBeVisible();
+
+	await page.getByRole("button", { name: /Visitante/ }).click();
+	await page.getByRole("menuitem", { name: /Paulo Mendes/ }).click();
+	await expect(
+		page.getByRole("status").filter({ hasText: "Você está como" }),
+	).toBeVisible();
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
 test("arrow keys move between steps and Esc closes the tour", async ({
 	page,
 }) => {
