@@ -32,6 +32,7 @@ export {
 	DuplicateRoleError,
 	dashboardSummary,
 	findInvite,
+	grantedPermissions,
 	HeadquartersLockedError,
 	hasPermission,
 	InvalidInviteError,

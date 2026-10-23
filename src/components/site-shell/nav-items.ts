@@ -1,5 +1,6 @@
 import {
 	BuildingIcon,
+	ContactIcon,
 	LayoutDashboardIcon,
 	type LucideIcon,
 	PackageIcon,
@@ -17,6 +18,7 @@ export type NavItem = { title: string; href: string; icon: LucideIcon };
 export function navItems(
 	copy: {
 		dashboard: string;
+		customers: string;
 		parts: string;
 		suppliers: string;
 		branches: string;
@@ -26,23 +28,32 @@ export function navItems(
 	},
 	locale: Locale,
 	usesBranches: boolean,
+	/** Permissões do usuário na empresa ativa: cadastro que ele não pode consultar não aparece no menu. */
+	permissions: readonly string[],
 ): NavItem[] {
+	const can = (permission: string) => permissions.includes(permission);
+	const when = (allowed: boolean, item: NavItem) => (allowed ? [item] : []);
 	return [
 		{
 			title: copy.dashboard,
 			href: localePath(locale, "/painel"),
 			icon: LayoutDashboardIcon,
 		},
-		{
+		...when(can("customer.view"), {
+			title: copy.customers,
+			href: localePath(locale, "/painel/clientes"),
+			icon: ContactIcon,
+		}),
+		...when(can("inventory.view"), {
 			title: copy.parts,
 			href: localePath(locale, "/painel/pecas"),
 			icon: PackageIcon,
-		},
-		{
+		}),
+		...when(can("purchasing.view"), {
 			title: copy.suppliers,
 			href: localePath(locale, "/painel/fornecedores"),
 			icon: TruckIcon,
-		},
+		}),
 		...(usesBranches
 			? [
 					{

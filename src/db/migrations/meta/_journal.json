@@ -47,8 +47,15 @@
     {
       "idx": 6,
       "version": "7",
-      "when": 1792686030796,
-      "tag": "0006_parts_suppliers",
+      "when": 1792685987107,
+      "tag": "0006_customers",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792716744114,
+      "tag": "0007_parts_suppliers",
       "breakpoints": true
     }
   ]
