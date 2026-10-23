@@ -1,0 +1,85 @@
+export default {
+	title: { pt: "Fornecedores", en: "Suppliers" },
+	nav: { pt: "Fornecedores", en: "Suppliers" },
+	description: {
+		pt: "Empresas de quem você compra peças, com CNPJ e contato.",
+		en: "Companies you buy parts from, with CNPJ and contact.",
+	},
+	readOnly: {
+		pt: "Você pode ver os fornecedores, mas não cadastrar nem alterar.",
+		en: "You can see the suppliers but not add or change them.",
+	},
+	noAccess: {
+		title: {
+			pt: "Você não tem acesso a esta tela",
+			en: "You do not have access to this page",
+		},
+		text: {
+			pt: "Peça a quem administra a empresa para liberar a consulta de compras no seu cargo.",
+			en: "Ask whoever manages the company to allow purchasing access for your role.",
+		},
+	},
+	table: {
+		legalName: { pt: "Razão social", en: "Legal name" },
+		cnpj: { pt: "CNPJ", en: "CNPJ" },
+		contact: { pt: "Contato", en: "Contact" },
+		phone: { pt: "Telefone", en: "Phone" },
+		city: { pt: "Cidade/UF", en: "City/State" },
+		status: { pt: "Situação", en: "Status" },
+		actions: { pt: "Ações", en: "Actions" },
+		active: { pt: "Ativo", en: "Active" },
+		inactive: { pt: "Inativo", en: "Inactive" },
+	},
+	empty: {
+		title: { pt: "Nenhum fornecedor ainda", en: "No suppliers yet" },
+		text: {
+			pt: "Cadastre quem vende peças para você. Um fornecedor com histórico não se apaga, só se inativa.",
+			en: "Add whoever sells you parts. A supplier with history is never deleted, only deactivated.",
+		},
+	},
+	new: { pt: "Novo fornecedor", en: "New supplier" },
+	edit: { pt: "Editar", en: "Edit" },
+	deactivate: { pt: "Inativar", en: "Deactivate" },
+	reactivate: { pt: "Reativar", en: "Reactivate" },
+	form: {
+		newTitle: { pt: "Novo fornecedor", en: "New supplier" },
+		editTitle: { pt: "Editar fornecedor", en: "Edit supplier" },
+		legalName: { pt: "Razão social", en: "Legal name" },
+		legalNameRequired: {
+			pt: "Informe a razão social.",
+			en: "Enter the legal name.",
+		},
+		cnpj: { pt: "CNPJ", en: "CNPJ" },
+		cnpjInvalid: { pt: "CNPJ inválido.", en: "Invalid CNPJ." },
+		cnpjDuplicate: {
+			pt: "Este CNPJ já está cadastrado.",
+			en: "This CNPJ is already registered.",
+		},
+		contact: { pt: "Contato (opcional)", en: "Contact (optional)" },
+		phone: { pt: "Telefone (opcional)", en: "Phone (optional)" },
+		phoneInvalid: {
+			pt: "Informe DDD e número, com 10 ou 11 dígitos.",
+			en: "Enter area code and number, 10 or 11 digits.",
+		},
+		city: { pt: "Cidade", en: "City" },
+		cityRequired: { pt: "Informe a cidade.", en: "Enter the city." },
+		state: { pt: "UF", en: "State" },
+		statePlaceholder: { pt: "Escolha", en: "Choose" },
+		stateRequired: { pt: "Escolha a UF.", en: "Choose the state." },
+		save: { pt: "Salvar", en: "Save" },
+		saving: { pt: "Salvando...", en: "Saving..." },
+		error: {
+			pt: "Não foi possível salvar agora. Tente de novo.",
+			en: "Could not save right now. Try again.",
+		},
+	},
+	created: { pt: "Fornecedor cadastrado.", en: "Supplier added." },
+	updated: { pt: "Fornecedor atualizado.", en: "Supplier updated." },
+	deactivated: { pt: "Fornecedor inativado.", en: "Supplier deactivated." },
+	reactivated: { pt: "Fornecedor reativado.", en: "Supplier reactivated." },
+	undo: { pt: "Desfazer", en: "Undo" },
+	actionError: {
+		pt: "Não foi possível alterar o fornecedor agora.",
+		en: "Could not change the supplier right now.",
+	},
+};

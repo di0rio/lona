@@ -105,13 +105,16 @@ No código: `blocked` (valor de `customers.status`; ativo é `active`)
 **Peça**:
 Um item vendido ou aplicado em serviço, com código, marca e os veículos em que serve.
 _Evitar_: produto, item, mercadoria
+No código: `part`
 
 **Aplicação**:
 Os modelos de veículo e eixos em que uma peça serve.
 _Evitar_: compatibilidade
+No código: `partApplication`
 
 **Fornecedor**:
 Empresa de quem se compram peças.
+No código: `supplier`
 
 **Pedido de compra**:
 O que a empresa encomenda de um fornecedor. Pode chegar de uma vez ou em várias entradas.

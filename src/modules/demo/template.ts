@@ -1,5 +1,7 @@
 import { seedAccessTemplate } from "@/modules/access";
 import { seedCustomersTemplate } from "@/modules/customers";
+import { seedInventoryTemplate } from "@/modules/inventory";
+import { seedPurchasingTemplate } from "@/modules/purchasing";
 
 /**
  * O modelo "Freios Rodovia Ltda", de onde toda demonstração é copiada. Cresce a cada etapa: um bloco por módulo
@@ -11,5 +13,7 @@ export async function seedTemplate(
 ) {
 	const access = await seedAccessTemplate(tx);
 	await seedCustomersTemplate(tx, access.companyId);
+	await seedInventoryTemplate(tx, access.companyId);
+	await seedPurchasingTemplate(tx, access.companyId);
 	return { companyId: access.companyId };
 }
