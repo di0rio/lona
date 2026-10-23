@@ -12,8 +12,9 @@ import { safeUrl } from "../src/db/url";
 
 // Recria do zero o banco da produção (roteiro em docs/deploy.md): esquemas, migrações, papel lona_app e modelo.
 // As URLs vêm só deste arquivo, nunca do ambiente: o Bun carrega o .env.local (dev) sozinho e misturar os
-// dois poderia apagar o banco errado. Nenhuma URL ou senha é impressa.
-const envFile = ".env.production.local";
+// dois poderia apagar o banco errado. O nome não é .env.production.local de propósito: esse o next build/start
+// carrega sozinho, e um e2e local acabaria na produção. Nenhuma URL ou senha é impressa.
+const envFile = ".env.main.local";
 
 const env = parseEnv(readFileSync(envFile, "utf8"));
 const { ownerUrl, pooledUrl } = assertProductionTarget(
@@ -45,7 +46,7 @@ try {
 	// A senha antiga do lona_app deixa de valer: o arquivo fica só com a URL nova.
 	const appUrl = await enableAppRole(ownerUrl, pooledUrl);
 	const rest = readFileSync(envFile, "utf8").replace(
-		/^DATABASE_URL_APP=.*\n?/m,
+		/^DATABASE_URL_APP=.*\n?/gm,
 		"",
 	);
 	writeFileSync(envFile, `${rest.trimEnd()}\nDATABASE_URL_APP="${appUrl}"\n`);

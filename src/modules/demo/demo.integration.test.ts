@@ -512,6 +512,7 @@ describe.skipIf(!hasDatabase)("demo", () => {
 
 		// Regressão: o vercel.ts ainda chamava /api/cron/limpar depois que a rota virou /api/cron/clean.
 		test("the schedule in vercel.ts calls an existing route", async () => {
+			expect(config.crons?.length).toBeGreaterThan(0);
 			for (const cron of config.crons ?? []) {
 				const response = await app.handle(
 					new Request(`http://localhost${cron.path}`),

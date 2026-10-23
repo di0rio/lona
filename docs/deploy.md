@@ -82,10 +82,10 @@ Em `BETTER_AUTH_URL` vai o endereço público, com `https://` e sem barra no fim
 
 A branch `main` do Neon ainda tem o esquema antigo (nomes em português). Não há dado real nela. O script apaga tudo e monta de novo.
 
-Baixe as variáveis da produção pra um arquivo local (o git ignora `.env*`):
+Baixe as variáveis da produção pra um arquivo local (o git ignora `.env*`). Use esse nome mesmo: um `.env.production.local` seria carregado sozinho pelo `next build` local, e o e2e rodaria contra a produção.
 
 ```bash
-vercel env pull .env.production.local --environment=production
+vercel env pull .env.main.local --environment=production
 ```
 
 Rode o script:
@@ -99,13 +99,13 @@ Ele pede pra digitar `main`. Qualquer outra coisa cancela sem mexer em nada. No 
 ```
 Esquemas antigos apagados e public recriado.
 Migrações aplicadas.
-Papel lona_app ligado; DATABASE_URL_APP nova no .env.production.local.
+Papel lona_app ligado; DATABASE_URL_APP nova no .env.main.local.
 Modelo semeado: <id>
 ```
 
-Se ele disser que `DATABASE_URL` ou `DATABASE_URL_UNPOOLED` "não é da branch main", o arquivo veio sem essas URLs (variável marcada como sensível não desce no `env pull`) ou com a branch errada. Copie as duas do console do Neon (**Connect**, branch `main`, com e sem pooler) pro `.env.production.local` e rode de novo.
+Se ele disser que `DATABASE_URL` ou `DATABASE_URL_UNPOOLED` "não é da branch main", o arquivo veio sem essas URLs (variável marcada como sensível não desce no `env pull`) ou com a branch errada. Copie as duas do console do Neon (**Connect**, branch `main`, com e sem pooler) pro `.env.main.local` e rode de novo.
 
-Agora mande a `DATABASE_URL_APP` nova pra Vercel. Abra o `.env.production.local`, copie o valor da última linha (sem as aspas) e cole quando a CLI pedir:
+Agora mande a `DATABASE_URL_APP` nova pra Vercel. Abra o `.env.main.local`, copie o valor da última linha (sem as aspas) e cole quando a CLI pedir:
 
 ```bash
 vercel env add DATABASE_URL_APP production
@@ -116,7 +116,7 @@ Se ela já existia, remova antes com `vercel env rm DATABASE_URL_APP production`
 Depois apague o arquivo local, que tem senhas da produção:
 
 ```bash
-rm .env.production.local
+rm .env.main.local
 ```
 
 ### 5. Painel da Vercel
@@ -150,12 +150,12 @@ Se o build parar com `Faltam variáveis de ambiente na produção: ...`, cadastr
 ## O que o script faz
 
 `bun run db:rebuild-production --confirm` (`scripts/rebuild-production-db.ts`):
-1. Lê as URLs só do `.env.production.local`, nunca do ambiente, pra não misturar com o `.env.local` do desenvolvimento.
+1. Lê as URLs só do `.env.main.local`, nunca do ambiente, pra não misturar com o `.env.local` do desenvolvimento.
 2. Recusa sem `--confirm` e recusa se `DATABASE_URL` ou `DATABASE_URL_UNPOOLED` não forem do endpoint da branch `main` do Neon (`ep-mute-scene-b7vm7eiy`).
 3. Pede pra digitar o nome da branch (`main`).
 4. Numa transação só, apaga os esquemas `public`, `auth`, `autenticacao` (o de antes da troca pra inglês) e `drizzle`, e recria o `public` como o PostgreSQL 15+ cria: dono `pg_database_owner` e só `USAGE` pro `PUBLIC`. O esquema `neon_auth`, do próprio Neon, fica.
 5. Roda as migrações de `src/db/migrations`.
-6. Dá uma senha aleatória nova ao papel `lona_app` e grava a `DATABASE_URL_APP` no `.env.production.local`, trocando a antiga.
+6. Dá uma senha aleatória nova ao papel `lona_app` e grava a `DATABASE_URL_APP` no `.env.main.local`, trocando a antiga.
 7. Semeia o modelo da demonstração.
 
 Nenhuma URL nem senha aparece na tela. Ele foi ensaiado numa branch descartável criada a partir da `main`.
@@ -187,13 +187,13 @@ Troque `https://lona.com.br` pelo endereço da produção.
 - **Migração nova:** rode na produção antes do merge, e escreva a migração de um jeito que o código antigo continue funcionando com ela (os dois convivem durante o deploy):
 
   ```bash
-  vercel env pull .env.production.local --environment=production
+  vercel env pull .env.main.local --environment=production
   ```
 
   ```bash
-  bun --env-file=.env.production.local run db:migrate
+  bun --env-file=.env.main.local run db:migrate
   ```
 
-  Depois apague o `.env.production.local`.
+  Depois apague o `.env.main.local`.
 - **Nunca** rode `db:rebuild-production` com dado real na produção: ele apaga tudo. Ele serve só pro primeiro deploy.
 - Deploy ruim: em **Deployments**, escolha o anterior e use **Instant Rollback**.
