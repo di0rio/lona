@@ -3,8 +3,10 @@ import {
 	ContactIcon,
 	LayoutDashboardIcon,
 	type LucideIcon,
+	PackageIcon,
 	SettingsIcon,
 	ShieldCheckIcon,
+	TruckIcon,
 	UsersIcon,
 } from "lucide-react";
 import type { Locale } from "@/i18n/generated";
@@ -17,6 +19,8 @@ export function navItems(
 	copy: {
 		dashboard: string;
 		customers: string;
+		parts: string;
+		suppliers: string;
 		branches: string;
 		roles: string;
 		users: string;
@@ -24,23 +28,32 @@ export function navItems(
 	},
 	locale: Locale,
 	usesBranches: boolean,
-	canViewCustomers: boolean,
+	/** Permissões do usuário na empresa ativa: cadastro que ele não pode consultar não aparece no menu. */
+	permissions: readonly string[],
 ): NavItem[] {
+	const can = (permission: string) => permissions.includes(permission);
+	const when = (allowed: boolean, item: NavItem) => (allowed ? [item] : []);
 	return [
 		{
 			title: copy.dashboard,
 			href: localePath(locale, "/painel"),
 			icon: LayoutDashboardIcon,
 		},
-		...(canViewCustomers
-			? [
-					{
-						title: copy.customers,
-						href: localePath(locale, "/painel/clientes"),
-						icon: ContactIcon,
-					},
-				]
-			: []),
+		...when(can("customer.view"), {
+			title: copy.customers,
+			href: localePath(locale, "/painel/clientes"),
+			icon: ContactIcon,
+		}),
+		...when(can("inventory.view"), {
+			title: copy.parts,
+			href: localePath(locale, "/painel/pecas"),
+			icon: PackageIcon,
+		}),
+		...when(can("purchasing.view"), {
+			title: copy.suppliers,
+			href: localePath(locale, "/painel/fornecedores"),
+			icon: TruckIcon,
+		}),
 		...(usesBranches
 			? [
 					{
