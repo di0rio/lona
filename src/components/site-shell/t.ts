@@ -52,6 +52,43 @@ export default {
 			en: "Could not do that right now. Try again.",
 		},
 	},
+	tour: {
+		of: { pt: "de", en: "of" },
+		skip: { pt: "Pular", en: "Skip" },
+		next: { pt: "Próximo", en: "Next" },
+		finish: { pt: "Concluir", en: "Done" },
+		restart: { pt: "Ver o tour", en: "Take the tour" },
+		steps: {
+			sidebar: {
+				title: { pt: "Menu lateral", en: "Side menu" },
+				text: {
+					pt: "Daqui você vai para cada tela do sistema.",
+					en: "From here you go to each screen of the system.",
+				},
+			},
+			search: {
+				title: { pt: "Busca", en: "Search" },
+				text: {
+					pt: "Ache uma tela ou uma ação de qualquer lugar.",
+					en: "Find a screen or an action from anywhere.",
+				},
+			},
+			viewAs: {
+				title: { pt: "Ver como", en: "View as" },
+				text: {
+					pt: "No seu menu, aqui embaixo, abra o sistema como outra pessoa da empresa e veja só o que o cargo dela enxerga.",
+					en: "From your menu down here, open the system as someone else in the company and see only what their role sees.",
+				},
+			},
+			countdown: {
+				title: { pt: "Contador da demonstração", en: "Demonstration timer" },
+				text: {
+					pt: "A demonstração dura 2 horas e depois os dados são apagados. Dá para resetar quando quiser.",
+					en: "The demonstration lasts 2 hours and then the data is deleted. You can reset it whenever you like.",
+				},
+			},
+		},
+	},
 	expired: {
 		title: { pt: "Sua demonstração acabou", en: "Your demonstration is over" },
 		text: {

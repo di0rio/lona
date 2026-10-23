@@ -15,6 +15,7 @@ import { Countdown } from "./countdown";
 import { navItems } from "./nav-items";
 import { ResetButton } from "./reset-button";
 import { StartAnother } from "./start-another";
+import { Tour, type TourCopy, useTour } from "./tour";
 import { BackToOwner, ViewAsBanner, type ViewAsCopy } from "./view-as-banner";
 
 type Copy = {
@@ -33,6 +34,7 @@ type Copy = {
 	};
 	countdown: { label: string; warning: string };
 	viewAs: ViewAsCopy & { menu: string };
+	tour: TourCopy;
 	reset: { button: string; resetting: string; error: string };
 	expired: {
 		title: string;
@@ -51,6 +53,7 @@ type Copy = {
  */
 export function AppShell({
 	summary,
+	userId,
 	userName,
 	dashboardTitle,
 	customersTitle,
@@ -66,6 +69,7 @@ export function AppShell({
 	children,
 }: {
 	summary: DashboardSummary | null;
+	userId: string;
 	userName: string;
 	dashboardTitle: string;
 	customersTitle: string;
@@ -85,6 +89,9 @@ export function AppShell({
 	const [searchOpen, setSearchOpen] = useState(false);
 	const pathname = stripLocale(usePathname());
 	const color = summary?.company.color;
+	// O tour é só da demonstração, e não de quem a abriu "vendo como" (outra pessoa fictícia).
+	const demo = Boolean(summary?.company.expiresAt) && !viewingAs;
+	const tour = useTour(userId, demo);
 
 	// Dialog, Sheet e menus renderizam num portal fora do wrapper [data-color]; sem isto eles ficariam cinza.
 	useEffect(() => {
@@ -161,6 +168,7 @@ export function AppShell({
 					signOutTo={signOutTo}
 					viewAs={{ copy: copy.viewAs, targets: viewAsTargets }}
 					viewingAs={viewingAs}
+					tour={demo ? { label: copy.tour.restart, onStart: tour.start } : null}
 					user={{
 						name: userName,
 						line2: `${summary.role} · ${summary.branch.name}`,
@@ -201,6 +209,7 @@ export function AppShell({
 				onOpenChange={setSearchOpen}
 				open={searchOpen}
 			/>
+			{tour.open && <Tour copy={copy.tour} onClose={tour.close} />}
 			<Toaster />
 		</div>
 	);

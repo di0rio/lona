@@ -26,6 +26,7 @@ export default async function PainelLayout({
 			locale={locale}
 			signOutTo={localePath(locale, "/")}
 			summary={summary}
+			userId={user.id}
 			userName={user.name}
 			viewAsTargets={targets}
 			viewingAs={user.viewingAs}

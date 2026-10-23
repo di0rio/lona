@@ -13,6 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
+/** Se o visitante está num Apple (muda a tecla do atalho). Só depois de montar: o server não sabe o sistema dele. */
+export function useIsMac() {
+	const [mac, setMac] = useState(false);
+	useEffect(() => {
+		setMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
+	}, []);
+	return mac;
+}
+
 /** Breadcrumb "Empresa › Página" + gatilho da busca. Cresce para mais segmentos quando houver sub-rotas. */
 export function AppHeader({
 	companyName,
@@ -25,11 +34,7 @@ export function AppHeader({
 	searchLabel: string;
 	onSearchClick: () => void;
 }) {
-	// Só depois de montar: o server não sabe o sistema do visitante.
-	const [mac, setMac] = useState(false);
-	useEffect(() => {
-		setMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
-	}, []);
+	const mac = useIsMac();
 
 	return (
 		<header className="flex h-12 items-center justify-between gap-2 border-b px-4 md:px-6">
@@ -49,6 +54,7 @@ export function AppHeader({
 			</div>
 			<Button
 				aria-label={searchLabel}
+				data-tour="search"
 				onClick={onSearchClick}
 				className="bg-canvas text-muted-foreground hover:bg-[color-mix(in_oklch,var(--canvas),var(--foreground)_4%)] sm:min-w-[220px] sm:justify-start"
 				size="sm"

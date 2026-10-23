@@ -2,6 +2,7 @@
 
 import {
 	ChevronsUpDownIcon,
+	CompassIcon,
 	LockKeyholeIcon,
 	LogOutIcon,
 	MonitorIcon,
@@ -47,6 +48,7 @@ export function AppSidebar({
 	signOutTo,
 	viewAs,
 	viewingAs,
+	tour,
 	copy,
 }: {
 	accountHref: string;
@@ -56,6 +58,8 @@ export function AppSidebar({
 	signOutTo: string;
 	viewAs: { copy: { menu: string; error: string }; targets: ViewAsTarget[] };
 	viewingAs: boolean;
+	/** Item "Ver o tour" do menu; só na demonstração. */
+	tour: { label: string; onStart: () => void } | null;
 	copy: {
 		theme: { label: string; light: string; dark: string; system: string };
 		account: string;
@@ -88,7 +92,7 @@ export function AppSidebar({
 				</div>
 			</SidebarHeader>
 			<SidebarContent>
-				<SidebarMenu>
+				<SidebarMenu data-tour="sidebar">
 					{items.map((item) => (
 						<SidebarMenuItem key={item.href}>
 							<SidebarMenuButton
@@ -108,7 +112,12 @@ export function AppSidebar({
 						<DropdownMenu>
 							<DropdownMenuTrigger
 								render={
-									<SidebarMenuButton size="lg">
+									<SidebarMenuButton
+										data-tour={
+											viewAs.targets.length > 0 ? "view-as" : undefined
+										}
+										size="lg"
+									>
 										<div className="flex min-w-0 flex-col">
 											<span className="truncate text-sm">{user.name}</span>
 											<span className="truncate text-muted-foreground text-xs">
@@ -155,6 +164,11 @@ export function AppSidebar({
 									</>
 								)}
 								<DropdownMenuSeparator />
+								{tour && (
+									<DropdownMenuItem onClick={tour.onStart}>
+										<CompassIcon /> {tour.label}
+									</DropdownMenuItem>
+								)}
 								<DropdownMenuItem
 									render={<Link prefetch={false} href={accountHref} />}
 								>

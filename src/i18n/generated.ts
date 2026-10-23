@@ -575,6 +575,31 @@ export const translations = {
 					back: "Voltar pro dono",
 					error: "Não foi possível agora. Tente de novo.",
 				},
+				tour: {
+					of: "de",
+					skip: "Pular",
+					next: "Próximo",
+					finish: "Concluir",
+					restart: "Ver o tour",
+					steps: {
+						sidebar: {
+							title: "Menu lateral",
+							text: "Daqui você vai para cada tela do sistema.",
+						},
+						search: {
+							title: "Busca",
+							text: "Ache uma tela ou uma ação de qualquer lugar.",
+						},
+						viewAs: {
+							title: "Ver como",
+							text: "Abra o sistema como outra pessoa da empresa e veja só o que o cargo dela enxerga.",
+						},
+						countdown: {
+							title: "Contador da demonstração",
+							text: "A demonstração dura 2 horas e depois os dados são apagados. Dá para resetar quando quiser.",
+						},
+					},
+				},
 				expired: {
 					title: "Sua demonstração acabou",
 					text: "Os dados dela foram apagados. Comece outra para continuar testando.",
@@ -1073,7 +1098,7 @@ export const translations = {
 					title: "What Lona does",
 					lead: "One system, from the counter to the workshop, with every branch in its place.",
 					registers: {
-						title: "Registers",
+						title: "Records",
 						text: "Fleet and independent customers, vehicles, parts with application, suppliers and payment methods with the card processor fees.",
 					},
 					stock: {
@@ -1156,6 +1181,31 @@ export const translations = {
 					prefix: "You are viewing as",
 					back: "Back to the owner",
 					error: "Could not do that right now. Try again.",
+				},
+				tour: {
+					of: "of",
+					skip: "Skip",
+					next: "Next",
+					finish: "Done",
+					restart: "Take the tour",
+					steps: {
+						sidebar: {
+							title: "Side menu",
+							text: "From here you go to each screen of the system.",
+						},
+						search: {
+							title: "Search",
+							text: "Find a screen or an action from anywhere.",
+						},
+						viewAs: {
+							title: "View as",
+							text: "Open the system as someone else in the company and see only what their role sees.",
+						},
+						countdown: {
+							title: "Demonstration timer",
+							text: "The demonstration lasts 2 hours and then the data is deleted. You can reset it whenever you like.",
+						},
+					},
 				},
 				expired: {
 					title: "Your demonstration is over",
