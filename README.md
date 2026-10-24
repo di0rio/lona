@@ -84,7 +84,7 @@ e2e/            testes do Playwright
 docs/adr/       decisões de arquitetura
 ```
 
-Cada módulo em `src/modules/<módulo>/` tem o mesmo formato: `schema.ts` com as tabelas, `service.ts` com as regras, `routes.ts` com as rotas da API e `index.ts`, que é a única porta de entrada. Um módulo usa outro só pelo `index.ts` dele, nunca importando as tabelas de outro módulo. `access` cuida de empresas, filiais, cargos e usuários, `demo` da demonstração e `customers` de clientes e veículos. Os próximos seguem o mesmo molde.
+Cada módulo em `src/modules/<módulo>/` tem o mesmo formato: `schema.ts` com as tabelas, `service.ts` com as regras, `routes.ts` com as rotas da API e `index.ts`, que é a única porta de entrada. Um módulo usa outro só pelo `index.ts` dele, nunca importando as tabelas de outro módulo. `access` cuida de empresas, filiais, cargos e usuários, `demo` da demonstração, `customers` de clientes e veículos, `inventory` das peças e `purchasing` dos fornecedores. Os próximos seguem o mesmo molde.
 
 Toda consulta de negócio passa pelo `withContext` (`src/db/`), que abre a transação e diz ao Postgres qual empresa e qual usuário estão ali. É isso que faz o RLS funcionar.
 
@@ -96,4 +96,5 @@ O código, o banco e a API ficam em inglês. A interface, as URLs, os comentári
 - [`DESIGN.md`](DESIGN.md): cores, tipografia, movimento e componentes da interface.
 - [`docs/adr/`](docs/adr): por que as decisões grandes foram tomadas do jeito que foram.
 - [`docs/escopo.md`](docs/escopo.md): a ordem de construção da v1 e o que ficou para a v2.
+- [`docs/deploy.md`](docs/deploy.md): o roteiro do deploy na Vercel e as variáveis da produção.
 - [`AGENTS.md`](AGENTS.md): as regras do projeto, para gente e para agente de IA.
