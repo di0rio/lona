@@ -19,6 +19,7 @@ export {
 	addFee,
 	addMethod,
 	addTerm,
+	copyFees,
 	DuplicatePaymentError,
 	type FeeInput,
 	InvalidPaymentError,

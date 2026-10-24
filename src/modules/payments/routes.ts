@@ -6,6 +6,7 @@ import {
 	addFee,
 	addMethod,
 	addTerm,
+	copyFees,
 	DuplicatePaymentError,
 	InvalidPaymentError,
 	paymentsView,
@@ -129,6 +130,23 @@ export const paymentsRoutes = new Elysia({ prefix: "/payments" })
 					: status(404, "Nenhuma empresa ativa.");
 			}),
 		{ session: true, body: feeBody },
+	)
+	.post(
+		"/fees/copy",
+		({ userId, body, status }) =>
+			guarded(status, "Só quem gerencia pagamentos cria taxas.", async () => {
+				const copied = await copyFees(userId, body);
+				return copied === null
+					? status(404, "Nenhuma empresa ativa.")
+					: { copied };
+			}),
+		{
+			session: true,
+			body: t.Object(
+				{ acquirerId: id, from: date, to: date },
+				{ additionalProperties: false },
+			),
+		},
 	)
 	.patch(
 		"/fees/:id",

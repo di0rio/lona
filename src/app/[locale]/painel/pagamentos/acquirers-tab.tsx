@@ -231,6 +231,7 @@ function AcquirerCard({
 						<ValidityForm
 							acquirer={acquirer}
 							copy={copy}
+							from={selected}
 							onDone={(date) => {
 								setCreating(false);
 								setSelected(date);
@@ -238,6 +239,7 @@ function AcquirerCard({
 								toast(text.validityCreated);
 							}}
 							rows={rows}
+							today={today}
 						/>
 					)}
 				</SheetContent>
@@ -279,7 +281,10 @@ function FeeRow({
 			Pick<AcquirerFeeRow, "feePct" | "daysToReceive" | "anticipationFeePct">
 		>,
 	) {
-		if (saving.current) return false;
+		if (saving.current) {
+			toast(text.feeSaving);
+			return false;
+		}
 		saving.current = true;
 		const { error } = fee
 			? await api().payments.fees({ id: fee.id }).patch(patch)
@@ -527,15 +532,18 @@ function AcquirerForm({
 function ValidityForm({
 	acquirer,
 	rows,
+	from,
+	today,
 	copy,
 	onDone,
 }: {
 	acquirer: AcquirerRow;
 	rows: AcquirerFeeRow[];
+	from: string;
+	today: string;
 	copy: Copy;
 	onDone: (date: string) => void;
 }) {
-	const router = useRouter();
 	const text = copy.acquirers;
 	const [date, setDate] = useState("");
 	const [error, setError] = useState("");
@@ -547,31 +555,13 @@ function ValidityForm({
 		if (!date) return setError(text.newValidityRequired);
 		setError("");
 		setSaving(true);
-		const results = await Promise.all(
-			rows.map((fee) =>
-				api().payments.fees.post({
-					acquirerId: acquirer.id,
-					modality: fee.modality,
-					installments: fee.installments,
-					feePct: fee.feePct,
-					daysToReceive: fee.daysToReceive,
-					anticipationFeePct: fee.anticipationFeePct,
-					validFrom: date,
-				}),
-			),
-		);
+		const { error: failed } = await api().payments.fees.copy.post({
+			acquirerId: acquirer.id,
+			from,
+			to: date,
+		});
 		setSaving(false);
-		const failed = results.filter((r) => r.error);
-		const first = failed[0]?.error;
-		if (first) {
-			// As que deram certo já existem: atualiza a tela para mostrar o estado real.
-			router.refresh();
-			return setError(
-				failed.length === results.length
-					? failure(first, copy.error)
-					: `${failed.length} ${text.newValidityPartial}`,
-			);
-		}
+		if (failed) return setError(failure(failed, copy.error));
 		onDone(date);
 	}
 

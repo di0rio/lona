@@ -18,6 +18,7 @@ import {
 	addFee,
 	addMethod,
 	addTerm,
+	copyFees,
 	DuplicatePaymentError,
 	type FeeInput,
 	InvalidPaymentError,
@@ -183,7 +184,8 @@ describe.skipIf(!hasDatabase)("payments", () => {
 		expect(await updateAcquirer(ownerA, id, { name: "Stone Pagamentos" })).toBe(
 			true,
 		);
-		const [first] = found.acquirers[0].fees;
+		// A vigência de 2026-01-01 já foi substituída (só consulta): edita a vigente.
+		const [, first] = found.acquirers[0].fees;
 		expect(
 			await updateFee(ownerA, first.id, {
 				feePct: "3.10",
@@ -196,7 +198,7 @@ describe.skipIf(!hasDatabase)("payments", () => {
 		expect(await updateMethod(ownerA, cashId, { active: false })).toBe(true);
 		const after = await view(ownerA);
 		expect(after.acquirers[0]).toMatchObject({ name: "Stone Pagamentos" });
-		expect(after.acquirers[0].fees[0]).toMatchObject({
+		expect(after.acquirers[0].fees[1]).toMatchObject({
 			feePct: "3.10",
 			anticipation: false,
 			anticipationFeePct: null,
@@ -341,6 +343,75 @@ describe.skipIf(!hasDatabase)("payments", () => {
 				issuerInstallments: true,
 			}),
 		).toBeTruthy();
+	});
+
+	test("copyFees copies a validity in one call; duplicates, empty source and clerk are refused", async () => {
+		const acquirerId = (await addAcquirer(ownerA, {
+			name: "Zz Copia",
+		})) as string;
+		await addFee(ownerA, fee(acquirerId, { validFrom: "2999-01-01" }));
+		await addFee(
+			ownerA,
+			fee(acquirerId, { modality: "debit", validFrom: "2999-01-01" }),
+		);
+		const count = async () =>
+			(await view(ownerA)).acquirers
+				.find((a) => a.id === acquirerId)
+				?.fees.filter((f) => f.validFrom === "2999-06-01").length;
+		const data = { acquirerId, from: "2999-01-01", to: "2999-06-01" };
+
+		expect(await copyFees(ownerA, data)).toBe(2);
+		expect(await count()).toBe(2);
+		const again = await copyFees(ownerA, data).catch((e) => e);
+		expect(again).toBeInstanceOf(DuplicatePaymentError);
+		expect(again.field).toBe("validFrom");
+		expect(await count()).toBe(2);
+		await expect(
+			copyFees(ownerA, { ...data, from: "2999-03-01", to: "2999-07-01" }),
+		).rejects.toBeInstanceOf(InvalidPaymentError);
+		await expect(copyFees(clerk, data)).rejects.toBeInstanceOf(
+			PermissionDeniedError,
+		);
+	});
+
+	test("a past validity is read-only for add, update, remove and copy; the current one works", async () => {
+		const acquirerId = (await addAcquirer(ownerA, {
+			name: "Zz Antiga",
+		})) as string;
+		const oldFee = (await addFee(
+			ownerA,
+			fee(acquirerId, { validFrom: "2025-01-01" }),
+		)) as string;
+		const currentFee = (await addFee(
+			ownerA,
+			fee(acquirerId, { validFrom: "2025-06-01" }),
+		)) as string;
+		const refused = (promise: Promise<unknown>) =>
+			expect(promise).rejects.toThrow(/Vigência antiga/);
+
+		await refused(
+			addFee(
+				ownerA,
+				fee(acquirerId, { modality: "debit", validFrom: "2025-01-01" }),
+			),
+		);
+		await refused(updateFee(ownerA, oldFee, { feePct: "1.00" }));
+		await refused(updateFee(ownerA, currentFee, { validFrom: "2025-01-01" }));
+		await refused(removeFee(ownerA, oldFee));
+		await refused(
+			copyFees(ownerA, {
+				acquirerId,
+				from: "2025-06-01",
+				to: "2025-01-01",
+			}),
+		);
+
+		expect(await updateFee(ownerA, currentFee, { feePct: "1.00" })).toBe(true);
+		await addFee(
+			ownerA,
+			fee(acquirerId, { modality: "debit", validFrom: "2025-06-01" }),
+		);
+		expect(await removeFee(ownerA, currentFee)).toBe(true);
 	});
 
 	test("update rejects an empty patch and re-activating a term of an inactive method", async () => {

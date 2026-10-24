@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import type { Transaction } from "@/db/client";
 import {
 	hasPermission,
@@ -249,6 +249,32 @@ function assertValidFrom(date: string | undefined) {
 	}
 }
 
+const pastValidityMessage =
+	"Vigência antiga: só consulta. Para mudar taxas, crie uma nova vigência.";
+
+/** Vigência antiga = a operadora já tem outra mais nova que começou (dia de São Paulo, o mesmo da tela). */
+async function assertValidityEditable(
+	tx: Transaction,
+	acquirerId: string,
+	validFrom: string,
+) {
+	const [newer] = await tx
+		.select({ id: acquirerFees.id })
+		.from(acquirerFees)
+		.where(
+			and(
+				eq(acquirerFees.acquirerId, acquirerId),
+				gt(acquirerFees.validFrom, validFrom),
+				lte(
+					acquirerFees.validFrom,
+					sql`(now() AT TIME ZONE 'America/Sao_Paulo')::date`,
+				),
+			),
+		)
+		.limit(1);
+	if (newer) throw new InvalidPaymentError(pastValidityMessage);
+}
+
 /** Cria uma taxa (uma nova vigência) da operadora. Exige `payment_methods.manage`. */
 export async function addFee(userId: string, data: FeeInput) {
 	return asManager(userId, async (tx, companyId) => {
@@ -267,6 +293,7 @@ export async function addFee(userId: string, data: FeeInput) {
 			.from(acquirers)
 			.where(eq(acquirers.id, data.acquirerId));
 		if (!acquirer) throw new InvalidPaymentError("Operadora não encontrada.");
+		await assertValidityEditable(tx, data.acquirerId, data.validFrom);
 		const [row] = await tx
 			.insert(acquirerFees)
 			.values({
@@ -299,6 +326,18 @@ export async function updateFee(
 	return asManager(userId, async (tx) => {
 		assertPatchNotEmpty(patch);
 		assertValidFrom(patch.validFrom);
+		const [current] = await tx
+			.select({
+				acquirerId: acquirerFees.acquirerId,
+				validFrom: acquirerFees.validFrom,
+			})
+			.from(acquirerFees)
+			.where(eq(acquirerFees.id, feeId));
+		if (!current) return false;
+		await assertValidityEditable(tx, current.acquirerId, current.validFrom);
+		if (patch.validFrom) {
+			await assertValidityEditable(tx, current.acquirerId, patch.validFrom);
+		}
 		const updated = await tx
 			.update(acquirerFees)
 			.set({
@@ -320,11 +359,44 @@ export async function updateFee(
 /** Apaga uma taxa (o histórico de vigências é da empresa). Devolve false se não existe. */
 export async function removeFee(userId: string, feeId: string) {
 	return asManager(userId, async (tx) => {
+		const [current] = await tx
+			.select({
+				acquirerId: acquirerFees.acquirerId,
+				validFrom: acquirerFees.validFrom,
+			})
+			.from(acquirerFees)
+			.where(eq(acquirerFees.id, feeId));
+		if (!current) return false;
+		await assertValidityEditable(tx, current.acquirerId, current.validFrom);
 		const removed = await tx
 			.delete(acquirerFees)
 			.where(eq(acquirerFees.id, feeId))
 			.returning({ id: acquirerFees.id });
 		return removed.length > 0;
+	});
+}
+
+/** Copia, numa só instrução, todas as taxas da vigência `from` da operadora para a vigência `to`. Devolve quantas copiou. */
+export async function copyFees(
+	userId: string,
+	data: { acquirerId: string; from: string; to: string },
+) {
+	return asManager(userId, async (tx, companyId) => {
+		assertValidFrom(data.from);
+		assertValidFrom(data.to);
+		await assertValidityEditable(tx, data.acquirerId, data.to);
+		const { rows } = await tx.execute<{ id: string }>(sql`
+			INSERT INTO acquirer_fees (company_id, acquirer_id, modality, installments, fee_pct, days_to_receive, anticipation, anticipation_fee_pct, valid_from)
+			SELECT company_id, acquirer_id, modality, installments, fee_pct, days_to_receive, anticipation, anticipation_fee_pct, ${data.to}::date
+			FROM acquirer_fees
+			WHERE company_id = ${companyId} AND acquirer_id = ${data.acquirerId} AND valid_from = ${data.from}::date
+			RETURNING id`);
+		if (rows.length === 0) {
+			throw new InvalidPaymentError(
+				"Esta vigência não tem taxas para copiar. Cadastre as taxas antes.",
+			);
+		}
+		return rows.length;
 	});
 }
 

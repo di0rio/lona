@@ -131,6 +131,59 @@ test("payments: see the demo fees and terms, edit a fee inline and create a term
 	);
 });
 
+test("payments: a second cell committed while a save is in flight warns instead of clashing", async ({
+	page,
+}) => {
+	await openPayments(page);
+	await acquirersTab(page).click();
+	const stone = page.locator('[data-acquirer="Stone"]');
+	// Segura a resposta do salvamento para a segunda edição acontecer com a primeira em andamento.
+	await page.route("**/api/payments/fees**", async (route) => {
+		if (route.request().method() === "PATCH") {
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+		}
+		await route.continue();
+	});
+	const debit = stone.getByLabel("Débito: Taxa", { exact: true });
+	const days = stone.getByLabel("Débito: Dias para receber", { exact: true });
+	await debit.fill("1,20");
+	await debit.press("Enter");
+	await days.fill("5");
+	await days.press("Enter");
+	await expect(
+		page.getByText("Aguarde: a taxa anterior ainda está sendo salva."),
+	).toBeVisible();
+	await expect(page.getByText(/Já existe/)).toHaveCount(0);
+	await expect(page.getByText("Taxa salva.")).toBeVisible();
+	await expect(debit).toHaveValue("1,20");
+});
+
+test("payments: new validity copies the rates once and a repeated date shows the duplicate message", async ({
+	page,
+}) => {
+	await openPayments(page);
+	await acquirersTab(page).click();
+	const stone = page.locator('[data-acquirer="Stone"]');
+	const future = `${new Date().getFullYear() + 1}-05-10`;
+
+	await stone.getByRole("button", { name: "Nova vigência" }).click();
+	const sheet = page.getByRole("dialog");
+	await sheet.getByLabel("Começa em").fill(future);
+	await sheet.getByRole("button", { name: "Criar vigência" }).click();
+	await expect(sheet).toBeHidden();
+	await expect(stone.getByLabel("Vigência")).toHaveValue(future);
+	await expect(stone.getByLabel("Débito: Taxa", { exact: true })).toHaveValue(
+		"1,09",
+	);
+
+	await stone.getByRole("button", { name: "Nova vigência" }).click();
+	await sheet.getByLabel("Começa em").fill(future);
+	await sheet.getByRole("button", { name: "Criar vigência" }).click();
+	await expect(
+		sheet.getByText(/Já existe uma taxa dessa modalidade/),
+	).toBeVisible();
+});
+
 test("payments: view as the counter clerk is read-only", async ({ page }) => {
 	await openPayments(page);
 	await expect(page.getByRole("button", { name: "Nova forma" })).toBeVisible();
