@@ -109,7 +109,9 @@ test("opening Ver como in the middle of the tour closes it", async ({
 	page,
 }) => {
 	await startDemo(page);
-	await expect(page.getByRole("dialog", { name: "Menu lateral" })).toBeVisible();
+	await expect(
+		page.getByRole("dialog", { name: "Menu lateral" }),
+	).toBeVisible();
 
 	await page.getByRole("button", { name: /Visitante/ }).click();
 	await page.getByRole("menuitem", { name: /Paulo Mendes/ }).click();
