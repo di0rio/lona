@@ -2,9 +2,10 @@
 
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/site-shell/empty-state";
+import { Field } from "@/components/site-shell/field";
 import { PageHeader } from "@/components/site-shell/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -330,38 +331,5 @@ function BranchForm({
 				</Button>
 			</DialogFooter>
 		</form>
-	);
-}
-
-function Field({
-	id,
-	label,
-	help,
-	error,
-	children,
-}: {
-	id: string;
-	label: string;
-	help?: string;
-	error?: string;
-	children: ReactNode;
-}) {
-	return (
-		<div className="flex flex-col gap-1.5">
-			<label className="font-medium" htmlFor={id}>
-				{label}
-			</label>
-			{children}
-			{help && (
-				<p className="text-muted-foreground text-xs" id={`${id}-help`}>
-					{help}
-				</p>
-			)}
-			{error && (
-				<p className="text-destructive text-sm" id={`${id}-error`}>
-					{error}
-				</p>
-			)}
-		</div>
 	);
 }

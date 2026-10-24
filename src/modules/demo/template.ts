@@ -1,6 +1,7 @@
 import { seedAccessTemplate } from "@/modules/access";
 import { seedCustomersTemplate } from "@/modules/customers";
 import { seedInventoryTemplate } from "@/modules/inventory";
+import { seedPaymentsTemplate } from "@/modules/payments";
 import { seedPurchasingTemplate } from "@/modules/purchasing";
 
 /**
@@ -12,6 +13,7 @@ export async function seedTemplate(
 		Parameters<typeof seedCustomersTemplate>[0],
 ) {
 	const access = await seedAccessTemplate(tx);
+	await seedPaymentsTemplate(tx, access.companyId);
 	await seedCustomersTemplate(tx, access.companyId);
 	await seedInventoryTemplate(tx, access.companyId);
 	await seedPurchasingTemplate(tx, access.companyId);

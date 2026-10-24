@@ -85,8 +85,15 @@ export default {
 		finance: { pt: "Financeiro", en: "Finance" },
 		override: { pt: "Liberação", en: "Overrides" },
 		admin: { pt: "Administração", en: "Administration" },
+		payment_methods: { pt: "Pagamentos", en: "Payments" },
 	},
 	permissions: {
+		payment_methods: {
+			manage: {
+				pt: "Gerenciar formas, operadoras, taxas e condições de pagamento",
+				en: "Manage payment methods, acquirers, fees and terms",
+			},
+		},
 		inventory: {
 			view: {
 				pt: "Consultar peças e estoque",

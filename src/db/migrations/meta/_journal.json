@@ -57,6 +57,13 @@
       "when": 1792716744114,
       "tag": "0007_parts_suppliers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792795645822,
+      "tag": "0008_payments",
+      "breakpoints": true
     }
   ]
 }

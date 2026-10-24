@@ -116,6 +116,8 @@ describe.skipIf(!hasDatabase)("demo", () => {
 		const visitor = await newVisitor();
 		const start = Date.now();
 		const copyId = await startDemo(visitor);
+		// Só a cópia conta: as conferências abaixo fazem duas idas ao banco por tabela e crescem a cada módulo.
+		const copyTime = Date.now() - start;
 		companyIds.push(copyId);
 
 		expect(copyId).not.toBe(templateId);
@@ -140,7 +142,7 @@ describe.skipIf(!hasDatabase)("demo", () => {
 				table,
 			).toEqual([]);
 		}
-		expect(Date.now() - start).toBeLessThan(5000);
+		expect(copyTime).toBeLessThan(5000);
 
 		// Quem copiou é dono em todas as filiais e a demonstração vence em 2 horas.
 		const { rows } = await owner.query(

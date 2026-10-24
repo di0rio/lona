@@ -58,6 +58,7 @@ export const readyRoles: readonly ReadyRole[] = [
 			"finance.receive",
 			"finance.pay",
 			"cash_register.close",
+			"payment_methods.manage",
 		],
 		limits: { max_discount_pct: 0, max_purchase_order: 0 },
 	},

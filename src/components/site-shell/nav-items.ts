@@ -1,6 +1,7 @@
 import {
 	BuildingIcon,
 	ContactIcon,
+	CreditCardIcon,
 	LayoutDashboardIcon,
 	type LucideIcon,
 	PackageIcon,
@@ -24,6 +25,7 @@ export function navItems(
 		branches: string;
 		roles: string;
 		users: string;
+		payments: string;
 		settings: string;
 	},
 	locale: Locale,
@@ -72,6 +74,11 @@ export function navItems(
 			title: copy.users,
 			href: localePath(locale, "/painel/usuarios"),
 			icon: UsersIcon,
+		},
+		{
+			title: copy.payments,
+			href: localePath(locale, "/painel/pagamentos"),
+			icon: CreditCardIcon,
 		},
 		{
 			title: copy.settings,
