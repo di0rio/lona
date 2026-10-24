@@ -47,7 +47,10 @@ export function Countdown({
 	const close = remaining !== null && remaining <= WARNING_AT_MS;
 
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b bg-canvas px-4 py-1 md:px-6">
+		<div
+			className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b bg-canvas px-4 py-1 md:px-6"
+			data-tour="countdown"
+		>
 			<p className="flex shrink-0 items-baseline gap-2 text-[13px]">
 				<span className="text-muted-foreground">{copy.label}</span>
 				<span

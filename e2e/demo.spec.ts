@@ -41,6 +41,11 @@ async function dashboardCompany(page: Page) {
 
 const countdown = /\d:\d{2}:\d{2}/;
 
+// O tour é um dialog não modal e entraria nos `getByRole("dialog")` dos testes que abrem sheet ou paleta; ele tem teste próprio em tour.spec.ts.
+async function skipTour(page: Page) {
+	await page.getByRole("button", { name: "Pular" }).click();
+}
+
 // Mesmo quando o teste falha no meio, a sessão dele entra na lista de limpeza.
 test.afterEach(async ({ page }) => {
 	const response = await page.request.get("/api/auth/get-session");
@@ -65,6 +70,9 @@ test("trying the demonstration leads to the dashboard with the countdown", async
 	page,
 }) => {
 	await page.goto("/");
+	await expect(
+		page.getByRole("heading", { name: "O que o Lona faz" }),
+	).toBeAttached();
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 
 	await expect(page).toHaveURL(/\/painel$/);
@@ -278,6 +286,7 @@ test("english stays hidden: /en gives 404 and there is no language switch", asyn
 test("Ctrl+K opens the palette and navigates via Painel", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await skipTour(page);
 	await expect(page).toHaveURL(/\/painel$/);
 	await sessionUser(page);
 
@@ -380,6 +389,7 @@ test("branches: turning them on shows the menu item, then create, deactivate and
 }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await skipTour(page);
 	await expect(page).toHaveURL(/\/painel$/);
 	await sessionUser(page);
 	await page.goto("/painel/configuracoes");
@@ -434,6 +444,7 @@ test("roles: create one copying balconista, tick a permission, save and see it a
 }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await skipTour(page);
 	await expect(page).toHaveURL(/\/painel$/);
 	await sessionUser(page);
 
@@ -480,6 +491,7 @@ test("users: change a fictitious user's role, save and see it after reload", asy
 }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
+	await skipTour(page);
 	await expect(page).toHaveURL(/\/painel$/);
 	await sessionUser(page);
 

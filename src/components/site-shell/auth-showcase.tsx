@@ -14,7 +14,7 @@ export async function AuthShowcase() {
 	return (
 		<div
 			aria-hidden="true"
-			className="relative hidden flex-col justify-center overflow-hidden bg-canvas p-12 md:flex"
+			className="relative hidden flex-col justify-center overflow-hidden bg-canvas p-12 md:sticky md:top-0 md:flex md:h-svh md:self-start"
 		>
 			<div className="absolute inset-0 bg-tarp" />
 			<div className="road-dash absolute inset-x-0 top-[46%] -rotate-[8deg]" />

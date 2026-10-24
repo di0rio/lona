@@ -43,6 +43,8 @@ async function startDemo(page: Page, path: string) {
 	await page.goto("/");
 	await page.getByRole("button", { name: "Testar demonstração" }).click();
 	await expect(page).toHaveURL(/\/painel$/);
+	// O tour é um dialog não modal e entraria nos `getByRole("dialog")` dos sheets; ele tem teste próprio em tour.spec.ts.
+	await page.getByRole("button", { name: "Pular" }).click();
 	await page.goto(path);
 }
 
