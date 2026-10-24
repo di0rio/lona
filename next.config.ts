@@ -1,6 +1,9 @@
 import { withInternationalization } from "better-intl/next";
 import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
+import { assertProductionEnv } from "./src/env";
+
+assertProductionEnv(process.env);
 
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
